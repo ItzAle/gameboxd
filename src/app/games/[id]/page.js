@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import jsonp from "jsonp";
 import AddReviewModal from "../../../Components/AddReviewModal/AddReviewModal";
+import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 
 // Función para jsonp
 window.jsonpCallback = function (data) {
@@ -18,59 +21,73 @@ export default function GameDetailsPage({ params }) {
   const [showModal, setShowModal] = useState(false);
   const [likedGames, setLikedGames] = useState([]);
   const [error, setError] = useState(null);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
-    const fetchGameDetails = () => {
-      const apiUrl = `https://www.giantbomb.com/api/game/${id}/`;
+    const fetchGameDetails = async () => {
+      try {
+        const apiUrl = `https://www.giantbomb.com/api/game/${id}/`;
+        const params = {
+          api_key: "54a0e172e4af5165c21d0517ca55f7c8f3d34aab",
+          format: "jsonp",
+          json_callback: "jsonpCallback",
+        };
 
-      const params = {
-        api_key: "54a0e172e4af5165c21d0517ca55f7c8f3d34aab",
-        format: "jsonp",
-        json_callback: "jsonpCallback",
-      };
+        const urlParams = new URLSearchParams(params).toString();
+        const apiUrlWithParams = `${apiUrl}?${urlParams}`;
 
-      const urlParams = new URLSearchParams(params).toString();
-      const apiUrlWithParams = `${apiUrl}?${urlParams}`;
+        jsonp(
+          apiUrlWithParams,
+          { param: "json_callback" },
+          async (err, data) => {
+            if (err) {
+              console.error("Error fetching game details:", err);
+              setError(err);
+            } else {
+              setGame(data.results);
 
-      jsonp(apiUrlWithParams, { param: "json_callback" }, (err, data) => {
-        if (err) {
-          console.error("Error fetching game details:", err);
-          setError(err);
-        } else {
-          setGame(data.results);
-          // Simulación de carga de reviews
-          setReviews([
-            {
-              id: 1,
-              user: "John",
-              rating: 4,
-              comment: "Great game!",
-              containsSpoilers: false,
-            },
-            {
-              id: 2,
-              user: "Jane",
-              rating: 5,
-              comment: "Amazing experience.",
-              containsSpoilers: true,
-            },
-          ]);
-        }
-      });
+              // Cargar reviews desde Firestore
+              const reviewsQuery = query(
+                collection(db, "reviews"),
+                where("gameId", "==", id)
+              );
+              const reviewsSnapshot = await getDocs(reviewsQuery);
+              const loadedReviews = reviewsSnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+              }));
+              setReviews(loadedReviews);
+            }
+            // añadir lo de los favoritos bien puesto y que funcione por favor por la gloria de dios
+          }
+        );
+      } catch (error) {
+        console.error("Error fetching game or reviews:", error);
+        setError(error);
+      }
     };
-
     fetchGameDetails();
   }, [id]);
 
-  const handleSaveReview = (newReview) => {
-    setReviews((prevReviews) => [
-      ...prevReviews,
-      { ...newReview, id: prevReviews.length + 1, user: session.user.name },
-    ]);
+  const handleSaveReview = async (newReview) => {
+    try {
+      const reviewToSave = {
+        ...newReview,
+        user: session.user.name,
+        gameId: id,
+      };
+      const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
+      setReviews((prevReviews) => [
+        ...prevReviews,
+        { ...reviewToSave, id: docRef.id },
+      ]);
 
-    // Si el usuario ha dado "like", añadir el juego a la lista de juegos favoritos
-    if (newReview.liked) {
-      setLikedGames((prevLikedGames) => [...prevLikedGames, game]);
+      // Si el usuario ha dado "like", añadir el juego a la lista de juegos favoritos
+      if (newReview.liked) {
+        setLikedGames((prevLikedGames) => [...prevLikedGames, game]);
+      }
+    } catch (error) {
+      console.error("Error saving review:", error);
     }
   };
 
@@ -96,6 +113,35 @@ export default function GameDetailsPage({ params }) {
     reviews.length > 0
       ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
       : 0;
+
+  const handleToggleFavorite = async () => {
+    if (!session?.user?.id) {
+      console.error("User ID is not defined.");
+      return;
+    }
+
+    const docRef = doc(collection(db, "favorites"), `${session.user.id}_${id}`);
+
+    if (isFavorite) {
+      // Eliminar el juego de favoritos (opcionalmente)
+      await updateDoc(docRef, { liked: false });
+      setIsFavorite(false);
+    } else {
+      // Añadir el juego a favoritos o actualizar el documento existente
+      await setDoc(
+        docRef,
+        {
+          gameId: id,
+          userId: session.user.id,
+          liked: true,
+          gameName: game.name,
+          gameImage: game.image.medium_url,
+        },
+        { merge: true }
+      );
+      setIsFavorite(true);
+    }
+  };
 
   return (
     <div className="flex flex-col lg:flex-row p-4 space-y-4 lg:space-y-0 lg:space-x-8">
@@ -143,19 +189,30 @@ export default function GameDetailsPage({ params }) {
           </p>
         </div>
 
-        {/* Botón para añadir una reseña */}
-        {session ? (
-          <button
-            className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
-            onClick={() => setShowModal(true)}
-          >
-            Add Review
-          </button>
-        ) : (
-          <p className="text-red-500 mb-4">
-            You need to log in to add a review.
-          </p>
-        )}
+        {/* Botón para añadir una reseña y el corazón para favoritos */}
+        <div className="flex items-center space-x-4 mb-4">
+          {session ? (
+            <>
+              <button
+                className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition"
+                onClick={() => setShowModal(true)}
+              >
+                Add Review
+              </button>
+              <button className="text-lg" onClick={handleToggleFavorite}>
+                {isFavorite ? (
+                  <AiFillHeart className="text-red-500" />
+                ) : (
+                  <AiOutlineHeart className="text-gray-500" />
+                )}
+              </button>
+            </>
+          ) : (
+            <p className="text-red-500 mb-4">
+              You need to log in to add a review.
+            </p>
+          )}
+        </div>
 
         {/* Lista de reviews */}
         <div>
@@ -171,10 +228,10 @@ export default function GameDetailsPage({ params }) {
                   <p className="text-yellow-500">
                     {"★".repeat(review.rating)}
                     {"☆".repeat(5 - review.rating)}
+                    {review.containsSpoilers && (
+                      <p className="text-red-500">Contains Spoilers</p>
+                    )}
                   </p>
-                  {review.containsSpoilers && (
-                    <p className="text-red-500">Contains Spoilers</p>
-                  )}
                   <p>{review.comment}</p>
                 </div>
               ))}
