@@ -10,6 +10,8 @@ import {
   doc,
   updateDoc,
   arrayUnion,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { db } from "../../../lib/firebase";
@@ -58,14 +60,12 @@ export default function AddReviewModal({ game, onClose, onSave }) {
     }
 
     try {
-      // Verificar si game.cover está definido y asignar un valor por defecto si no lo está
-      const gameCover = game.cover || ""; // Si game.cover es undefined, usa una cadena vacía
+      const gameCover = game.cover || "";
 
-      // Guardar la review si no existe una previa
       const reviewData = {
         gameId: game.id,
         gameName: game.name,
-        gameCover: gameCover, // Utilizar la variable que garantiza un valor
+        gameCover: gameCover,
         user: user.email,
         rating,
         comment,
@@ -75,9 +75,22 @@ export default function AddReviewModal({ game, onClose, onSave }) {
 
       const reviewRef = await addDoc(collection(db, "reviews"), reviewData);
 
-      // Actualizar el perfil del usuario con la reseña y los juegos liked
+      // Obtener una referencia al documento del usuario
       const userRef = doc(db, "users", user.email);
 
+      // Obtener el documento del usuario
+      const userDoc = await getDoc(userRef);
+
+      if (!userDoc.exists()) {
+        // Si el documento del usuario no existe, créalo
+        await setDoc(userRef, {
+          email: user.email,
+          reviews: [],
+          likedGames: [],
+        });
+      }
+
+      // Ahora actualiza el documento del usuario
       await updateDoc(userRef, {
         reviews: arrayUnion({
           id: reviewRef.id,
@@ -91,14 +104,12 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           ? arrayUnion({
               gameId: game.id,
               gameName: game.name,
-              gameCover: gameCover, // Utilizar la variable que garantiza un valor
+              gameCover: gameCover,
             })
           : arrayUnion(),
       });
 
-      // Ejecutar la función de callback para guardar en el estado
       onSave(reviewData);
-
       onClose();
     } catch (error) {
       console.error("Error adding review: ", error);

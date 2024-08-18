@@ -21,6 +21,7 @@ import {
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import Link from "next/link";
 window.jsonpCallback = function (data) {
   window.jsonpData = data;
 };
@@ -244,14 +245,19 @@ export default function GameDetailsPage({ params }) {
                   key={review.id}
                   className="p-4 border border-gray-300 rounded bg-white shadow-md"
                 >
-                  <p className="font-bold">{review.user}</p>
+                  <Link
+                    href={`/profile/${encodeURIComponent(review.user)}`}
+                    className="font-bold text-blue-600 hover:underline"
+                  >
+                    {review.user}
+                  </Link>
                   <p className="text-yellow-500">
                     {"★".repeat(review.rating)}
                     {"☆".repeat(5 - review.rating)}
-                    {review.containsSpoilers && (
-                      <p className="text-red-500">Contains Spoilers</p>
-                    )}
                   </p>
+                  {review.containsSpoilers && (
+                    <p className="text-red-500">Contains Spoilers</p>
+                  )}
                   <p>{review.comment}</p>
                 </div>
               ))}
