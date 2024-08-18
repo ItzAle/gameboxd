@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// import { ToastContainer, toast } from "react-toastify";
-// import "react-toastify/dist/ReactToastify.css";
-import { query, collection, where, getDocs } from "firebase/firestore";
+import {
+  query,
+  collection,
+  where,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { db } from "../../../lib/firebase";
 import { useSession } from "next-auth/react";
+
 export default function AddReviewModal({ game, onClose, onSave }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -18,23 +26,24 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   const handleToggleFavorite = () => {
     setLiked((prevLiked) => !prevLiked);
   };
+
   useEffect(() => {
     const checkIfReviewExists = async () => {
       if (!user) {
-        toast.error("You need to be logged in to add a review.");
+        alert("You need to be logged in to add a review.");
         return;
       }
 
       const reviewsQuery = query(
         collection(db, "reviews"),
         where("gameId", "==", game.id),
-        where("user", "==", user.name)
+        where("user", "==", user.email)
       );
 
       const reviewsSnapshot = await getDocs(reviewsQuery);
 
       if (!reviewsSnapshot.empty) {
-        toast.error("You have already submitted a review for this game.");
+        alert("You have already submitted a review for this game.");
         onClose();
       }
     };
@@ -44,34 +53,57 @@ export default function AddReviewModal({ game, onClose, onSave }) {
 
   const handleSubmit = async () => {
     if (rating === 0 || !comment) {
-      toast.error("Please fill in all fields.");
+      alert("Please fill in all fields.");
       return;
     }
 
-    // Verificar si el usuario ya ha añadido una review para este juego
-    const reviewsQuery = query(
-      collection(db, "reviews"),
-      where("gameId", "==", game.id),
-      where("user", "==", user.name)
-    );
+    try {
+      // Verificar si game.cover está definido y asignar un valor por defecto si no lo está
+      const gameCover = game.cover || ""; // Si game.cover es undefined, usa una cadena vacía
 
-    const reviewsSnapshot = await getDocs(reviewsQuery);
-    if (!reviewsSnapshot.empty) {
-      toast.error("You have already reviewed this game.");
-      return;
+      // Guardar la review si no existe una previa
+      const reviewData = {
+        gameId: game.id,
+        gameName: game.name,
+        gameCover: gameCover, // Utilizar la variable que garantiza un valor
+        user: user.email,
+        rating,
+        comment,
+        containsSpoilers,
+        liked,
+      };
+
+      const reviewRef = await addDoc(collection(db, "reviews"), reviewData);
+
+      // Actualizar el perfil del usuario con la reseña y los juegos liked
+      const userRef = doc(db, "users", user.email);
+
+      await updateDoc(userRef, {
+        reviews: arrayUnion({
+          id: reviewRef.id,
+          gameId: game.id,
+          gameName: game.name,
+          rating,
+          comment,
+          containsSpoilers,
+        }),
+        likedGames: liked
+          ? arrayUnion({
+              gameId: game.id,
+              gameName: game.name,
+              gameCover: gameCover, // Utilizar la variable que garantiza un valor
+            })
+          : arrayUnion(),
+      });
+
+      // Ejecutar la función de callback para guardar en el estado
+      onSave(reviewData);
+
+      onClose();
+    } catch (error) {
+      console.error("Error adding review: ", error);
+      alert("There was an error submitting your review.");
     }
-
-    // Guardar la review si no existe una previa
-    onSave({
-      gameId: game.id,
-      user: user.name, // Utiliza la información del usuario autenticado
-      rating,
-      comment,
-      containsSpoilers,
-      liked,
-    });
-
-    onClose();
   };
 
   return (
