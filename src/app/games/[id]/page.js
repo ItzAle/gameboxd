@@ -1,12 +1,9 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import jsonp from "jsonp";
 import AddReviewModal from "../../../Components/AddReviewModal/AddReviewModal";
-//import { collection, addDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "../../../../lib/firebase";
-//import { doc, setDoc, updateDoc, getDoc } from "firebase/firestore";
 import {
   collection,
   addDoc,
@@ -14,17 +11,11 @@ import {
   query,
   where,
   doc,
-  setDoc,
-  updateDoc,
   getDoc,
 } from "firebase/firestore";
-
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
-window.jsonpCallback = function (data) {
-  window.jsonpData = data;
-};
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;

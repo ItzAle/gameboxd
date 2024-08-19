@@ -22,6 +22,21 @@ export default function UserProfilePage({ params }) {
         const decodedUsername = decodeURIComponent(username);
         console.log("Fetching profile for:", decodedUsername);
 
+        // Fetch user's profile document
+        const userRef = collection(db, "users");
+        const userQuery = query(
+          userRef,
+          where("username", "==", decodedUsername)
+        );
+        const userSnapshot = await getDocs(userQuery);
+
+        // Handle case where user is not found
+        if (userSnapshot.empty) {
+          throw new Error("User not found");
+        }
+
+        const userDoc = userSnapshot.docs[0].data();
+
         // Fetch user's reviews
         const reviewsRef = collection(db, "reviews");
         const reviewsQuery = query(
@@ -30,18 +45,15 @@ export default function UserProfilePage({ params }) {
         );
         const reviewsSnapshot = await getDocs(reviewsQuery);
 
-        if (reviewsSnapshot.empty) {
-          throw new Error("User not found");
-        }
-
         const userReviews = reviewsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+
         console.log("User reviews:", userReviews);
         setReviews(userReviews);
 
-        // Construct user profile from reviews
+        // Construct user profile
         const likedGames = userReviews
           .filter((review) => review.liked)
           .map((review) => ({
@@ -51,7 +63,10 @@ export default function UserProfilePage({ params }) {
           }));
 
         setUserProfile({
-          name: decodedUsername,
+          name: userDoc.name || decodedUsername,
+          bio: userDoc.bio || "No bio available.",
+          profilePicture:
+            userDoc.profilePicture || "/path/to/default-profile-pic.png",
           likedGames: likedGames,
         });
       } catch (error) {
@@ -79,7 +94,18 @@ export default function UserProfilePage({ params }) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">{userProfile.name}'s Profile</h1>
+      <div className="flex flex-col items-center mb-8">
+        {/* Foto de perfil */}
+        <img
+          src={userProfile.profilePicture}
+          alt={`${userProfile.name}'s profile picture`}
+          className="w-32 h-32 object-cover rounded-full mb-4"
+        />
+        {/* Nombre de usuario */}
+        <h1 className="text-3xl font-bold mb-2">{userProfile.name}</h1>
+        {/* Biografía */}
+        <p className="text-lg text-gray-700 text-center">{userProfile.bio}</p>
+      </div>
 
       <div className="mb-8">
         <h2 className="text-2xl font-semibold mb-4">Liked Games</h2>

@@ -76,7 +76,32 @@ export default function OtherUserProfile({ userId }) {
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-bold mb-4">Profile of {userId}</h1>
+      {/* Perfil de Usuario */}
+      <div className="mb-8">
+        <div className="mb-4">
+          {/* Imagen de Perfil */}
+          <img
+            src={
+              userProfile.profilePicture || "/path/to/default-profile-pic.png"
+            }
+            alt="Profile Picture"
+            className="w-32 h-32 object-cover rounded-full"
+          />
+        </div>
+
+        {/* Nombre de Usuario */}
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold mb-4">
+            Profile of {userProfile.name}
+          </h1>
+        </div>
+
+        {/* Biografía */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold mb-2">Bio</h2>
+          <p>{userProfile.bio || "No bio available."}</p>
+        </div>
+      </div>
 
       {/* Liked Games Section */}
       <div className="mb-8">

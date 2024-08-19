@@ -39,7 +39,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
       const reviewsQuery = query(
         collection(db, "reviews"),
         where("gameId", "==", game.id),
-        where("user", "==", user.email)
+        where("user", "==", user.name)
       );
 
       const reviewsSnapshot = await getDocs(reviewsQuery);
