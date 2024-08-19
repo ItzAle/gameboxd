@@ -22,14 +22,10 @@ const Modal = ({
   isOpen,
   onClose,
   onSave,
-  userProfile,
   setBio,
   setProfilePicture,
-  setUsername,
-  username,
-  profilePicture,
   bio,
-  usernameError,
+  profilePicture,
 }) => {
   if (!isOpen) return null;
 
@@ -88,8 +84,6 @@ export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
-  const [username, setUsername] = useState("");
-  const [usernameError, setUsernameError] = useState("");
   const user = session?.user;
   const apiUrl = "https://www.giantbomb.com/api/games/";
 
@@ -135,7 +129,6 @@ export default function UserProfile() {
           setUserProfile(userData);
           setBio(userData.bio || "");
           setProfilePicture(userData.profilePicture || "");
-          setUsername(userData.name || ""); // Set initial username
 
           // Obtener las carátulas de los juegos
           const newCovers = {};
@@ -167,18 +160,6 @@ export default function UserProfile() {
   const handleSaveProfile = async () => {
     if (!user) return;
 
-    // Validate that the username is unique
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("name", "==", username));
-    const querySnapshot = await getDocs(q);
-
-    if (!querySnapshot.empty && username !== userProfile.name) {
-      setUsernameError("Username is already taken.");
-      return;
-    }
-
-    setUsernameError(""); // Clear any previous error
-
     try {
       const batch = writeBatch(db);
 
@@ -189,28 +170,28 @@ export default function UserProfile() {
         profilePicture,
       });
 
-      // Update all reviews of this user
-      const reviewsRef = collection(db, "reviews");
-      const reviewsQuery = query(
-        reviewsRef,
-        where("userEmail", "==", user.email)
-      );
-      const reviewsSnapshot = await getDocs(reviewsQuery);
-
-      reviewsSnapshot.forEach((reviewDoc) => {
-        const reviewRef = reviewDoc.ref;
-        batch.update(reviewRef, {
-          userName: username,
-        });
-      });
-
       await batch.commit();
 
-      setEditing(false); // Exit editing mode after saving
+      // Actualizar el userProfile local después de guardar
+      setUserProfile((prevProfile) => ({
+        ...prevProfile,
+        bio,
+        profilePicture,
+      }));
+
+      setEditing(false);
       console.log("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
     }
+  };
+
+  const handleEditProfile = () => {
+    if (userProfile) {
+      setBio(userProfile.bio || "");
+      setProfilePicture(userProfile.profilePicture || "");
+    }
+    setEditing(true);
   };
 
   if (!user) {
@@ -235,18 +216,12 @@ export default function UserProfile() {
           />
           {!editing && (
             <button
-              onClick={() => setEditing(true)}
+              onClick={handleEditProfile}
               className="bg-gray-500 text-white px-4 py-2 rounded-md mt-2"
             >
               Edit Profile
             </button>
           )}
-        </div>
-
-        {/* Username */}
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-2">Username</h2>
-          <p>{username}</p>
         </div>
 
         {/* Bio */}
@@ -320,14 +295,10 @@ export default function UserProfile() {
           isOpen={editing}
           onClose={() => setEditing(false)}
           onSave={handleSaveProfile}
-          userProfile={userProfile}
           setBio={setBio}
           setProfilePicture={setProfilePicture}
-          setUsername={setUsername}
-          username={username}
-          profilePicture={profilePicture}
           bio={bio}
-          usernameError={usernameError}
+          profilePicture={profilePicture}
         />
       )}
     </div>
