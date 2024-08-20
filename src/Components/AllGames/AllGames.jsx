@@ -3,12 +3,13 @@
 import React, { useEffect, useState } from "react";
 import jsonp from "jsonp";
 import Link from "next/link";
+import { Search } from "lucide-react";
 
 window.jsonpCallback = function (data) {
   window.jsonpData = data;
 };
 
-function AllGames() {
+export default function Component() {
   const [games, setGames] = useState([]);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,13 +43,12 @@ function AllGames() {
     });
   };
 
-  // Cargar juegos al iniciar la página
   useEffect(() => {
-    fetchGames(); // Llamada sin término de búsqueda para cargar los juegos predeterminados
+    fetchGames();
   }, []);
 
   const handleSearch = () => {
-    setGames([]); // Reiniciar juegos antes de realizar la búsqueda
+    setGames([]);
     fetchGames(searchTerm);
   };
 
@@ -61,54 +61,50 @@ function AllGames() {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">All Games</h1>
-      <div className="mb-4 flex">
+    <div className="container mx-auto p-4 space-y-8">
+      <h1 className="text-4xl font-bold text-center mb-8 animate-fade-in">
+        All Games
+      </h1>
+      <div className="flex items-center space-x-2 max-w-md mx-auto">
         <input
           type="text"
           placeholder="Search games"
           value={searchTerm}
           onChange={handleInputChange}
-          className="border border-gray-300 p-2 rounded mr-2 flex-grow"
+          className="flex-grow px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
         />
         <button
           onClick={handleSearch}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
         >
-          Search
+          <Search className="h-4 w-4" />
+          <span>Search</span>
         </button>
       </div>
       {isLoading ? (
-        <h4 className="text-center">Loading...</h4>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
           {games.map((game) => (
-            <Link href={`/games/${game.id}`} key={game.id}>
-              <div className="p-4 border border-gray-300 rounded bg-white shadow-md cursor-pointer h-full flex flex-col items-center">
-                <h2
-                  className="text-lg font-semibold text-center mb-2 truncate"
-                  style={{
-                    maxWidth: "100%",
-                    maxHeight: "3.6rem",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "normal",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                  }}
-                >
-                  {game.name}
-                </h2>
+            <Link href={`/games/${game.id}`} key={game.id} className="group">
+              <div className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105">
                 {game.image && (
-                  <div className="w-full h-48 flex justify-center items-center">
+                  <div className="aspect-w-3 aspect-h-4">
                     <img
                       src={game.image.small_url}
                       alt={`${game.name} cover`}
-                      className="max-w-full max-h-full"
+                      className="object-cover w-full h-full"
                     />
                   </div>
                 )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                  <h2 className="text-lg font-semibold line-clamp-2">
+                    {game.name}
+                  </h2>
+                </div>
               </div>
             </Link>
           ))}
@@ -117,5 +113,3 @@ function AllGames() {
     </div>
   );
 }
-
-export default AllGames;
