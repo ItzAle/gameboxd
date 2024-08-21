@@ -12,6 +12,7 @@ import {
   where,
   doc,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -51,6 +52,60 @@ export default function GameDetailsPage({ params }) {
     } catch (error) {
       console.error("Error checking existing reviews:", error);
       toast.error("An error occurred while checking for existing reviews.");
+    }
+  };
+
+  const handleLikeClick = async () => {
+    if (!session || !session.user) {
+      toast.error("You need to be logged in to like a game.");
+      return;
+    }
+
+    try {
+      const docRef = doc(db, "favorites", `${session.user.id}_${id}`);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const currentLikeStatus = docSnap.data().liked;
+        await setDoc(docRef, { liked: !currentLikeStatus }, { merge: true });
+        setIsFavorite(!currentLikeStatus);
+        toast.success(
+          !currentLikeStatus
+            ? "Game added to favorites."
+            : "Game removed from favorites."
+        );
+      } else {
+        await setDoc(docRef, { liked: true });
+        setIsFavorite(true);
+        toast.success("Game added to favorites.");
+      }
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+      toast.error("An error occurred while updating favorite status.");
+    }
+  };
+
+  const handleRateGame = async (rating) => {
+    if (!session || !session.user) {
+      toast.error("You need to be logged in to rate a game.");
+      return;
+    }
+
+    try {
+      const reviewToSave = {
+        rating,
+        user: session.user.name,
+        gameId: id,
+      };
+      const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
+      setReviews((prevReviews) => [
+        ...prevReviews,
+        { ...reviewToSave, id: docRef.id },
+      ]);
+      toast.success("Game rated successfully.");
+    } catch (error) {
+      console.error("Error rating game:", error);
+      toast.error("An error occurred while rating the game.");
     }
   };
 
@@ -122,16 +177,18 @@ export default function GameDetailsPage({ params }) {
 
   const handleSaveReview = async (newReview) => {
     try {
-      const reviewToSave = {
-        ...newReview,
-        user: session.user.name,
-        gameId: id,
-      };
-      const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
-      setReviews((prevReviews) => [
-        ...prevReviews,
-        { ...reviewToSave, id: docRef.id },
-      ]);
+      if (newReview.rating > 0 || newReview.comment) {
+        const reviewToSave = {
+          ...newReview,
+          user: session.user.name,
+          gameId: id,
+        };
+        const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
+        setReviews((prevReviews) => [
+          ...prevReviews,
+          { ...reviewToSave, id: docRef.id },
+        ]);
+      }
 
       // Si el usuario ha dado "like", añadir el juego a la lista de juegos favoritos
       if (newReview.liked) {
@@ -213,15 +270,17 @@ export default function GameDetailsPage({ params }) {
 
         <div className="flex items-center space-x-4 mb-4">
           {session ? (
-            <button
-              className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
-              onClick={handleAddReviewClick}
-            >
-              Add Review
-            </button>
+            <>
+              <button
+                className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
+                onClick={handleAddReviewClick}
+              >
+                Add Review
+              </button>
+            </>
           ) : (
             <p className="text-red-500 mb-4">
-              You need to log in to add a review.
+              You need to log in to add a review, rate, or like a game.
             </p>
           )}
         </div>

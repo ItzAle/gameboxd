@@ -54,8 +54,8 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   }, [user, game.id, onClose]);
 
   const handleSubmit = async () => {
-    if (rating === 0 || !comment) {
-      alert("Please fill in all fields.");
+    if (comment && rating === 0) {
+      alert("Please provide a rating if you are writing a review.");
       return;
     }
 
@@ -73,41 +73,47 @@ export default function AddReviewModal({ game, onClose, onSave }) {
         liked,
       };
 
-      const reviewRef = await addDoc(collection(db, "reviews"), reviewData);
+      if (rating > 0 || comment) {
+        const reviewRef = await addDoc(collection(db, "reviews"), reviewData);
 
-      // Obtener una referencia al documento del usuario
-      const userRef = doc(db, "users", user.email);
+        // Obtener una referencia al documento del usuario
+        const userRef = doc(db, "users", user.email);
 
-      // Obtener el documento del usuario
-      const userDoc = await getDoc(userRef);
+        // Obtener el documento del usuario
+        const userDoc = await getDoc(userRef);
 
-      if (!userDoc.exists()) {
-        // Si el documento del usuario no existe, créalo
-        await setDoc(userRef, {
-          email: user.email,
-          reviews: [],
-          likedGames: [],
+        if (!userDoc.exists()) {
+          // Si el documento del usuario no existe, créalo
+          await setDoc(userRef, {
+            email: user.email,
+            reviews: [],
+            likedGames: [],
+          });
+        }
+
+        // Ahora actualiza el documento del usuario
+        await updateDoc(userRef, {
+          reviews: arrayUnion({
+            id: reviewRef.id,
+            gameId: game.id,
+            gameName: game.name,
+            rating,
+            comment,
+            containsSpoilers,
+          }),
         });
       }
 
-      // Ahora actualiza el documento del usuario
-      await updateDoc(userRef, {
-        reviews: arrayUnion({
-          id: reviewRef.id,
-          gameId: game.id,
-          gameName: game.name,
-          rating,
-          comment,
-          containsSpoilers,
-        }),
-        likedGames: liked
-          ? arrayUnion({
-              gameId: game.id,
-              gameName: game.name,
-              gameCover: gameCover,
-            })
-          : arrayUnion(),
-      });
+      if (liked) {
+        const userRef = doc(db, "users", user.email);
+        await updateDoc(userRef, {
+          likedGames: arrayUnion({
+            gameId: game.id,
+            gameName: game.name,
+            gameCover: gameCover,
+          }),
+        });
+      }
 
       onSave(reviewData);
       onClose();
