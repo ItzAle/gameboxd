@@ -8,7 +8,9 @@ export default function LoginPage() {
   if (session) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <h1 className="text-4xl font-bold mb-4">You're already logged in</h1>
+        <h1 className="text-4xl font-bold mb-4">
+          You&apos;re already logged in
+        </h1>
         <p className="text-lg mb-8">Welcome, {session.user.name}!</p>
         <button
           onClick={() => signOut()}
