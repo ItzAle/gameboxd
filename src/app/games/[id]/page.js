@@ -17,6 +17,7 @@ import {
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
+import { useReviews } from "../../../context/ReviewsProvider";
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;
@@ -27,6 +28,7 @@ export default function GameDetailsPage({ params }) {
   const [likedGames, setLikedGames] = useState([]);
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
 
   const handleAddReviewClick = async () => {
     if (!session || !session.user) {
@@ -175,6 +177,12 @@ export default function GameDetailsPage({ params }) {
     fetchGameDetails();
   }, [id, session]);
 
+  useEffect(() => {
+    // Filtrar las reseñas para este juego
+    const gameReviews = globalReviews.filter((review) => review.gameId === id);
+    setReviews(gameReviews);
+  }, [id, globalReviews]);
+
   const handleSaveReview = async (newReview) => {
     try {
       if (newReview.rating > 0 || newReview.comment) {
@@ -185,6 +193,10 @@ export default function GameDetailsPage({ params }) {
         };
         const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
         setReviews((prevReviews) => [
+          ...prevReviews,
+          { ...reviewToSave, id: docRef.id },
+        ]);
+        setGlobalReviews((prevReviews) => [
           ...prevReviews,
           { ...reviewToSave, id: docRef.id },
         ]);

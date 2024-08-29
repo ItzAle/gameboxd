@@ -7,6 +7,11 @@ import {
   updateDoc,
   arrayRemove,
   arrayUnion,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import Modal from "../Modal/Modal"; // Importa el componente Modal
@@ -14,6 +19,8 @@ import Bio from "./Bio"; // Importa el componente Bio
 import LikedGames from "./LikedGames"; // Importa el componente LikedGames
 import ProfilePicture from "./ProfilePicture"; // Importa el componente ProfilePicture
 import Reviews from "./Reviews"; // Importa el componente Reviews
+import { toast } from "react-toastify";
+import { useReviews } from "../../context/ReviewsProvider";
 
 export default function UserProfile() {
   const { data: session } = useSession();
@@ -22,6 +29,7 @@ export default function UserProfile() {
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
+  const { reviews, updateReview, deleteReview } = useReviews();
   const user = session?.user;
   const apiUrl = "https://www.giantbomb.com/api/games/";
 
@@ -123,63 +131,38 @@ export default function UserProfile() {
     setEditing(true);
   };
 
-  const handleEditReview = async (gameId, editedComment, editedRating) => {
-    if (!user) return;
-
+  const onEditReview = async (reviewId, newComment, newRating) => {
     try {
-      const userRef = doc(db, "users", user.email);
-      const userDoc = await getDoc(userRef);
+      const reviewRef = doc(db, "reviews", reviewId);
+      await updateDoc(reviewRef, {
+        comment: newComment,
+        rating: newRating,
+      });
 
-      if (userDoc.exists()) {
-        const reviews = userDoc.data().reviews || [];
-        const updatedReviews = reviews.map((review) =>
-          review.gameId === gameId
-            ? { ...review, comment: editedComment, rating: editedRating }
-            : review
-        );
+      updateReview(reviewId, { comment: newComment, rating: newRating });
 
-        await updateDoc(userRef, { reviews: updatedReviews });
-
-        setUserProfile((prevProfile) => ({
-          ...prevProfile,
-          reviews: updatedReviews,
-        }));
-
-        console.log("Review updated successfully");
-      } else {
-        console.error("User document does not exist");
-      }
+      toast.success("Reseña actualizada con éxito");
+      return true;
     } catch (error) {
       console.error("Error updating review:", error);
+      toast.error("Error al actualizar la reseña");
+      return false;
     }
   };
 
-  const handleDeleteReview = async (gameId) => {
-    if (!user) return;
-
+  const onDeleteReview = async (reviewId) => {
     try {
-      const userRef = doc(db, "users", user.email);
-      const userDoc = await getDoc(userRef);
+      const reviewRef = doc(db, "reviews", reviewId);
+      await deleteDoc(reviewRef);
 
-      if (userDoc.exists()) {
-        const reviews = userDoc.data().reviews || [];
-        const updatedReviews = reviews.filter(
-          (review) => review.gameId !== gameId
-        );
+      deleteReview(reviewId);
 
-        await updateDoc(userRef, { reviews: updatedReviews });
-
-        setUserProfile((prevProfile) => ({
-          ...prevProfile,
-          reviews: updatedReviews,
-        }));
-
-        console.log("Review deleted successfully");
-      } else {
-        console.error("User document does not exist");
-      }
+      toast.success("Reseña eliminada con éxito");
+      return true;
     } catch (error) {
       console.error("Error deleting review:", error);
+      toast.error("Error al eliminar la reseña");
+      return false;
     }
   };
 
@@ -222,9 +205,9 @@ export default function UserProfile() {
             <h2 className="text-2xl font-semibold mb-2">Your Reviews</h2>
             {userProfile.reviews && userProfile.reviews.length > 0 ? (
               <Reviews
-                reviews={userProfile.reviews}
-                onEditReview={handleEditReview}
-                onDeleteReview={handleDeleteReview}
+                reviews={reviews}
+                onEditReview={onEditReview}
+                onDeleteReview={onDeleteReview}
               />
             ) : (
               <p className="text-lg">You have not written any reviews yet.</p>

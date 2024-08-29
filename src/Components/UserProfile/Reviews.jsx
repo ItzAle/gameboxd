@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
-import Link from "next/link";
+import React, { useState } from 'react';
+import { FaEdit, FaTrash, FaStar } from 'react-icons/fa';
 
 const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
   const [editingReview, setEditingReview] = useState(null);
@@ -13,13 +12,15 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
     setEditedRating(review.rating);
   };
 
-  const handleSaveClick = () => {
-    onEditReview(editingReview.gameId, editedComment, editedRating);
-    setEditingReview(null);
+  const handleSaveClick = async () => {
+    const success = await onEditReview(editingReview.id, editedComment, editedRating);
+    if (success) {
+      setEditingReview(null);
+    }
   };
 
-  const handleDeleteClick = (gameId) => {
-    onDeleteReview(gameId);
+  const handleDeleteClick = async (reviewId) => {
+    await onDeleteReview(reviewId);
   };
 
   return (
@@ -27,65 +28,46 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
       {reviews.length > 0 ? (
         <ul className="space-y-4">
           {reviews.map((review) => (
-            <li
-              key={review.gameId}
-              className="p-4 border border-gray-300 rounded bg-white shadow-md hover:shadow-lg transition-shadow duration-300"
-            >
-              {editingReview && editingReview.gameId === review.gameId ? (
-                <div>
+            <li key={review.id} className="border-b pb-4">
+              {editingReview && editingReview.id === review.id ? (
+                <div className="space-y-2">
                   <textarea
                     value={editedComment}
                     onChange={(e) => setEditedComment(e.target.value)}
-                    className="p-2 border rounded w-full"
+                    className="w-full p-2 border rounded"
                   />
-                  <div className="flex items-center mt-2">
-                    <label className="mr-2">Rating:</label>
-                    <select
-                      value={editedRating}
-                      onChange={(e) => setEditedRating(Number(e.target.value))}
-                      className="p-2 border rounded"
-                    >
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <option key={rating} value={rating}>
-                          {rating}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="flex items-center">
+                    <span className="mr-2">Calificación:</span>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <FaStar
+                        key={star}
+                        className={`cursor-pointer ${star <= editedRating ? 'text-yellow-400' : 'text-gray-300'}`}
+                        onClick={() => setEditedRating(star)}
+                      />
+                    ))}
                   </div>
-                  <button
-                    onClick={handleSaveClick}
-                    className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
-                  >
-                    Save
+                  <button onClick={handleSaveClick} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                    Guardar
                   </button>
                 </div>
               ) : (
                 <div>
-                  <Link href={`/games/${review.gameId}`}>
-                    <p className="text-xl font-bold hover:underline">
-                      {review.gameName}
-                    </p>
-                  </Link>
-                  <p className="text-yellow-500">
-                    {"★".repeat(review.rating)}
-                    {"☆".repeat(5 - review.rating)}
-                  </p>
-                  <p className="mt-2">{review.comment}</p>
-                  {review.containsSpoilers && (
-                    <p className="text-red-500 mt-1">Contains Spoilers</p>
-                  )}
-                  <div className="flex space-x-2 mt-2">
-                    <button
-                      onClick={() => handleEditClick(review)}
-                      className="bg-yellow-500 text-white px-2 py-1 rounded"
-                    >
-                      <FaEdit />
+                  <p className="text-lg">{review.comment}</p>
+                  <div className="flex items-center mt-2">
+                    <span className="mr-2">Calificación:</span>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <FaStar
+                        key={star}
+                        className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-2">
+                    <button onClick={() => handleEditClick(review)} className="text-blue-500 mr-2">
+                      <FaEdit className="inline mr-1" /> Editar
                     </button>
-                    <button
-                      onClick={() => handleDeleteClick(review.gameId)}
-                      className="bg-red-500 text-white px-2 py-1 rounded"
-                    >
-                      <FaTrash />
+                    <button onClick={() => handleDeleteClick(review.id)} className="text-red-500">
+                      <FaTrash className="inline mr-1" /> Eliminar
                     </button>
                   </div>
                 </div>
@@ -94,7 +76,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
           ))}
         </ul>
       ) : (
-        <p className="text-lg">You have not written any reviews yet.</p>
+        <p className="text-gray-500">No tienes reseñas aún.</p>
       )}
     </div>
   );
