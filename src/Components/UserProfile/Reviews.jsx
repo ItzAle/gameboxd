@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaEdit, FaTrash, FaStar } from 'react-icons/fa';
+import Link from 'next/link';
 
 const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
   const [editingReview, setEditingReview] = useState(null);
@@ -52,6 +53,9 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                 </div>
               ) : (
                 <div>
+                  <Link href={`/games/${review.gameId}`}>
+                    <h3 className="text-xl font-bold hover:underline">{review.gameName}</h3>
+                  </Link>
                   <p className="text-lg">{review.comment}</p>
                   <div className="flex items-center mt-2">
                     <span className="mr-2">Calificación:</span>

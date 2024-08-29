@@ -103,7 +103,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           }),
         });
       }
-
       if (liked) {
         const userRef = doc(db, "users", user.email);
         await updateDoc(userRef, {
