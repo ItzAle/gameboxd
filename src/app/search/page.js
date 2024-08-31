@@ -5,6 +5,7 @@ import Link from "next/link";
 import { db, collection, getDocs } from "../../../lib/firebase";
 import { query, where, orderBy, limit } from "firebase/firestore";
 import jsonp from "jsonp";
+import Navbar from "@/Components/Navbar/Navbar";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -91,46 +92,49 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">
-        Search Results for "{searchQuery}"
-      </h1>
+    <>
+      <Navbar />
+      <div className="p-4">
+        <h1 className="text-2xl font-bold mb-4">
+          Search Results for "{searchQuery}"
+        </h1>
 
-      <h2 className="text-xl font-semibold mt-4 mb-2">Games</h2>
-      {games.length > 0 ? (
-        <ul className="list-disc pl-5">
-          {games.map((game) => (
-            <li key={game.id} className="mb-2">
-              <Link
-                href={`/games/${game.id}`}
-                className="text-blue-600 hover:underline"
-              >
-                {game.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No games found.</p>
-      )}
+        <h2 className="text-xl font-semibold mt-4 mb-2">Games</h2>
+        {games.length > 0 ? (
+          <ul className="list-disc pl-5">
+            {games.map((game) => (
+              <li key={game.id} className="mb-2">
+                <Link
+                  href={`/games/${game.id}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {game.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No games found.</p>
+        )}
 
-      <h2 className="text-xl font-semibold mt-6 mb-2">Users</h2>
-      {users.length > 0 ? (
-        <ul className="list-disc pl-5">
-          {users.map((user) => (
-            <li key={user.id} className="mb-2">
-              <Link
-                href={`/profile/${user.name}`}
-                className="text-blue-600 hover:underline"
-              >
-                {user.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>No users found.</p>
-      )}
-    </div>
+        <h2 className="text-xl font-semibold mt-6 mb-2">Users</h2>
+        {users.length > 0 ? (
+          <ul className="list-disc pl-5">
+            {users.map((user) => (
+              <li key={user.id} className="mb-2">
+                <Link
+                  href={`/profile/${user.name}`}
+                  className="text-blue-600 hover:underline"
+                >
+                  {user.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No users found.</p>
+        )}
+      </div>
+    </>
   );
 }

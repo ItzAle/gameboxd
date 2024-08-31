@@ -21,6 +21,7 @@ import ProfilePicture from "./ProfilePicture"; // Importa el componente ProfileP
 import Reviews from "./Reviews"; // Importa el componente Reviews
 import { toast } from "react-toastify";
 import { useReviews } from "../../context/ReviewsProvider";
+import Navbar from "../Navbar/Navbar";
 
 export default function UserProfile() {
   const { data: session } = useSession();
@@ -167,7 +168,12 @@ export default function UserProfile() {
   };
 
   if (!user) {
-    return <p className="text-red-500">Please log in to view your profile.</p>;
+    return (
+      <div>
+        <p className="text-red-500">Please log in to view your profile.</p>
+        <Link href="/login">Login here</Link>
+      </div>
+    );
   }
 
   if (!userProfile) {
@@ -175,59 +181,62 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="container mx-auto p-4 space-y-8">
-      <h1 className="text-4xl font-bold text-center mb-8 animate-fade-in">
-        Welcome, {user.name}!
-      </h1>
+    <>
+      <Navbar />
+      <div className="container mx-auto p-4 space-y-8">
+        <h1 className="text-4xl font-bold text-center mb-8 animate-fade-in">
+          Welcome, {user.name}!
+        </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Profile Section */}
-        <div className="md:col-span-1">
-          <div className="mb-8 p-4 border border-gray-300 rounded bg-white shadow-md">
-            <ProfilePicture profilePicture={profilePicture} />
-            <Bio bio={bio} setBio={setBio} editing={editing} />
-            {!editing && (
-              <button
-                onClick={handleEditProfile}
-                className="bg-blue-500 text-white px-4 py-2 rounded-md mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
-              >
-                Edit Profile
-              </button>
-            )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Profile Section */}
+          <div className="md:col-span-1">
+            <div className="mb-8 p-4 border border-gray-300 rounded bg-white shadow-md">
+              <ProfilePicture profilePicture={profilePicture} />
+              <Bio bio={bio} setBio={setBio} editing={editing} />
+              {!editing && (
+                <button
+                  onClick={handleEditProfile}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
+                >
+                  Edit Profile
+                </button>
+              )}
+            </div>
+
+            <LikedGames likedGames={userProfile.likedGames} covers={covers} />
           </div>
 
-          <LikedGames likedGames={userProfile.likedGames} covers={covers} />
-        </div>
-
-        {/* Reviews Section */}
-        <div className="md:col-span-2">
-          <div className="mb-8 p-4 border border-gray-300 rounded bg-white shadow-md">
-            <h2 className="text-2xl font-semibold mb-2">Your Reviews</h2>
-            {userProfile.reviews && userProfile.reviews.length > 0 ? (
-              <Reviews
-                reviews={reviews}
-                onEditReview={onEditReview}
-                onDeleteReview={onDeleteReview}
-              />
-            ) : (
-              <p className="text-lg">You have not written any reviews yet.</p>
-            )}
+          {/* Reviews Section */}
+          <div className="md:col-span-2">
+            <div className="mb-8 p-4 border border-gray-300 rounded bg-white shadow-md">
+              <h2 className="text-2xl font-semibold mb-2">Your Reviews</h2>
+              {userProfile.reviews && userProfile.reviews.length > 0 ? (
+                <Reviews
+                  reviews={reviews}
+                  onEditReview={onEditReview}
+                  onDeleteReview={onDeleteReview}
+                />
+              ) : (
+                <p className="text-lg">You have not written any reviews yet.</p>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Modal para editar perfil */}
+        {editing && (
+          <Modal
+            isOpen={editing}
+            onClose={() => setEditing(false)}
+            onSave={handleSaveProfile}
+            setBio={setBio}
+            setProfilePicture={setProfilePicture}
+            bio={bio}
+            profilePicture={profilePicture}
+          />
+        )}
       </div>
-
-      {/* Modal para editar perfil */}
-      {editing && (
-        <Modal
-          isOpen={editing}
-          onClose={() => setEditing(false)}
-          onSave={handleSaveProfile}
-          setBio={setBio}
-          setProfilePicture={setProfilePicture}
-          bio={bio}
-          profilePicture={profilePicture}
-        />
-      )}
-    </div>
+    </>
   );
 }

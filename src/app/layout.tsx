@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
       <body>
         <SessionProvider>
           <ReviewsProvider>
-            <Navbar />
+            {/* <Navbar /> */}
             <main>{children}</main>
             <ToastContainer />
           </ReviewsProvider>

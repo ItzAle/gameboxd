@@ -4,6 +4,8 @@ import { useSession, signIn } from "next-auth/react";
 import { motion } from "framer-motion";
 import { FaGoogle } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -46,30 +48,45 @@ const StarField = ({ count = 100 }) => {
 
 export default function LoginPage() {
   const { data: session } = useSession();
+  const router = useRouter();
 
   if (session) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white"
-      >
-        <h1 className="text-4xl font-bold mb-4">
-          You&apos;re already logged in
-        </h1>
-        <p className="text-lg mb-8">Welcome, {session.user.name}!</p>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => signOut()}
-          className="bg-red-500 text-white px-6 py-3 rounded-full text-lg hover:bg-red-600 transition"
-        >
-          Sign out
-        </motion.button>
-      </motion.div>
-    );
+    router.push("/profile");
+    return null;
   }
+
+  // if (session) {
+  //   return (
+  //     <motion.div
+  //       initial={{ opacity: 0 }}
+  //       animate={{ opacity: 1 }}
+  //       transition={{ duration: 0.5 }}
+  //       className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white"
+  //     >
+  //       <h1 className="text-4xl font-bold mb-4">
+  //         You&apos;re already logged in
+  //       </h1>
+  //       <p className="text-lg mb-8">Welcome, {session.user.name}!</p>
+  //       <div className="flex flex-col items-center gap-5">
+  //         <motion.button
+  //           whileHover={{ scale: 1.05 }}
+  //           whileTap={{ scale: 0.95 }}
+  //           className="bg-blue-500 text-white px-6 py-3 rounded-full text-lg hover:bg-blue-600 transition mt-4"
+  //         >
+  //           <Link href="/all">Browse Games</Link>
+  //         </motion.button>
+  //         <motion.button
+  //           whileHover={{ scale: 1.05 }}
+  //           whileTap={{ scale: 0.95 }}
+  //           onClick={() => signOut()}
+  //           className="bg-red-500 text-white px-6 py-3 rounded-full text-lg hover:bg-red-600 transition"
+  //         >
+  //           Sign out
+  //         </motion.button>
+  //       </div>
+  //     </motion.div>
+  //   );
+  // }
 
   return (
     <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-gray-900">
