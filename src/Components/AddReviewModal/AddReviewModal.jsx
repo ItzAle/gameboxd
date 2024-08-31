@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   query,
   collection,
@@ -14,8 +14,49 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import { FaStar } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 import { db } from "../../../lib/firebase";
 import { useSession } from "next-auth/react";
+
+const StarRating = ({ rating, setRating }) => {
+  const handleStarClick = (value) => {
+    setRating(value);
+  };
+
+  const handleInputChange = (e) => {
+    const value = Math.min(Math.max(parseInt(e.target.value) || 0, 0), 5);
+    setRating(value);
+  };
+
+  return (
+    <div className="flex items-center">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <motion.button
+          key={star}
+          whileHover={{ scale: 1.2 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => handleStarClick(star)}
+          className="focus:outline-none"
+        >
+          <FaStar
+            className={`text-2xl ${
+              star <= rating ? "text-yellow-400" : "text-gray-300"
+            }`}
+          />
+        </motion.button>
+      ))}
+      <input
+        type="number"
+        min="0"
+        max="5"
+        value={rating}
+        onChange={handleInputChange}
+        className="ml-2 w-12 p-1 border rounded text-center"
+      />
+    </div>
+  );
+};
 
 export default function AddReviewModal({ game, onClose, onSave }) {
   const [rating, setRating] = useState(0);
@@ -23,6 +64,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [liked, setLiked] = useState(false);
   const { data: session } = useSession();
+  const [isBrowser, setIsBrowser] = useState(false);
   const user = session?.user;
 
   const handleToggleFavorite = () => {
@@ -76,14 +118,10 @@ export default function AddReviewModal({ game, onClose, onSave }) {
       if (rating > 0 || comment) {
         const reviewRef = await addDoc(collection(db, "reviews"), reviewData);
 
-        // Obtener una referencia al documento del usuario
         const userRef = doc(db, "users", user.email);
-
-        // Obtener el documento del usuario
         const userDoc = await getDoc(userRef);
 
         if (!userDoc.exists()) {
-          // Si el documento del usuario no existe, créalo
           await setDoc(userRef, {
             email: user.email,
             reviews: [],
@@ -91,7 +129,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           });
         }
 
-        // Ahora actualiza el documento del usuario
         await updateDoc(userRef, {
           reviews: arrayUnion({
             id: reviewRef.id,
@@ -122,79 +159,141 @@ export default function AddReviewModal({ game, onClose, onSave }) {
     }
   };
 
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-md shadow-md w-96">
-        <h2 className="text-2xl font-bold mb-4">Add Review for {game.name}</h2>
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black bg-opacity-50 z-[9999]"
+        style={{
+          position: "fixed",
+          left: "0",
+          top: "0",
+          right: "0",
+          bottom: "0",
+          width: "100vw",
+          height: "100vh",
+          margin: "0",
+          padding: "0",
+          overflow: "hidden",
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white p-6 rounded-md shadow-md w-96 max-w-[90%]"
+        >
+          <h2 className="text-2xl font-bold mb-4">
+            Add Review for {game.name}
+          </h2>
 
-        {/* Selector de Estrellas */}
-        <div className="mb-4">
-          <label className="block text-lg mb-2">Rating:</label>
-          <select
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-            className="border border-gray-300 p-2 rounded w-full"
+          {/* Star Rating Component */}
+          <div className="mb-4">
+            <label className="block text-lg mb-2">Rating:</label>
+            <StarRating rating={rating} setRating={setRating} />
+          </div>
+
+          {/* Comment Area with animation */}
+          <motion.div
+            className="mb-4"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
           >
-            <option value={0}>Select rating</option>
-            {[1, 2, 3, 4, 5].map((num) => (
-              <option key={num} value={num}>
-                {num} Star{num > 1 ? "s" : ""}
-              </option>
-            ))}
-          </select>
-        </div>
+            <label className="block text-lg mb-2">Review:</label>
+            <motion.textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows="4"
+              className="border border-gray-300 p-2 rounded w-full"
+              whileFocus={{
+                scale: 1.02,
+                boxShadow: "0px 0px 8px rgba(0,0,0,0.1)",
+              }}
+            ></motion.textarea>
+          </motion.div>
 
-        {/* Área de Comentario */}
-        <div className="mb-4">
-          <label className="block text-lg mb-2">Review:</label>
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows="4"
-            className="border border-gray-300 p-2 rounded w-full"
-          ></textarea>
-        </div>
-
-        {/* Opción de Spoilers */}
-        <div className="mb-4">
-          <label className="inline-flex items-center">
-            <input
-              type="checkbox"
-              checked={containsSpoilers}
-              onChange={(e) => setContainsSpoilers(e.target.checked)}
-              className="form-checkbox"
-            />
-            <span className="ml-2">Contains Spoilers</span>
-          </label>
-        </div>
-
-        {/* Opción de Favorito */}
-        <div className="mb-4 flex items-center">
-          <button
-            className="text-red-500 focus:outline-none"
-            onClick={handleToggleFavorite}
+          {/* Spoilers Option with animation */}
+          <motion.div
+            className="mb-4"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
           >
-            {liked ? <AiFillHeart size={24} /> : <AiOutlineHeart size={24} />}
-          </button>
-          <span className="ml-2">Mark as Favorite</span>
-        </div>
+            <label className="inline-flex items-center">
+              <motion.input
+                type="checkbox"
+                checked={containsSpoilers}
+                onChange={(e) => setContainsSpoilers(e.target.checked)}
+                className="form-checkbox"
+                whileTap={{ scale: 0.9 }}
+              />
+              <span className="ml-2">Contains Spoilers</span>
+            </label>
+          </motion.div>
 
-        {/* Botones de Acción */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleSubmit}
-            className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition"
+          {/* Favorite Option with animation */}
+          <motion.div
+            className="mb-4"
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
           >
-            Submit
-          </button>
-          <button
-            onClick={onClose}
-            className="bg-gray-300 text-black px-4 py-2 rounded-md ml-2 hover:bg-gray-400 transition"
+            <motion.button
+              onClick={handleToggleFavorite}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="flex items-center"
+            >
+              {liked ? (
+                <AiFillHeart className="text-red-500 text-2xl mr-2" />
+              ) : (
+                <AiOutlineHeart className="text-2xl mr-2" />
+              )}
+              <span>Add to Favorites</span>
+            </motion.button>
+          </motion.div>
+
+          {/* Action Buttons with animation */}
+          <motion.div
+            className="flex justify-end"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5 }}
           >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+            <motion.button
+              onClick={onClose}
+              className="bg-gray-300 text-black px-4 py-2 rounded mr-2"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Cancel
+            </motion.button>
+            <motion.button
+              onClick={handleSubmit}
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Submit Review
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
+
+  // no hace falta pero lo dejo por si acaso xd
+
+  if (isBrowser) {
+    return createPortal(modalContent, document.body);
+  } else {
+    return null;
+  }
 }
