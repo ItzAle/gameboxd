@@ -22,6 +22,47 @@ import Reviews from "./Reviews"; // Importa el componente Reviews
 import { toast } from "react-toastify";
 import { useReviews } from "../../context/ReviewsProvider";
 import Navbar from "../Navbar/Navbar";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaEdit, FaStar } from "react-icons/fa";
+
+const StarField = ({ count = 100 }) => {
+  const [stars, setStars] = useState([]);
+
+  useEffect(() => {
+    const newStars = Array.from({ length: count }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      size: Math.random() * 2 + 1,
+    }));
+    setStars(newStars);
+  }, [count]);
+
+  return (
+    <div className="fixed inset-0 z-0">
+      {stars.map((star, i) => (
+        <motion.div
+          key={i}
+          className="absolute bg-white rounded-full"
+          style={{
+            width: star.size,
+            height: star.size,
+            left: `${star.x * 100}%`,
+            top: `${star.y * 100}%`,
+          }}
+          animate={{
+            opacity: [0.2, 1, 0.2],
+            scale: [1, 1.2, 1],
+          }}
+          transition={{
+            duration: Math.random() * 3 + 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 export default function UserProfile() {
   const { data: session } = useSession();
@@ -169,74 +210,141 @@ export default function UserProfile() {
 
   if (!user) {
     return (
-      <div>
-        <p className="text-red-500">Please log in to view your profile.</p>
-        <Link href="/login">Login here</Link>
-      </div>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white"
+      >
+        <p className="text-red-500 mb-4">Please log in to view your profile.</p>
+        <Link
+          href="/login"
+          className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
+        >
+          Login here
+        </Link>
+      </motion.div>
     );
   }
 
   if (!userProfile) {
-    return <p className="text-blue-500">Loading profile...</p>;
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="flex items-center justify-center min-h-screen bg-gray-900 text-white"
+      >
+        <motion.p
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, duration: 1 }}
+          className="text-blue-500 text-2xl"
+        >
+          Loading profile...
+        </motion.p>
+      </motion.div>
+    );
   }
 
   return (
     <>
       <Navbar />
-      <div className="container mx-auto p-4 space-y-8">
-        <h1 className="text-4xl font-bold text-center mb-8 animate-fade-in">
-          Welcome, {user.name}!
-        </h1>
+      <div className="min-h-screen bg-gray-900 text-white">
+        <StarField count={200} />
+        <div className="container mx-auto p-4 space-y-8 relative z-10">
+          <motion.h1
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-4xl font-bold text-center mb-8"
+          >
+            Welcome, {user.name}!
+          </motion.h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Profile Section */}
-          <div className="md:col-span-1">
-            <div className="mb-8 p-4 border border-gray-300 rounded bg-white shadow-md">
-              <ProfilePicture profilePicture={profilePicture} />
-              <Bio bio={bio} setBio={setBio} editing={editing} />
-              {!editing && (
-                <button
-                  onClick={handleEditProfile}
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
-                >
-                  Edit Profile
-                </button>
-              )}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Profile Section */}
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="md:col-span-1"
+            >
+              <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+                <ProfilePicture profilePicture={profilePicture} />
+                <Bio bio={bio} setBio={setBio} editing={editing} />
+                {!editing && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleEditProfile}
+                    className="bg-blue-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center"
+                  >
+                    <FaEdit className="mr-2" /> Edit Profile
+                  </motion.button>
+                )}
+              </div>
 
-            <LikedGames likedGames={userProfile.likedGames} covers={covers} />
-          </div>
-
-          {/* Reviews Section */}
-          <div className="md:col-span-2">
-            <div className="mb-8 p-4 border border-gray-300 rounded bg-white shadow-md">
-              <h2 className="text-2xl font-semibold mb-2">Your Reviews</h2>
-              {userProfile.reviews && userProfile.reviews.length > 0 ? (
-                <Reviews
-                  reviews={reviews}
-                  onEditReview={onEditReview}
-                  onDeleteReview={onDeleteReview}
+              <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+              >
+                <LikedGames
+                  likedGames={userProfile.likedGames}
+                  covers={covers}
                 />
-              ) : (
-                <p className="text-lg">You have not written any reviews yet.</p>
-              )}
-            </div>
-          </div>
-        </div>
+              </motion.div>
+            </motion.div>
 
-        {/* Modal para editar perfil */}
-        {editing && (
-          <Modal
-            isOpen={editing}
-            onClose={() => setEditing(false)}
-            onSave={handleSaveProfile}
-            setBio={setBio}
-            setProfilePicture={setProfilePicture}
-            bio={bio}
-            profilePicture={profilePicture}
-          />
-        )}
-      </div>
+            {/* Reviews Section */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+              className="md:col-span-2"
+            >
+              <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+                <h2 className="text-2xl font-semibold mb-2 flex items-center">
+                  <FaStar className="mr-2 text-yellow-400" /> Your Reviews
+                </h2>
+                <AnimatePresence>
+                  {userProfile.reviews && userProfile.reviews.length > 0 ? (
+                    <Reviews
+                      reviews={reviews}
+                      onEditReview={onEditReview}
+                      onDeleteReview={onDeleteReview}
+                    />
+                  ) : (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="text-lg"
+                    >
+                      You have not written any reviews yet.
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Modal para editar perfil */}
+          <AnimatePresence>
+            {editing && (
+              <Modal
+                isOpen={editing}
+                onClose={() => setEditing(false)}
+                onSave={handleSaveProfile}
+                setBio={setBio}
+                setProfilePicture={setProfilePicture}
+                bio={bio}
+                profilePicture={profilePicture}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>{" "}
     </>
   );
 }

@@ -18,6 +18,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 import { useReviews } from "../../../context/ReviewsProvider";
+import Navbar from "@/Components/Navbar/Navbar";
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;
@@ -235,109 +236,114 @@ export default function GameDetailsPage({ params }) {
       : 0;
 
   return (
-    <div className="flex flex-col lg:flex-row p-4 space-y-4 lg:space-y-0 lg:space-x-8">
-      {/* Imagen del juego a la izquierda */}
-      <div className="w-full lg:w-1/3">
-        {game.image && (
-          <img
-            src={game.image.medium_url}
-            alt={`${game.name} cover`}
-            className="w-full h-auto object-cover rounded mb-4"
+    <>
+      <Navbar />
+      <div className="flex flex-col lg:flex-row p-4 space-y-4 lg:space-y-0 lg:space-x-8">
+        {/* Imagen del juego a la izquierda */}
+        <div className="w-full lg:w-1/3">
+          {game.image && (
+            <img
+              src={game.image.medium_url}
+              alt={`${game.name} cover`}
+              className="w-full h-auto object-cover rounded mb-4"
+            />
+          )}
+          <div className="mt-4">
+            <h2 className="text-2xl font-semibold mb-2">Description</h2>
+            <p className="text-lg">
+              {game.deck || "No description available."}
+            </p>
+          </div>
+        </div>
+
+        {/* Detalles del juego a la derecha */}
+        <div className="w-full lg:w-2/3">
+          <h1 className="text-4xl font-bold mb-4">{game.name}</h1>
+
+          <div className="mb-4">
+            <h2 className="text-2xl font-semibold mb-2">Game Details</h2>
+            <p>
+              <strong>Release Date:</strong> {formattedReleaseDate}
+            </p>
+            <p>
+              <strong>Platforms:</strong>{" "}
+              {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
+            </p>
+            <p>
+              <strong>Genres:</strong>{" "}
+              {game.genres?.map((g) => g.name).join(", ") || "N/A"}
+            </p>
+          </div>
+
+          {/* Mostrar la media de las reviews */}
+          <div className="mb-4">
+            <h2 className="text-2xl font-semibold mb-2">Average Rating</h2>
+            <p className="text-lg">
+              {reviews.length > 0
+                ? `${averageRating.toFixed(1)} / 5 (${reviews.length} reviews)`
+                : "No reviews yet."}
+            </p>
+          </div>
+
+          <div className="flex items-center space-x-4 mb-4">
+            {session ? (
+              <>
+                <button
+                  className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
+                  onClick={handleAddReviewClick}
+                >
+                  Add Review
+                </button>
+              </>
+            ) : (
+              <p className="text-red-500 mb-4">
+                You need to log in to add a review, rate, or like a game.
+              </p>
+            )}
+          </div>
+
+          {/* Lista de reviews */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+            {reviews.length > 0 ? (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="p-4 border border-gray-300 rounded bg-white shadow-md"
+                  >
+                    <Link
+                      href={`/profile/${encodeURIComponent(review.user)}`}
+                      className="font-bold text-blue-600 hover:underline"
+                    >
+                      {review.user}
+                    </Link>
+                    <p className="text-yellow-500">
+                      {"★".repeat(review.rating)}
+                      {"☆".repeat(5 - review.rating)}
+                    </p>
+                    {review.containsSpoilers && (
+                      <p className="text-red-500">Contains Spoilers</p>
+                    )}
+                    <p>{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No reviews yet. Be the first!</p>
+            )}
+          </div>
+        </div>
+
+        {/* Modal para añadir una review */}
+        {showModal && (
+          <AddReviewModal
+            game={game}
+            onClose={() => setShowModal(false)}
+            onSave={handleSaveReview}
           />
         )}
-        <div className="mt-4">
-          <h2 className="text-2xl font-semibold mb-2">Description</h2>
-          <p className="text-lg">{game.deck || "No description available."}</p>
-        </div>
       </div>
-
-      {/* Detalles del juego a la derecha */}
-      <div className="w-full lg:w-2/3">
-        <h1 className="text-4xl font-bold mb-4">{game.name}</h1>
-
-        <div className="mb-4">
-          <h2 className="text-2xl font-semibold mb-2">Game Details</h2>
-          <p>
-            <strong>Release Date:</strong> {formattedReleaseDate}
-          </p>
-          <p>
-            <strong>Platforms:</strong>{" "}
-            {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
-          </p>
-          <p>
-            <strong>Genres:</strong>{" "}
-            {game.genres?.map((g) => g.name).join(", ") || "N/A"}
-          </p>
-        </div>
-
-        {/* Mostrar la media de las reviews */}
-        <div className="mb-4">
-          <h2 className="text-2xl font-semibold mb-2">Average Rating</h2>
-          <p className="text-lg">
-            {reviews.length > 0
-              ? `${averageRating.toFixed(1)} / 5 (${reviews.length} reviews)`
-              : "No reviews yet."}
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-4 mb-4">
-          {session ? (
-            <>
-              <button
-                className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
-                onClick={handleAddReviewClick}
-              >
-                Add Review
-              </button>
-            </>
-          ) : (
-            <p className="text-red-500 mb-4">
-              You need to log in to add a review, rate, or like a game.
-            </p>
-          )}
-        </div>
-
-        {/* Lista de reviews */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-          {reviews.length > 0 ? (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="p-4 border border-gray-300 rounded bg-white shadow-md"
-                >
-                  <Link
-                    href={`/profile/${encodeURIComponent(review.user)}`}
-                    className="font-bold text-blue-600 hover:underline"
-                  >
-                    {review.user}
-                  </Link>
-                  <p className="text-yellow-500">
-                    {"★".repeat(review.rating)}
-                    {"☆".repeat(5 - review.rating)}
-                  </p>
-                  {review.containsSpoilers && (
-                    <p className="text-red-500">Contains Spoilers</p>
-                  )}
-                  <p>{review.comment}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500">No reviews yet. Be the first!</p>
-          )}
-        </div>
-      </div>
-
-      {/* Modal para añadir una review */}
-      {showModal && (
-        <AddReviewModal
-          game={game}
-          onClose={() => setShowModal(false)}
-          onSave={handleSaveReview}
-        />
-      )}
-    </div>
+    </>
   );
 }
