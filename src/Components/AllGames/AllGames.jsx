@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
+import "../../utils/global.css";
 
 window.jsonpCallback = function (data) {
   window.jsonpData = data;

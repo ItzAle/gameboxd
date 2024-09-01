@@ -8,6 +8,7 @@ import jsonp from "jsonp";
 import Navbar from "@/Components/Navbar/Navbar";
 import { motion } from "framer-motion";
 import { FaUser, FaGamepad } from "react-icons/fa";
+import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
@@ -89,7 +90,7 @@ export default function SearchPage() {
   if (isLoading) {
     return (
       <>
-        <Navbar />
+        <TransparentNavbar />
         <div className="flex justify-center items-center h-screen bg-gray-900">
           <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
         </div>
@@ -100,7 +101,7 @@ export default function SearchPage() {
   if (error) {
     return (
       <>
-        <Navbar />
+        <TransparentNavbar />
         <div className="flex justify-center items-center h-screen bg-gray-900">
           <div className="text-red-500 text-xl">{error}</div>
         </div>
@@ -110,7 +111,7 @@ export default function SearchPage() {
 
   return (
     <>
-      <Navbar />
+      <TransparentNavbar />
       <div className="min-h-screen bg-gray-900 text-white p-8">
         <div className="container mx-auto">
           <motion.h1

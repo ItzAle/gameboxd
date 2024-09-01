@@ -23,6 +23,7 @@ import { useReviews } from "../../../context/ReviewsProvider";
 import Navbar from "@/Components/Navbar/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaHeart, FaStar, FaGamepad } from "react-icons/fa";
+import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;
@@ -248,13 +249,13 @@ export default function GameDetailsPage({ params }) {
 
   return (
     <>
-      <Navbar />
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="min-h-screen bg-gray-900 text-white"
       >
+        <TransparentNavbar />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
             {/* Game image */}

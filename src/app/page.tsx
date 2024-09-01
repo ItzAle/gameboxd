@@ -5,6 +5,7 @@ import Link from "next/link";
 import TransparentNavbar from "../Components/Navbar/TransparentNavbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaGamepad, FaSearch, FaStar } from "react-icons/fa";
+// import "../utils/global.css";
 
 const gameCoverUrls = [
   "https://cdn.hobbyconsolas.com/sites/navi.axelspringer.es/public/media/image/2024/03/gta-6-3282307.jpg?tf=3840x",
@@ -38,8 +39,8 @@ export default function LandingPage() {
 
   return (
     <>
-      <TransparentNavbar />
       <div className="relative min-h-screen bg-gray-900 text-white overflow-hidden">
+        <TransparentNavbar />
         {/* Animated background */}
         <div className="absolute inset-0 opacity-20">
           <AnimatePresence mode="wait">
