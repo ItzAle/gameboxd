@@ -1,11 +1,12 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TransparentNavbar from "../Components/Navbar/TransparentNavbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaGamepad, FaSearch, FaStar } from "react-icons/fa";
-// import "../utils/global.css";
+import Footer from "../Components/Navbar/Footer";
 
 const gameCoverUrls = [
   "https://cdn.hobbyconsolas.com/sites/navi.axelspringer.es/public/media/image/2024/03/gta-6-3282307.jpg?tf=3840x",
@@ -25,7 +26,7 @@ export default function LandingPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex(Math.floor(Math.random() * gameCoverUrls.length));
-    }, 10000);
+    }, 8000); // Cambia el intervalo para una transición más rápida
 
     return () => clearInterval(interval);
   }, []);
@@ -49,10 +50,10 @@ export default function LandingPage() {
               src={gameCoverUrls[currentImageIndex]}
               alt="Game cover"
               className="absolute inset-0 w-full h-full object-cover"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ duration: 1.5 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.0 }} // Reducción de la duración para animaciones más rápidas
             />
           </AnimatePresence>
         </div>
@@ -62,7 +63,7 @@ export default function LandingPage() {
           <motion.h1
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.6, delay: 0.1 }} // Ajusta la duración para animaciones más rápidas
             className="text-6xl font-bold mb-6 text-blue-400"
           >
             Welcome to Gameboxd
@@ -70,7 +71,7 @@ export default function LandingPage() {
           <motion.p
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.3 }} // Ajusta la duración para animaciones más rápidas
             className="text-2xl mb-10 max-w-2xl"
           >
             Discover, track, and review your favorite games in one place.
@@ -78,7 +79,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.5 }} // Ajusta la duración para animaciones más rápidas
             className="flex flex-wrap justify-center gap-4"
           >
             <Link href="/all">
@@ -126,7 +127,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.7 }} // Ajusta la duración para animaciones más rápidas
             className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl"
           >
             <div className="bg-gray-800 p-6 rounded-lg">
@@ -147,6 +148,7 @@ export default function LandingPage() {
               </p>
             </div>
           </motion.div>
+          <Footer />
         </div>
       </div>
     </>
