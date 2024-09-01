@@ -41,7 +41,7 @@ const StarRating = ({ rating, setRating }) => {
         >
           <FaStar
             className={`text-2xl ${
-              star <= rating ? "text-yellow-400" : "text-gray-300"
+              star <= rating ? "text-yellow-400" : "text-gray-600"
             }`}
           />
         </motion.button>
@@ -52,7 +52,7 @@ const StarRating = ({ rating, setRating }) => {
         max="5"
         value={rating}
         onChange={handleInputChange}
-        className="ml-2 w-12 p-1 border rounded text-center"
+        className="ml-2 w-12 p-1 border rounded text-center bg-gray-700 text-white"
       />
     </div>
   );
@@ -187,15 +187,15 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white p-6 rounded-md shadow-md w-96 max-w-[90%]"
+          className="bg-gray-900 p-6 rounded-lg shadow-lg w-96 max-w-[90%] text-white"
         >
-          <h2 className="text-2xl font-bold mb-4">
+          <h2 className="text-2xl font-bold mb-4 text-blue-400">
             Add Review for {game.name}
           </h2>
 
           {/* Star Rating Component */}
           <div className="mb-4">
-            <label className="block text-lg mb-2">Rating:</label>
+            <label className="block text-lg mb-2 text-blue-300">Rating:</label>
             <StarRating rating={rating} setRating={setRating} />
           </div>
 
@@ -206,15 +206,15 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <label className="block text-lg mb-2">Review:</label>
+            <label className="block text-lg mb-2 text-blue-300">Review:</label>
             <motion.textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows="4"
-              className="border border-gray-300 p-2 rounded w-full"
+              className="border border-gray-600 p-2 rounded w-full bg-gray-800 text-white"
               whileFocus={{
                 scale: 1.02,
-                boxShadow: "0px 0px 8px rgba(0,0,0,0.1)",
+                boxShadow: "0px 0px 8px rgba(59, 130, 246, 0.5)",
               }}
             ></motion.textarea>
           </motion.div>
@@ -231,10 +231,10 @@ export default function AddReviewModal({ game, onClose, onSave }) {
                 type="checkbox"
                 checked={containsSpoilers}
                 onChange={(e) => setContainsSpoilers(e.target.checked)}
-                className="form-checkbox"
+                className="form-checkbox bg-gray-700 border-gray-600 text-blue-500"
                 whileTap={{ scale: 0.9 }}
               />
-              <span className="ml-2">Contains Spoilers</span>
+              <span className="ml-2 text-gray-300">Contains Spoilers</span>
             </label>
           </motion.div>
 
@@ -249,14 +249,14 @@ export default function AddReviewModal({ game, onClose, onSave }) {
               onClick={handleToggleFavorite}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="flex items-center"
+              className="flex items-center text-gray-300 hover:text-white"
             >
               {liked ? (
                 <AiFillHeart className="text-red-500 text-2xl mr-2" />
               ) : (
                 <AiOutlineHeart className="text-2xl mr-2" />
               )}
-              <span>Add to Favorites</span>
+              <span>Add to Liked Games</span>
             </motion.button>
           </motion.div>
 
@@ -269,7 +269,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           >
             <motion.button
               onClick={onClose}
-              className="bg-gray-300 text-black px-4 py-2 rounded mr-2"
+              className="bg-gray-700 text-white px-4 py-2 rounded mr-2 hover:bg-gray-600"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -277,7 +277,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             </motion.button>
             <motion.button
               onClick={handleSubmit}
-              className="bg-blue-500 text-white px-4 py-2 rounded"
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -288,12 +288,4 @@ export default function AddReviewModal({ game, onClose, onSave }) {
       </motion.div>
     </AnimatePresence>
   );
-
-  // no hace falta pero lo dejo por si acaso xd
-
-  if (isBrowser) {
-    return createPortal(modalContent, document.body);
-  } else {
-    return null;
-  }
 }

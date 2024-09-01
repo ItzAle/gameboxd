@@ -1,24 +1,13 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  arrayRemove,
-  arrayUnion,
-  deleteDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import Modal from "../Modal/Modal"; // Importa el componente Modal
-import Bio from "./Bio"; // Importa el componente Bio
-import LikedGames from "./LikedGames"; // Importa el componente LikedGames
-import ProfilePicture from "./ProfilePicture"; // Importa el componente ProfilePicture
-import Reviews from "./Reviews"; // Importa el componente Reviews
+import Modal from "../Modal/Modal";
+import Bio from "./Bio";
+import LikedGames from "./LikedGames";
+import ProfilePicture from "./ProfilePicture";
+import Reviews from "./Reviews";
 import { toast } from "react-toastify";
 import { useReviews } from "../../context/ReviewsProvider";
 import Navbar from "../Navbar/Navbar";
@@ -291,6 +280,7 @@ export default function UserProfile() {
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
                 <LikedGames
+                  userEmail={user.email}
                   likedGames={userProfile.likedGames}
                   covers={covers}
                 />
@@ -345,7 +335,7 @@ export default function UserProfile() {
             )}
           </AnimatePresence>
         </div>
-      </div>{" "}
+      </div>
     </>
   );
 }

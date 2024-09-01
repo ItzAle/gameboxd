@@ -12,15 +12,17 @@ import {
   where,
   doc,
   getDoc,
-  setDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 import { useReviews } from "../../../context/ReviewsProvider";
 import Navbar from "@/Components/Navbar/Navbar";
-import { motion } from "framer-motion";
-import { FaHeart, FaStar } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaHeart, FaStar, FaGamepad } from "react-icons/fa";
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;
@@ -28,7 +30,6 @@ export default function GameDetailsPage({ params }) {
   const [game, setGame] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [likedGames, setLikedGames] = useState([]);
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
@@ -66,22 +67,28 @@ export default function GameDetailsPage({ params }) {
     }
 
     try {
-      const docRef = doc(db, "favorites", `${session.user.id}_${id}`);
-      const docSnap = await getDoc(docRef);
+      const userRef = doc(db, "users", session.user.email);
+      const userDoc = await getDoc(userRef);
 
-      if (docSnap.exists()) {
-        const currentLikeStatus = docSnap.data().liked;
-        await setDoc(docRef, { liked: !currentLikeStatus }, { merge: true });
-        setIsFavorite(!currentLikeStatus);
-        toast.success(
-          !currentLikeStatus
-            ? "Game added to favorites."
-            : "Game removed from favorites."
-        );
-      } else {
-        await setDoc(docRef, { liked: true });
-        setIsFavorite(true);
-        toast.success("Game added to favorites.");
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const likedGames = userData.likedGames || [];
+
+        if (likedGames.includes(id)) {
+          // Remove from likedGames
+          await updateDoc(userRef, {
+            likedGames: arrayRemove(id),
+          });
+          setIsFavorite(false);
+          toast.success("Game removed from favorites.");
+        } else {
+          // Add to likedGames
+          await updateDoc(userRef, {
+            likedGames: arrayUnion(id),
+          });
+          setIsFavorite(true);
+          toast.success("Game added to favorites.");
+        }
       }
     } catch (error) {
       console.error("Error updating favorite status:", error);
@@ -158,11 +165,14 @@ export default function GameDetailsPage({ params }) {
               setReviews(loadedReviews);
 
               // Verificar si el juego está en favoritos
-              if (session?.user?.id) {
-                const docRef = doc(db, "favorites", `${session.user.id}_${id}`);
-                const docSnap = await getDoc(docRef);
+              if (session?.user?.email) {
+                const userRef = doc(db, "users", session.user.email);
+                const userDoc = await getDoc(userRef);
 
-                setIsFavorite(docSnap.exists() ? docSnap.data().liked : false);
+                if (userDoc.exists()) {
+                  const userData = userDoc.data();
+                  setIsFavorite(userData.likedGames.includes(id));
+                }
               }
             } catch (firestoreError) {
               console.error("Error accessing Firestore:", firestoreError);
@@ -239,194 +249,195 @@ export default function GameDetailsPage({ params }) {
   return (
     <>
       <Navbar />
-      <div className="flex flex-col lg:flex-row p-4 space-y-4 lg:space-y-0 lg:space-x-8">
-        {/* Imagen del juego a la izquierda */}
-        <div className="w-full lg:w-1/3">
-          {game.image && (
-            <motion.img
-              src={game.image.medium_url}
-              alt={`${game.name} cover`}
-              className="w-full h-auto object-cover rounded mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            />
-          )}
-          <div className="mt-4">
-            <motion.h2
-              className="text-2xl font-semibold mb-2"
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="min-h-screen bg-gray-900 text-white"
+      >
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
+            {/* Game image */}
+            <motion.div
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.5 }}
+              className="w-full lg:w-1/3"
             >
-              Description
-            </motion.h2>
-            <motion.p
-              className="text-lg"
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              {game.deck || "No description available."}
-            </motion.p>
-          </div>
-        </div>
+              {game.image && (
+                <img
+                  src={game.image.medium_url}
+                  alt={`${game.name} cover`}
+                  className="w-full h-auto object-cover rounded-lg shadow-lg"
+                />
+              )}
+            </motion.div>
 
-        {/* Detalles del juego a la derecha */}
-        <div className="w-full lg:w-2/3">
-          <motion.h1
-            className="text-4xl font-bold mb-4"
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            {game.name}
-          </motion.h1>
+            {/* Game details */}
+            <div className="w-full lg:w-2/3">
+              <motion.h1
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="text-4xl font-bold mb-4 text-blue-400"
+              >
+                {game.name}
+              </motion.h1>
 
-          <div className="mb-4">
-            <motion.h2
-              className="text-2xl font-semibold mb-2"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              Game Details
-            </motion.h2>
-            <motion.p
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <strong>Release Date:</strong> {formattedReleaseDate}
-            </motion.p>
-            <motion.p
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <strong>Platforms:</strong>{" "}
-              {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
-            </motion.p>
-            <motion.p
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <strong>Genres:</strong>{" "}
-              {game.genres?.map((g) => g.name).join(", ") || "N/A"}
-            </motion.p>
-          </div>
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="mb-6 bg-gray-800 p-4 rounded-lg shadow"
+              >
+                <h2 className="text-2xl font-semibold mb-2 text-blue-300">
+                  Game Details
+                </h2>
+                <p>
+                  <strong className="text-blue-300">Release Date:</strong>{" "}
+                  {formattedReleaseDate}
+                </p>
+                <p>
+                  <strong className="text-blue-300">Platforms:</strong>{" "}
+                  {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
+                </p>
+                <p>
+                  <strong className="text-blue-300">Genres:</strong>{" "}
+                  {game.genres?.map((g) => g.name).join(", ") || "N/A"}
+                </p>
+              </motion.div>
 
-          {/* Mostrar la media de las reviews */}
-          <div className="mb-4">
-            <motion.h2
-              className="text-2xl font-semibold mb-2"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.5 }}
-            >
-              Average Rating
-            </motion.h2>
-            <motion.p
-              className="text-lg"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              {reviews.length > 0
-                ? `${averageRating.toFixed(1)} / 5 (${reviews.length} reviews)`
-                : "No reviews yet."}
-            </motion.p>
-          </div>
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="mb-6 bg-gray-800 p-4 rounded-lg shadow"
+              >
+                <h2 className="text-2xl font-semibold mb-2 text-blue-300">
+                  Description
+                </h2>
+                <p>{game.deck || "No description available."}</p>
+              </motion.div>
 
-          <motion.div
-            className="flex items-center space-x-4 mb-4"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.7 }}
-          >
-            {session ? (
-              <>
-                <motion.button
-                  className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleAddReviewClick}
-                >
-                  Add Review
-                </motion.button>
-                <motion.button
-                  className={`text-lg rounded-md text-white px-6 py-3 mb-4 ${
-                    isFavorite ? "bg-red-500" : "bg-gray-400"
-                  }`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={handleLikeClick}
-                >
-                  <FaHeart className="inline-block mr-2" />
-                  {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
-                </motion.button>
-              </>
-            ) : (
-              <p className="text-red-500 mb-4">
-                You need to log in to add a review, rate, or like a game.
-              </p>
-            )}
-          </motion.div>
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="mb-6 bg-gray-800 p-4 rounded-lg shadow"
+              >
+                <h2 className="text-2xl font-semibold mb-2 text-blue-300">
+                  Average Rating
+                </h2>
+                <p className="text-lg">
+                  {reviews.length > 0 ? (
+                    <>
+                      <FaStar className="inline-block text-yellow-400 mr-2" />
+                      {averageRating.toFixed(1)} / 5 ({reviews.length} reviews)
+                    </>
+                  ) : (
+                    "No reviews yet."
+                  )}
+                </p>
+              </motion.div>
 
-          {/* Lista de reviews */}
-          <div>
-            <motion.h2
-              className="text-2xl font-semibold mb-4"
-              initial={{ y: -20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              Reviews
-            </motion.h2>
-            {reviews.length > 0 ? (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <motion.div
-                    key={review.id}
-                    className="p-4 border border-gray-300 rounded bg-white shadow-md"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <Link
-                      href={`/profile/${encodeURIComponent(review.user)}`}
-                      className="font-bold text-blue-600 hover:underline"
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="flex items-center space-x-4 mb-6"
+              >
+                {session ? (
+                  <>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition"
+                      onClick={handleAddReviewClick}
                     >
-                      {review.user}
-                    </Link>
-                    <p className="text-yellow-500">
-                      <FaStar className="inline-block" />
-                      {"★".repeat(review.rating)}
-                      {"☆".repeat(5 - review.rating)}
-                    </p>
-                    {review.containsSpoilers && (
-                      <p className="text-red-500">Contains Spoilers</p>
-                    )}
-                    <p>{review.comment}</p>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No reviews yet. Be the first!</p>
-            )}
+                      Add Review
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className={`text-lg rounded-md text-white px-6 py-3 ${
+                        isFavorite
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-gray-600 hover:bg-gray-700"
+                      } transition`}
+                      onClick={handleLikeClick}
+                    >
+                      <FaHeart className="inline-block mr-2" />
+                      {isFavorite
+                        ? "Remove from Favorites"
+                        : "Add to Favorites"}
+                    </motion.button>
+                  </>
+                ) : (
+                  <p className="text-red-400">
+                    You need to log in to add a review, rate, or like a game.
+                  </p>
+                )}
+              </motion.div>
+
+              {/* Reviews section */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+              >
+                <h2 className="text-2xl font-semibold mb-4 text-blue-300">
+                  Reviews
+                </h2>
+                {reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    <AnimatePresence>
+                      {reviews.map((review, index) => (
+                        <motion.div
+                          key={review.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          className="p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-md"
+                        >
+                          <Link
+                            href={`/profile/${encodeURIComponent(review.user)}`}
+                            className="font-bold text-blue-400 hover:underline"
+                          >
+                            {review.user}
+                          </Link>
+                          <p className="text-yellow-400">
+                            <FaStar className="inline-block mr-1" />
+                            {"★".repeat(review.rating)}
+                            {"☆".repeat(5 - review.rating)}
+                          </p>
+                          {review.containsSpoilers && (
+                            <p className="text-red-400">Contains Spoilers</p>
+                          )}
+                          <p className="mt-2">{review.comment}</p>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                ) : (
+                  <p className="text-gray-400">No reviews yet. Be the first!</p>
+                )}
+              </motion.div>
+            </div>
           </div>
         </div>
+      </motion.div>
 
-        {/* Modal para añadir una review */}
-        {showModal && (
-          <AddReviewModal
-            game={game}
-            onClose={() => setShowModal(false)}
-            onSave={handleSaveReview}
-          />
-        )}
-      </div>
+      {/* Modal for adding a review */}
+      {showModal && (
+        <AddReviewModal
+          game={game}
+          onClose={() => setShowModal(false)}
+          onSave={handleSaveReview}
+        />
+      )}
+
+      <ToastContainer position="bottom-right" theme="dark" />
     </>
   );
 }
