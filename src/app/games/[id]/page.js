@@ -19,6 +19,8 @@ import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 import { useReviews } from "../../../context/ReviewsProvider";
 import Navbar from "@/Components/Navbar/Navbar";
+import { motion } from "framer-motion";
+import { FaHeart, FaStar } from "react-icons/fa";
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;
@@ -38,11 +40,10 @@ export default function GameDetailsPage({ params }) {
     }
 
     try {
-      // Verificar si ya existe una reseña para este juego y usuario
       const reviewsQuery = query(
         collection(db, "reviews"),
         where("gameId", "==", id),
-        where("user", "==", session.user.name) // Aquí verificamos por el nombre del usuario
+        where("user", "==", session.user.name)
       );
 
       const reviewsSnapshot = await getDocs(reviewsQuery);
@@ -50,7 +51,7 @@ export default function GameDetailsPage({ params }) {
       if (!reviewsSnapshot.empty) {
         toast.error("You have already submitted a review for this game.");
       } else {
-        setShowModal(true); // Solo abrimos el modal si no hay una reseña existente
+        setShowModal(true);
       }
     } catch (error) {
       console.error("Error checking existing reviews:", error);
@@ -242,75 +243,156 @@ export default function GameDetailsPage({ params }) {
         {/* Imagen del juego a la izquierda */}
         <div className="w-full lg:w-1/3">
           {game.image && (
-            <img
+            <motion.img
               src={game.image.medium_url}
               alt={`${game.name} cover`}
               className="w-full h-auto object-cover rounded mb-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
             />
           )}
           <div className="mt-4">
-            <h2 className="text-2xl font-semibold mb-2">Description</h2>
-            <p className="text-lg">
+            <motion.h2
+              className="text-2xl font-semibold mb-2"
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              Description
+            </motion.h2>
+            <motion.p
+              className="text-lg"
+              initial={{ x: -50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               {game.deck || "No description available."}
-            </p>
+            </motion.p>
           </div>
         </div>
 
         {/* Detalles del juego a la derecha */}
         <div className="w-full lg:w-2/3">
-          <h1 className="text-4xl font-bold mb-4">{game.name}</h1>
+          <motion.h1
+            className="text-4xl font-bold mb-4"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {game.name}
+          </motion.h1>
 
           <div className="mb-4">
-            <h2 className="text-2xl font-semibold mb-2">Game Details</h2>
-            <p>
+            <motion.h2
+              className="text-2xl font-semibold mb-2"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              Game Details
+            </motion.h2>
+            <motion.p
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
               <strong>Release Date:</strong> {formattedReleaseDate}
-            </p>
-            <p>
+            </motion.p>
+            <motion.p
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
               <strong>Platforms:</strong>{" "}
               {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
-            </p>
-            <p>
+            </motion.p>
+            <motion.p
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
               <strong>Genres:</strong>{" "}
               {game.genres?.map((g) => g.name).join(", ") || "N/A"}
-            </p>
+            </motion.p>
           </div>
 
           {/* Mostrar la media de las reviews */}
           <div className="mb-4">
-            <h2 className="text-2xl font-semibold mb-2">Average Rating</h2>
-            <p className="text-lg">
+            <motion.h2
+              className="text-2xl font-semibold mb-2"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              Average Rating
+            </motion.h2>
+            <motion.p
+              className="text-lg"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
               {reviews.length > 0
                 ? `${averageRating.toFixed(1)} / 5 (${reviews.length} reviews)`
                 : "No reviews yet."}
-            </p>
+            </motion.p>
           </div>
 
-          <div className="flex items-center space-x-4 mb-4">
+          <motion.div
+            className="flex items-center space-x-4 mb-4"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.7 }}
+          >
             {session ? (
               <>
-                <button
+                <motion.button
                   className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition mb-4"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={handleAddReviewClick}
                 >
                   Add Review
-                </button>
+                </motion.button>
+                <motion.button
+                  className={`text-lg rounded-md text-white px-6 py-3 mb-4 ${
+                    isFavorite ? "bg-red-500" : "bg-gray-400"
+                  }`}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleLikeClick}
+                >
+                  <FaHeart className="inline-block mr-2" />
+                  {isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+                </motion.button>
               </>
             ) : (
               <p className="text-red-500 mb-4">
                 You need to log in to add a review, rate, or like a game.
               </p>
             )}
-          </div>
+          </motion.div>
 
           {/* Lista de reviews */}
           <div>
-            <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+            <motion.h2
+              className="text-2xl font-semibold mb-4"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              Reviews
+            </motion.h2>
             {reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <div
+                  <motion.div
                     key={review.id}
                     className="p-4 border border-gray-300 rounded bg-white shadow-md"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
                   >
                     <Link
                       href={`/profile/${encodeURIComponent(review.user)}`}
@@ -319,6 +401,7 @@ export default function GameDetailsPage({ params }) {
                       {review.user}
                     </Link>
                     <p className="text-yellow-500">
+                      <FaStar className="inline-block" />
                       {"★".repeat(review.rating)}
                       {"☆".repeat(5 - review.rating)}
                     </p>
@@ -326,7 +409,7 @@ export default function GameDetailsPage({ params }) {
                       <p className="text-red-500">Contains Spoilers</p>
                     )}
                     <p>{review.comment}</p>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             ) : (

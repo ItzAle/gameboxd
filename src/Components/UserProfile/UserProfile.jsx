@@ -24,6 +24,7 @@ import { useReviews } from "../../context/ReviewsProvider";
 import Navbar from "../Navbar/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaEdit, FaStar } from "react-icons/fa";
+import jsonp from "jsonp";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -248,10 +249,10 @@ export default function UserProfile() {
 
   return (
     <>
-      <Navbar />
       <div className="min-h-screen bg-gray-900 text-white">
         <StarField count={200} />
         <div className="container mx-auto p-4 space-y-8 relative z-10">
+          <Navbar />
           <motion.h1
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
