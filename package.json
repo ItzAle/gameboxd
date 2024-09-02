@@ -24,7 +24,8 @@
     "react-image-crop": "^11.0.6",
     "react-infinite-scroll-component": "^6.1.0",
     "react-router-dom": "^6.26.0",
-    "react-toastify": "^10.0.5"
+    "react-toastify": "^10.0.5",
+    "surprise": "^0.0.4"
   },
   "devDependencies": {
     "@types/node": "^20",

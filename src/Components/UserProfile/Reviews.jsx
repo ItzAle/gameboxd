@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { FaEdit, FaTrash, FaStar } from 'react-icons/fa';
-import Link from 'next/link';
+import React, { useState } from "react";
+import { FaEdit, FaTrash, FaStar } from "react-icons/fa";
+import Link from "next/link";
 
 const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
   const [editingReview, setEditingReview] = useState(null);
@@ -14,7 +14,11 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
   };
 
   const handleSaveClick = async () => {
-    const success = await onEditReview(editingReview.id, editedComment, editedRating);
+    const success = await onEditReview(
+      editingReview.id,
+      editedComment,
+      editedRating
+    );
     if (success) {
       setEditingReview(null);
     }
@@ -42,19 +46,28 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <FaStar
                         key={star}
-                        className={`cursor-pointer ${star <= editedRating ? 'text-yellow-400' : 'text-gray-300'}`}
+                        className={`cursor-pointer ${
+                          star <= editedRating
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }`}
                         onClick={() => setEditedRating(star)}
                       />
                     ))}
                   </div>
-                  <button onClick={handleSaveClick} className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                  <button
+                    onClick={handleSaveClick}
+                    className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  >
                     Guardar
                   </button>
                 </div>
               ) : (
                 <div>
                   <Link href={`/games/${review.gameId}`}>
-                    <h3 className="text-xl font-bold hover:underline">{review.gameName}</h3>
+                    <h3 className="text-xl font-bold hover:underline">
+                      {review.gameName}
+                    </h3>
                   </Link>
                   <p className="text-lg">{review.comment}</p>
                   <div className="flex items-center mt-2">
@@ -62,15 +75,25 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <FaStar
                         key={star}
-                        className={star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}
+                        className={
+                          star <= review.rating
+                            ? "text-yellow-400"
+                            : "text-gray-300"
+                        }
                       />
                     ))}
                   </div>
                   <div className="mt-2">
-                    <button onClick={() => handleEditClick(review)} className="text-blue-500 mr-2">
+                    <button
+                      onClick={() => handleEditClick(review)}
+                      className="text-blue-500 mr-2"
+                    >
                       <FaEdit className="inline mr-1" /> Editar
                     </button>
-                    <button onClick={() => handleDeleteClick(review.id)} className="text-red-500">
+                    <button
+                      onClick={() => handleDeleteClick(review.id)}
+                      className="text-red-500"
+                    >
                       <FaTrash className="inline mr-1" /> Eliminar
                     </button>
                   </div>
@@ -80,7 +103,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
           ))}
         </ul>
       ) : (
-        <p className="text-gray-500">No tienes reseñas aún.</p>
+        <p className="text-gray-500">You have no reviews yet.</p>
       )}
     </div>
   );

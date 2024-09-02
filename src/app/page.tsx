@@ -26,7 +26,7 @@ export default function LandingPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImageIndex(Math.floor(Math.random() * gameCoverUrls.length));
-    }, 8000); // Cambia el intervalo para una transición más rápida
+    }, 8000);
 
     return () => clearInterval(interval);
   }, []);
@@ -53,7 +53,7 @@ export default function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1.0 }} // Reducción de la duración para animaciones más rápidas
+              transition={{ duration: 1.0 }}
             />
           </AnimatePresence>
         </div>
@@ -63,7 +63,7 @@ export default function LandingPage() {
           <motion.h1
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }} // Ajusta la duración para animaciones más rápidas
+            transition={{ duration: 0.6, delay: 0.1 }}
             className="text-6xl font-bold mb-6 text-blue-400"
           >
             Welcome to Gameboxd
@@ -71,7 +71,7 @@ export default function LandingPage() {
           <motion.p
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }} // Ajusta la duración para animaciones más rápidas
+            transition={{ duration: 0.6, delay: 0.3 }}
             className="text-2xl mb-10 max-w-2xl"
           >
             Discover, track, and review your favorite games in one place.
@@ -79,7 +79,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }} // Ajusta la duración para animaciones más rápidas
+            transition={{ duration: 0.6, delay: 0.5 }}
             className="flex flex-wrap justify-center gap-4"
           >
             <Link href="/all">
@@ -92,14 +92,14 @@ export default function LandingPage() {
               </motion.button>
             </Link>
             <motion.div className="relative">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowSearchBar(!showSearchBar)}
-                className="bg-green-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-600 transition flex items-center"
-              >
-                <FaSearch className="mr-2" /> Search
-              </motion.button>
+                {/* <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setShowSearchBar(!showSearchBar)}
+                  className="bg-green-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-600 transition flex items-center"
+                >
+                  <FaSearch className="mr-2" /> Search
+                </motion.button> */}
               <AnimatePresence>
                 {showSearchBar && (
                   <motion.form
@@ -127,7 +127,7 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }} // Ajusta la duración para animaciones más rápidas
+            transition={{ duration: 0.6, delay: 0.7 }}
             className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl"
           >
             <div className="bg-gray-800 p-6 rounded-lg">
@@ -143,9 +143,7 @@ export default function LandingPage() {
             <div className="bg-gray-800 p-6 rounded-lg">
               <FaSearch className="text-4xl mb-4 text-green-400 mx-auto" />
               <h2 className="text-xl font-semibold mb-2">Discover New Games</h2>
-              <p>
-                Find your next favorite game with personalized recommendations.
-              </p>
+              <p>Find your next favorite game..</p>
             </div>
           </motion.div>
           <Footer />

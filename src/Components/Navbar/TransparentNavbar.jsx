@@ -85,7 +85,7 @@ export default function TransparentNavbar() {
             href="/"
             className="text-xl font-bold text-white hover:text-blue-400 transition"
           >
-            <span className="hidden md:inline">Gameboxd</span>
+            <span className="hidden md:inline">GBXD</span>
             <span className="md:hidden">GBXD</span>
           </Link>
 
