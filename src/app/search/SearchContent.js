@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { db, collection, getDocs } from "../../../src/firebase";
+import { db, collection, getDocs } from "../../../lib/firebase";
 import { query, where, orderBy, limit } from "firebase/firestore";
 import jsonp from "jsonp";
 import { motion } from "framer-motion";
