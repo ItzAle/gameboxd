@@ -8,10 +8,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import "../../utils/global.css";
 
-window.jsonpCallback = function (data) {
-  window.jsonpData = data;
-};
-
 export default function Component() {
   const [games, setGames] = useState([]);
   const [error, setError] = useState(null);
@@ -48,6 +44,14 @@ export default function Component() {
 
   useEffect(() => {
     fetchGames();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.jsonpCallback = function (data) {
+        window.jsonpData = data;
+      };
+    }
   }, []);
 
   const handleSearch = () => {
