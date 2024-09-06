@@ -6,11 +6,6 @@ export default function ProfilePage() {
   const { data: session } = useSession();
   const router = useRouter();
 
-  // if (!session) {
-  //   router.push("/login");
-  //   return null;
-  // }
-
   return (
     <div>
       <UserProfile />
