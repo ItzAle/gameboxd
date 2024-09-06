@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { db, collection, getDocs } from "../../../lib/firebase";
+import { db, collection, getDocs } from "../../../src/firebase";
 import { query, where, orderBy, limit } from "firebase/firestore";
 import jsonp from "jsonp";
 import { motion } from "framer-motion";
@@ -24,7 +24,9 @@ export default function SearchContent() {
         .then(() => setIsLoading(false))
         .catch((err) => {
           console.error("Error de búsqueda:", err);
-          setError("Ocurrió un error durante la búsqueda. Por favor, inténtalo de nuevo.");
+          setError(
+            "Ocurrió un error durante la búsqueda. Por favor, inténtalo de nuevo."
+          );
           setIsLoading(false);
         });
     } else {
