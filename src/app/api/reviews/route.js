@@ -1,5 +1,4 @@
-// app/api/reviews/route.js
-import { db, collection, addDoc, getDocs } from "../../../lib/firebase";
+import { db, collection, addDoc, getDocs } from "../../../../lib/firebase";
 
 export async function GET() {
   try {
