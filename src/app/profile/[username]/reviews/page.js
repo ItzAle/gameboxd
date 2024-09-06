@@ -1,8 +1,7 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../../../../../lib/firebase";
+import { db, collection, getDocs, query, where } from "../../../../lib/firebase";
 import Link from "next/link";
 
 const RecentReviews = () => {
