@@ -120,7 +120,7 @@ export default function SearchPage() {
             transition={{ duration: 0.5 }}
             className="text-4xl font-bold mb-8 text-blue-400"
           >
-            Search Results for "{searchQuery}"
+            Search Results for {searchQuery}
           </motion.h1>
 
           <motion.div
