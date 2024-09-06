@@ -297,12 +297,12 @@ export default function UserProfile() {
             >
               <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
                 <h2 className="text-2xl font-semibold mb-2 flex items-center">
-                  <FaStar className="mr-2 text-yellow-400" /> Your Reviews
+                  <FaStar className="mr-2 text-yellow-400" /> Sus Reseñas
                 </h2>
                 <AnimatePresence>
-                  {userProfile.reviews && userProfile.reviews.length > 0 ? (
+                  {reviews.filter(review => review.user === user.name).length > 0 ? (
                     <Reviews
-                      reviews={reviews}
+                      reviews={reviews.filter(review => review.user === user.name)}
                       onEditReview={onEditReview}
                       onDeleteReview={onDeleteReview}
                     />
@@ -313,7 +313,7 @@ export default function UserProfile() {
                       exit={{ opacity: 0 }}
                       className="text-lg"
                     >
-                      You have not written any reviews yet.
+                      Aún no ha escrito ninguna reseña.
                     </motion.p>
                   )}
                 </AnimatePresence>
