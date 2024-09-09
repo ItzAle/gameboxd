@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 let db;
 
@@ -27,8 +27,8 @@ const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account.provider === 'google') {
-        const userRef = db.collection('users').doc(user.email);
+      if (account.provider === "google") {
+        const userRef = db.collection("users").doc(user.email);
         const userDoc = await userRef.get();
 
         if (!userDoc.exists) {
@@ -36,7 +36,7 @@ const authOptions = {
             email: user.email,
             name: user.name,
             profilePicture: user.image,
-            bio: '',
+            bio: "",
             reviews: [],
             likedGames: [],
             lastLogin: new Date(),
