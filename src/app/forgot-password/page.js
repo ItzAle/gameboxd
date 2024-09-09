@@ -1,8 +1,8 @@
 import ForgotPassword from "../../Components/ForgotPassword/ForgotPassword";
 
 export const metadata = {
-  title: "Restablecer contraseña",
-  description: "Restablece tu contraseña",
+  title: "Reset password",
+  description: "Reset password",
 };
 
 export default function ForgotPasswordPage() {

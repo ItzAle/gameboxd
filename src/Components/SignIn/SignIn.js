@@ -18,13 +18,11 @@ export default function SignIn() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Inicio de sesión exitoso");
+      toast.success("Sing In Successfully");
       router.push("/profile");
     } catch (error) {
       console.error("Error en el inicio de sesión:", error);
-      toast.error(
-        "Error en el inicio de sesión. Por favor, verifica tus credenciales."
-      );
+      toast.error("Login error. Please verify your credentials.");
     }
   };
 
@@ -43,7 +41,7 @@ export default function SignIn() {
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
       >
         <h2 className="text-3xl font-bold mb-6 text-center text-white">
-          Iniciar sesión
+          Sign In
         </h2>
         <form onSubmit={handleSignIn} className="space-y-4">
           <div>
@@ -51,7 +49,7 @@ export default function SignIn() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-300"
             >
-              Correo electrónico
+              Email
             </label>
             <input
               type="email"
@@ -59,7 +57,7 @@ export default function SignIn() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="tu@email.com"
+              placeholder="your@email.com"
               required
             />
           </div>
@@ -68,7 +66,7 @@ export default function SignIn() {
               htmlFor="password"
               className="block text-sm font-medium text-gray-300"
             >
-              Contraseña
+              Password
             </label>
             <input
               type="password"
@@ -86,7 +84,7 @@ export default function SignIn() {
             type="submit"
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
           >
-            Iniciar sesión
+            Sign In
           </motion.button>
         </form>
         <div className="mt-4 text-center">
@@ -94,14 +92,14 @@ export default function SignIn() {
             href="/forgot-password"
             className="text-sm text-blue-400 hover:underline"
           >
-            ¿Has olvidado la contraseña?
+            Forgot your Password?
           </Link>
         </div>
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-400">
-            ¿No tienes una cuenta?{" "}
+            You don't have an account?{" "}
             <Link href="/signup" className="text-blue-400 hover:underline">
-              Regístrate
+              Register
             </Link>
           </p>
         </div>

@@ -18,14 +18,12 @@ export default function ForgotPassword() {
 
     try {
       await sendPasswordResetEmail(auth, email);
-      toast.success(
-        "Se ha enviado un correo electrónico para restablecer tu contraseña."
-      );
-      router.push("/signin"); // Redirige al usuario a la página de inicio de sesión
+      toast.success("An email has been sent to reset your password.");
+      router.push("/signin");
     } catch (error) {
-      console.error("Error al enviar el correo de restablecimiento:", error);
+      console.error("Error sending reset mail", error);
       toast.error(
-        "Error al enviar el correo de restablecimiento. Por favor, verifica tu correo electrónico."
+        "Error sending the reset email. Please check your email address."
       );
     } finally {
       setIsLoading(false);
@@ -41,7 +39,7 @@ export default function ForgotPassword() {
         className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
       >
         <h2 className="text-3xl font-bold mb-6 text-center text-white">
-          Restablecer contraseña
+          Reset Password
         </h2>
         <form onSubmit={handleResetPassword} className="space-y-4">
           <div>
@@ -49,7 +47,7 @@ export default function ForgotPassword() {
               htmlFor="email"
               className="block text-sm font-medium text-gray-300"
             >
-              Correo electrónico
+              Email
             </label>
             <input
               type="email"
@@ -57,7 +55,7 @@ export default function ForgotPassword() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="tu@email.com"
+              placeholder="your@email.com"
               required
             />
           </div>
@@ -68,7 +66,7 @@ export default function ForgotPassword() {
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
             disabled={isLoading}
           >
-            {isLoading ? "Enviando..." : "Enviar correo de restablecimiento"}
+            {isLoading ? "Sending..." : "Send reset mail"}
           </motion.button>
         </form>
         <div className="mt-6 text-center">
@@ -76,7 +74,7 @@ export default function ForgotPassword() {
             href="/signin"
             className="text-sm text-blue-400 hover:underline"
           >
-            Volver al inicio de sesión
+            Back to login
           </Link>
         </div>
       </motion.div>

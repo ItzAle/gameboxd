@@ -322,7 +322,7 @@ export default function UserProfile() {
             >
               <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
                 <h2 className="text-2xl font-semibold mb-2 flex items-center">
-                  <FaStar className="mr-2 text-yellow-400" /> Sus Reseñas
+                  <FaStar className="mr-2 text-yellow-400" /> Your Reviews
                 </h2>
                 <AnimatePresence>
                   {userReviews.length > 0 ? (

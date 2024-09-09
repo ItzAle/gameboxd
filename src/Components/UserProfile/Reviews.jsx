@@ -34,7 +34,10 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
         <ul className="space-y-4">
           {reviews.map((review) => (
             <li key={review.id} className="border-b pb-4">
-              <Link href={`/games/${review.gameId}`} className="text-blue-500 hover:underline">
+              <Link
+                href={`/games/${review.gameId}`}
+                className="text-blue-500 hover:underline"
+              >
                 <h3 className="text-xl font-semibold">{review.gameName}</h3>
               </Link>
               {editingReview && editingReview.id === review.id ? (
@@ -45,7 +48,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                     className="w-full p-2 border rounded"
                   />
                   <div className="flex items-center">
-                    <span className="mr-2">Calificación:</span>
+                    <span className="mr-2">Rating:</span>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <FaStar
                         key={star}
@@ -68,7 +71,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
               ) : (
                 <>
                   <div className="flex items-center">
-                    <span className="mr-2">Calificación:</span>
+                    <span className="mr-2">Rating:</span>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <FaStar
                         key={star}
@@ -86,13 +89,13 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                       onClick={() => handleEditClick(review)}
                       className="text-blue-500 hover:underline"
                     >
-                      Editar
+                      Edit
                     </button>
                     <button
                       onClick={() => handleDeleteClick(review.id)}
                       className="text-red-500 hover:underline"
                     >
-                      Eliminar
+                      Delete
                     </button>
                   </div>
                 </>
