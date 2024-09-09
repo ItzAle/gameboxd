@@ -14,6 +14,7 @@ import {
 } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
+import { SiGoogledocs } from "react-icons/si";
 
 export default function TransparentNavbar() {
   const { user } = useAuth(); // Usa useAuth en lugar de useSession
@@ -65,6 +66,11 @@ export default function TransparentNavbar() {
     ...(user
       ? [
           { href: "/profile", icon: <FaUser />, text: "Profile" },
+          {
+            href: "https://gbxd-api.vercel.app/",
+            icon: <SiGoogledocs />,
+            text: "API",
+          },
           {
             href: "#",
             icon: <FaSignOutAlt />,
