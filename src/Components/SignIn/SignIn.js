@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../src/context/AuthContext";
 import Link from "next/link";
 import { motion } from "framer-motion";
 
@@ -28,6 +28,7 @@ export default function SignIn() {
 
   // Si el usuario ya está autenticado, redirigir al perfil
   if (user) {
+    toast.info("You are already logged in. Redirecting to profile.");
     router.push("/profile");
     return null;
   }
