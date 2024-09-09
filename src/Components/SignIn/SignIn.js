@@ -18,7 +18,7 @@ export default function SignIn() {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Sing In Successfully");
+      toast.success("Sign In Successfully");
       router.push("/profile");
     } catch (error) {
       console.error("Error en el inicio de sesión:", error);

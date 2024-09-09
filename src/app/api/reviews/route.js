@@ -1,4 +1,5 @@
-import { db, collection, addDoc, getDocs } from "../../../../lib/firebase";
+import { db } from "../../../../lib/firebase";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
 export async function GET() {
   try {
