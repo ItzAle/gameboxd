@@ -5,7 +5,14 @@ import {
   sendEmailVerification,
   updateProfile,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -19,11 +26,17 @@ export default function SignUp() {
   const [username, setUsername] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const router = useRouter();
   const { user } = useAuth();
 
+  if (user) {
+    router.push("/profile");
+    return null;
+  }
+
   const validateUsername = (username) => {
-    const regex = /^[a-zA-Z0-9]{1,10}[^.]$/;
+    const regex = /^[a-zA-Z0-9]{4,10}[^.]$/;
     return (
       regex.test(username) && !username.includes("_") && !username.includes(" ")
     );
@@ -34,15 +47,27 @@ export default function SignUp() {
     return regex.test(password);
   };
 
-  const handleUsernameChange = (e) => {
+  const checkUsernameExists = async (username) => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("username", "==", username));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  };
+
+  const handleUsernameChange = async (e) => {
     const newUsername = e.target.value;
     setUsername(newUsername);
     if (!validateUsername(newUsername)) {
       setUsernameError(
-        "The username must be no longer than 10 characters, must not end in a period, and must not contain '_' or spaces."
+        "The username must be no longer than 10 characters, must be at least 4 characters long, must not end in a period and must not contain “_” or spaces.s must not end in a period, and must not contain '_' or spaces."
       );
     } else {
-      setUsernameError("");
+      const usernameExists = await checkUsernameExists(newUsername);
+      if (usernameExists) {
+        setUsernameError("This username is already in use.");
+      } else {
+        setUsernameError("");
+      }
     }
   };
 
@@ -58,13 +83,50 @@ export default function SignUp() {
     }
   };
 
+  const checkEmailExists = async (email) => {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    return !querySnapshot.empty;
+  };
+
+  const handleEmailChange = async (e) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    if (newEmail) {
+      const emailExists = await checkEmailExists(newEmail);
+      if (emailExists) {
+        setEmailError("This email is already registered.");
+      } else {
+        setEmailError("");
+      }
+    } else {
+      setEmailError("");
+    }
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (usernameError || passwordError) {
-      toast.error("Por favor, corrige los errores antes de registrarte.");
+    if (usernameError || passwordError || emailError) {
+      toast.error("Please correct any errors before registering.");
       return;
     }
+
     try {
+      const usernameExists = await checkUsernameExists(username);
+      if (usernameExists) {
+        toast.error(
+          "This username is already in use. Please choose another one."
+        );
+        return;
+      }
+
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        setEmailError("This email is already registered.");
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -86,16 +148,10 @@ export default function SignUp() {
       toast.success("Registration successful. Please verify your email.");
       router.push("/email-verification");
     } catch (error) {
+      console.error("Error en el registro:", error);
       toast.error("Error registering. Please try again.");
     }
   };
-
-  // Si el usuario ya está autenticado, redirigir al perfil
-  if (user) {
-    toast.info("You are already logged in. Redirecting to profile.");
-    router.push("/profile");
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -140,11 +196,19 @@ export default function SignUp() {
               type="email"
               id="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="your@email.com"
               required
             />
+            {emailError && (
+              <div className="text-red-500 text-xs mt-1">
+                {emailError}{" "}
+                <Link href="/signin" className="text-blue-400 hover:underline">
+                  Do you want to sign in?
+                </Link>
+              </div>
+            )}
           </div>
           <div>
             <label
@@ -171,7 +235,7 @@ export default function SignUp() {
             whileTap={{ scale: 0.95 }}
             type="submit"
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-            disabled={usernameError || passwordError}
+            disabled={usernameError || passwordError || emailError}
           >
             Register
           </motion.button>

@@ -17,6 +17,11 @@ export default function SignIn() {
   const router = useRouter();
   const { user } = useAuth();
 
+  if (user) {
+    router.push("/profile");
+    return null;
+  }
+
   const handleSignIn = async (e) => {
     e.preventDefault();
     try {
@@ -37,17 +42,9 @@ export default function SignIn() {
       toast.success("Sign in successful");
       router.push("/profile");
     } catch (error) {
-      console.error("Error en el inicio de sesión:", error);
       toast.error("Login error. Please verify your credentials.");
     }
   };
-
-  // Si el usuario ya está autenticado, redirigir al perfil
-  if (user) {
-    toast.info("You are already logged in. Redirecting to profile.");
-    router.push("/profile");
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
