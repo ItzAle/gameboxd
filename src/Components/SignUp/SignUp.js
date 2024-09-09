@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
@@ -57,7 +61,7 @@ export default function SignUp() {
   const handleSignUp = async (e) => {
     e.preventDefault();
     if (usernameError || passwordError) {
-      toast.error("Please correct any errors before registering.");
+      toast.error("Por favor, corrige los errores antes de registrarte.");
       return;
     }
     try {
@@ -68,20 +72,21 @@ export default function SignUp() {
       );
       const user = userCredential.user;
 
+      await sendEmailVerification(user);
+
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
         username: username,
         bio: "",
         reviews: [],
         likedGames: [],
+        emailVerified: false,
       });
 
-      await updateProfile(user, { displayName: username });
-
-      toast.success("Register Successfully");
-      router.push("/profile");
+      toast.success("Registration successful. Please verify your email.");
+      router.push("/email-verification");
     } catch (error) {
-      toast.error("Register Failed, please try again");
+      toast.error("Error registering. Please try again.");
     }
   };
 

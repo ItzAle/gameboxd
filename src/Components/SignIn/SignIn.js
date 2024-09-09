@@ -1,6 +1,9 @@
 "use client";
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
 import { auth } from "../../../lib/firebase";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -17,8 +20,21 @@ export default function SignIn() {
   const handleSignIn = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success("Sign In Successfully");
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+
+      if (!user.emailVerified) {
+        toast.error("Please verify your email before logging in.");
+        await sendEmailVerification(user);
+        router.push("/email-verification");
+        return;
+      }
+
+      toast.success("Sign in successful");
       router.push("/profile");
     } catch (error) {
       console.error("Error en el inicio de sesión:", error);
