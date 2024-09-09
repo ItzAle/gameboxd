@@ -79,6 +79,7 @@ export default function GameDetailsPage({ params }) {
         userId: user.uid,
         username: username, // Usar el nombre de usuario aquí
         gameId: id,
+        gameName: game.name,
         createdAt: new Date().toISOString(),
       };
 
@@ -90,7 +91,7 @@ export default function GameDetailsPage({ params }) {
 
       // Actualizar el documento del usuario
       await updateDoc(userRef, {
-        reviews: arrayUnion(docRef.id)
+        reviews: arrayUnion(docRef.id),
       });
 
       toast.success("Review added successfully.");
@@ -394,7 +395,9 @@ export default function GameDetailsPage({ params }) {
                           className="p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-md"
                         >
                           <Link
-                            href={`/profile/${encodeURIComponent(review.username)}`}
+                            href={`/profile/${encodeURIComponent(
+                              review.username
+                            )}`}
                             className="font-bold text-blue-400 hover:underline"
                           >
                             {review.username}

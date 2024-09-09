@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children }) {
   }
 
   if (!user) {
-    router.push("/singin");
+    router.push("/signin");
     return null;
   }
 

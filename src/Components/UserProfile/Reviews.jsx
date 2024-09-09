@@ -34,6 +34,9 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
         <ul className="space-y-4">
           {reviews.map((review) => (
             <li key={review.id} className="border-b pb-4">
+              <Link href={`/games/${review.gameId}`} className="text-blue-500 hover:underline">
+                <h3 className="text-xl font-semibold">{review.gameName}</h3>
+              </Link>
               {editingReview && editingReview.id === review.id ? (
                 <div className="space-y-2">
                   <textarea
@@ -63,47 +66,42 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                   </button>
                 </div>
               ) : (
-                <div>
-                  <Link href={`/games/${review.gameId}`}>
-                    <h3 className="text-xl font-bold hover:underline">
-                      {review.gameName}
-                    </h3>
-                  </Link>
-                  <p className="text-lg">{review.comment}</p>
-                  <div className="flex items-center mt-2">
+                <>
+                  <div className="flex items-center">
                     <span className="mr-2">Calificación:</span>
                     {[1, 2, 3, 4, 5].map((star) => (
                       <FaStar
                         key={star}
-                        className={
+                        className={`${
                           star <= review.rating
                             ? "text-yellow-400"
                             : "text-gray-300"
-                        }
+                        }`}
                       />
                     ))}
                   </div>
-                  <div className="mt-2">
+                  <p className="mt-2">{review.comment}</p>
+                  <div className="mt-2 space-x-2">
                     <button
                       onClick={() => handleEditClick(review)}
-                      className="text-blue-500 mr-2"
+                      className="text-blue-500 hover:underline"
                     >
-                      <FaEdit className="inline mr-1" /> Editar
+                      Editar
                     </button>
                     <button
                       onClick={() => handleDeleteClick(review.id)}
-                      className="text-red-500"
+                      className="text-red-500 hover:underline"
                     >
-                      <FaTrash className="inline mr-1" /> Eliminar
+                      Eliminar
                     </button>
                   </div>
-                </div>
+                </>
               )}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-gray-500">You have no reviews yet.</p>
+        <p className="text-lg">Aún no has escrito ninguna reseña.</p>
       )}
     </div>
   );

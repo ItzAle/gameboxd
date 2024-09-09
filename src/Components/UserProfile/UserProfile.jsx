@@ -1,6 +1,15 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import Modal from "../Modal/Modal";
 import Bio from "./Bio";
@@ -144,9 +153,9 @@ export default function UserProfile() {
         where("userId", "==", user.uid)
       );
       const reviewsSnapshot = await getDocs(reviewsQuery);
-      const reviewsData = reviewsSnapshot.docs.map(doc => ({
+      const reviewsData = reviewsSnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setUserReviews(reviewsData);
     } catch (error) {
@@ -194,8 +203,8 @@ export default function UserProfile() {
         rating: newRating,
       });
 
-      setUserReviews(prevReviews =>
-        prevReviews.map(review =>
+      setUserReviews((prevReviews) =>
+        prevReviews.map((review) =>
           review.id === reviewId
             ? { ...review, comment: newComment, rating: newRating }
             : review
@@ -216,7 +225,9 @@ export default function UserProfile() {
       const reviewRef = doc(db, "reviews", reviewId);
       await deleteDoc(reviewRef);
 
-      setUserReviews(prevReviews => prevReviews.filter(review => review.id !== reviewId));
+      setUserReviews((prevReviews) =>
+        prevReviews.filter((review) => review.id !== reviewId)
+      );
 
       toast.success("Reseña eliminada con éxito");
       return true;
@@ -228,7 +239,7 @@ export default function UserProfile() {
   };
 
   if (!user) {
-    router.push("/singin");
+    router.push("/signin");
     return null;
   }
 

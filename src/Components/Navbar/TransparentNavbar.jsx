@@ -74,7 +74,7 @@ export default function TransparentNavbar() {
         ]
       : [
           {
-            href: "/login",
+            href: "/signin",
             text: "Login",
             className:
               "bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition",
