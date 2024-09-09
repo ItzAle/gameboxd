@@ -104,7 +104,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
           ))}
         </ul>
       ) : (
-        <p className="text-lg">Aún no has escrito ninguna reseña.</p>
+        <p className="text-lg">You have no reviews yet.</p>
       )}
     </div>
   );

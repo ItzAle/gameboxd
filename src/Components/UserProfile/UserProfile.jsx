@@ -129,7 +129,7 @@ export default function UserProfile() {
               newCovers[game.gameId] = gameData.image.medium_url;
             } catch (error) {
               console.error(
-                `Error fetching cover for game ${game.gameId}:`,
+                `Error al obtener la carátula del juego ${game.gameId}:`,
                 error
               );
             }
@@ -140,7 +140,7 @@ export default function UserProfile() {
         setUserProfile({ likedGames: [], reviews: [] });
       }
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      console.error("Error al obtener el perfil del usuario:", error);
     }
   };
 
@@ -307,8 +307,8 @@ export default function UserProfile() {
               >
                 <LikedGames
                   userEmail={user.email}
-                  likedGames={userProfile.likedGames}
-                  covers={covers}
+                  likedGames={userProfile.likedGames || []}
+                  setUserProfile={setUserProfile}
                 />
               </motion.div>
             </motion.div>
@@ -338,7 +338,7 @@ export default function UserProfile() {
                       exit={{ opacity: 0 }}
                       className="text-lg"
                     >
-                      Aún no ha escrito ninguna reseña.
+                      You have no reviews yet.
                     </motion.p>
                   )}
                 </AnimatePresence>

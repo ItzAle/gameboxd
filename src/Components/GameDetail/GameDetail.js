@@ -21,7 +21,14 @@ import "react-toastify/dist/ReactToastify.css";
 import Link from "next/link";
 import { useReviews } from "../../context/ReviewsProvider";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaHeart, FaStar, FaGamepad } from "react-icons/fa";
+import {
+  FaHeart,
+  FaStar,
+  FaGamepad,
+  FaCalendarAlt,
+  FaDesktop,
+  FaTags,
+} from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 
 export default function GameDetailsPage({ id }) {
@@ -66,7 +73,6 @@ export default function GameDetailsPage({ id }) {
     }
 
     try {
-      // Obtener el documento del usuario para conseguir el nombre de usuario
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
       const userData = userDoc.data();
@@ -75,7 +81,7 @@ export default function GameDetailsPage({ id }) {
       const reviewToSave = {
         ...newReview,
         userId: user.uid,
-        username: username, // Usar el nombre de usuario aquí
+        username: username,
         gameId: id,
         gameName: game.name,
         createdAt: new Date().toISOString(),
@@ -87,7 +93,6 @@ export default function GameDetailsPage({ id }) {
       setReviews((prevReviews) => [...prevReviews, savedReview]);
       setGlobalReviews((prevReviews) => [...prevReviews, savedReview]);
 
-      // Actualizar el documento del usuario
       await updateDoc(userRef, {
         reviews: arrayUnion(docRef.id),
       });
@@ -102,7 +107,7 @@ export default function GameDetailsPage({ id }) {
 
   const handleLikeClick = async () => {
     if (!user) {
-      toast.error("You need to be logged in to like a game.");
+      toast.error("Necesitas iniciar sesión para marcar un juego como favorito.");
       return;
     }
 
@@ -114,25 +119,33 @@ export default function GameDetailsPage({ id }) {
         const userData = userDoc.data();
         const likedGames = userData.likedGames || [];
 
-        if (likedGames.includes(id)) {
-          // Remove from likedGames
+        const gameToSave = {
+          gameId: game.id,
+          name: game.name,
+          image: game.image?.small_url || null
+        };
+
+        const gameIndex = likedGames.findIndex(g => g.gameId === game.id);
+
+        if (gameIndex !== -1) {
+          // El juego ya está en favoritos, lo eliminamos
           await updateDoc(userRef, {
-            likedGames: arrayRemove(id),
+            likedGames: arrayRemove(likedGames[gameIndex])
           });
           setIsFavorite(false);
-          toast.success("Game removed from favorites.");
+          toast.success("Juego eliminado de favoritos.");
         } else {
-          // Add to likedGames
+          // El juego no está en favoritos, lo añadimos
           await updateDoc(userRef, {
-            likedGames: arrayUnion(id),
+            likedGames: arrayUnion(gameToSave)
           });
           setIsFavorite(true);
-          toast.success("Game added to favorites.");
+          toast.success("Juego añadido a favoritos.");
         }
       }
     } catch (error) {
-      console.error("Error updating favorite status:", error);
-      toast.error("An error occurred while updating favorite status.");
+      console.error("Error al actualizar el estado de favorito:", error);
+      toast.error("Ocurrió un error al actualizar el estado de favorito.");
     }
   };
 
@@ -168,7 +181,6 @@ export default function GameDetailsPage({ id }) {
             setGame(data.results);
 
             try {
-              // Cargar reviews desde Firestore
               const reviewsQuery = query(
                 collection(db, "reviews"),
                 where("gameId", "==", id)
@@ -180,7 +192,6 @@ export default function GameDetailsPage({ id }) {
               }));
               setReviews(loadedReviews);
 
-              // Verificar si el juego está en favoritos
               if (user) {
                 const userRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userRef);
@@ -206,7 +217,6 @@ export default function GameDetailsPage({ id }) {
   }, [id, user]);
 
   useEffect(() => {
-    // Filtrar las reseñas para este juego
     const gameReviews = globalReviews.filter((review) => review.gameId === id);
     setReviews(gameReviews);
   }, [id, globalReviews]);
@@ -219,7 +229,6 @@ export default function GameDetailsPage({ id }) {
     return <div className="text-center">Loading...</div>;
   }
 
-  // Formatear la fecha de lanzamiento
   const formattedReleaseDate = game.original_release_date
     ? new Date(game.original_release_date).toLocaleDateString("en-US", {
         year: "numeric",
@@ -228,7 +237,6 @@ export default function GameDetailsPage({ id }) {
       })
     : "N/A";
 
-  // Calcular la media de todas las reviews
   const averageRating =
     reviews.length > 0
       ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
@@ -240,12 +248,11 @@ export default function GameDetailsPage({ id }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-gray-900 text-white pt-20"
+        className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white pt-20"
       >
         <TransparentNavbar />
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
-            {/* Game image */}
             <motion.div
               initial={{ x: -50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
@@ -261,13 +268,12 @@ export default function GameDetailsPage({ id }) {
               )}
             </motion.div>
 
-            {/* Game details */}
             <div className="w-full lg:w-2/3">
               <motion.h1
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="text-4xl font-bold mb-4 text-blue-400"
+                className="text-4xl font-bold mb-4 text-blue-300"
               >
                 {game.name}
               </motion.h1>
@@ -276,51 +282,69 @@ export default function GameDetailsPage({ id }) {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="mb-6 bg-gray-800 p-4 rounded-lg shadow"
+                className="mb-6 bg-gray-800 bg-opacity-50 p-6 rounded-lg shadow-md backdrop-blur-sm"
               >
-                <h2 className="text-2xl font-semibold mb-2 text-blue-300">
+                <h2 className="text-2xl font-semibold mb-4 text-blue-300">
                   Game Details
                 </h2>
-                <p>
-                  <strong className="text-blue-300">Release Date:</strong>{" "}
-                  {formattedReleaseDate}
-                </p>
-                <p>
-                  <strong className="text-blue-300">Platforms:</strong>{" "}
-                  {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
-                </p>
-                <p>
-                  <strong className="text-blue-300">Genres:</strong>{" "}
-                  {game.genres?.map((g) => g.name).join(", ") || "N/A"}
-                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center">
+                    <FaCalendarAlt className="text-blue-400 mr-2" />
+                    <p>
+                      <strong className="text-blue-300">Release Date:</strong>{" "}
+                      {formattedReleaseDate}
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <FaDesktop className="text-blue-400 mr-2" />
+                    <p>
+                      <strong className="text-blue-300">Platforms:</strong>{" "}
+                      {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
+                    </p>
+                  </div>
+                  <div className="flex items-center">
+                    <FaTags className="text-blue-400 mr-2" />
+                    <p>
+                      <strong className="text-blue-300">Genres:</strong>{" "}
+                      {game.genres?.map((g) => g.name).join(", ") || "N/A"}
+                    </p>
+                  </div>
+                </div>
               </motion.div>
 
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="mb-6 bg-gray-800 p-4 rounded-lg shadow"
+                className="mb-6 bg-gray-800 bg-opacity-50 p-6 rounded-lg shadow-md backdrop-blur-sm"
               >
                 <h2 className="text-2xl font-semibold mb-2 text-blue-300">
                   Description
                 </h2>
-                <p>{game.deck || "No description available."}</p>
+                <p className="text-gray-300">
+                  {game.deck || "No description available."}
+                </p>
               </motion.div>
 
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
-                className="mb-6 bg-gray-800 p-4 rounded-lg shadow"
+                className="mb-6 bg-gray-800 bg-opacity-50 p-6 rounded-lg shadow-md backdrop-blur-sm"
               >
                 <h2 className="text-2xl font-semibold mb-2 text-blue-300">
                   Average Rating
                 </h2>
-                <p className="text-lg">
+                <p className="text-lg flex items-center">
                   {reviews.length > 0 ? (
                     <>
-                      <FaStar className="inline-block text-yellow-400 mr-2" />
-                      {averageRating.toFixed(1)} / 5 ({reviews.length} reviews)
+                      <FaStar className="text-yellow-400 mr-2" />
+                      <span className="font-bold text-yellow-400">
+                        {averageRating.toFixed(1)}
+                      </span>
+                      <span className="text-gray-300 ml-2">
+                        / 5 ({reviews.length} reviews)
+                      </span>
                     </>
                   ) : (
                     "No reviews yet."
@@ -332,14 +356,14 @@ export default function GameDetailsPage({ id }) {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
-                className="flex items-center space-x-4 mb-6"
+                className="flex flex-wrap items-center gap-4 mb-6"
               >
                 {user ? (
                   <>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="bg-blue-500 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-600 transition"
+                      className="bg-blue-600 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-md"
                       onClick={handleAddReviewClick}
                     >
                       Add Review
@@ -347,31 +371,28 @@ export default function GameDetailsPage({ id }) {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`text-lg rounded-md text-white px-6 py-3 ${
+                      className={`text-lg rounded-md text-white px-6 py-3 transition duration-300 ease-in-out shadow-md ${
                         isFavorite
-                          ? "bg-red-500 hover:bg-red-600"
+                          ? "bg-red-600 hover:bg-red-700"
                           : "bg-gray-600 hover:bg-gray-700"
-                      } transition`}
+                      }`}
                       onClick={handleLikeClick}
                     >
                       <FaHeart className="inline-block mr-2" />
-                      {isFavorite
-                        ? "Remove from Favorites"
-                        : "Add to Favorites"}
+                      {isFavorite ? "" : ""}
                     </motion.button>
                   </>
                 ) : (
                   <motion.p
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-red-400"
+                    className="text-red-400 bg-gray-800 bg-opacity-50 p-4 rounded-md shadow-md"
                   >
                     You need to log in to add a review, rate, or like a game.
                   </motion.p>
                 )}
               </motion.div>
 
-              {/* Reviews section */}
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -390,31 +411,36 @@ export default function GameDetailsPage({ id }) {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           transition={{ duration: 0.3, delay: index * 0.1 }}
-                          className="p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-md"
+                          className="p-6 border border-gray-700 rounded-lg bg-gray-800 bg-opacity-50 shadow-md backdrop-blur-sm"
                         >
-                          <Link
-                            href={`/profile/${encodeURIComponent(
-                              review.username
-                            )}`}
-                            className="font-bold text-blue-400 hover:underline"
-                          >
-                            {review.username}
-                          </Link>
-                          <p className="text-yellow-400">
-                            <FaStar className="inline-block mr-1" />
-                            {"★".repeat(review.rating)}
-                            {"☆".repeat(5 - review.rating)}
-                          </p>
+                          <div className="flex justify-between items-center mb-2">
+                            <Link
+                              href={`/profile/${encodeURIComponent(
+                                review.username
+                              )}`}
+                              className="font-bold text-blue-400 hover:underline"
+                            >
+                              {review.username}
+                            </Link>
+                            <p className="text-yellow-400 flex items-center">
+                              <FaStar className="mr-1" />
+                              {review.rating}
+                            </p>
+                          </div>
                           {review.containsSpoilers && (
-                            <p className="text-red-400">Contains Spoilers</p>
+                            <p className="text-red-400 mb-2">
+                              Contains Spoilers
+                            </p>
                           )}
-                          <p className="mt-2">{review.comment}</p>
+                          <p className="text-gray-300">{review.comment}</p>
                         </motion.div>
                       ))}
                     </AnimatePresence>
                   </div>
                 ) : (
-                  <p className="text-gray-400">No reviews yet. Be the first!</p>
+                  <p className="text-gray-400 bg-gray-800 bg-opacity-50 p-4 rounded-md shadow-md">
+                    No reviews yet. Be the first!
+                  </p>
                 )}
               </motion.div>
             </div>
@@ -422,7 +448,6 @@ export default function GameDetailsPage({ id }) {
         </div>
       </motion.div>
 
-      {/* Modal for adding a review */}
       {showModal && (
         <AddReviewModal
           game={game}

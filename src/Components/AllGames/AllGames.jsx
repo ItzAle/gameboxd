@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import jsonp from "jsonp";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import "../../utils/global.css";
+import debounce from "lodash/debounce";
 
 export default function Component() {
   const [games, setGames] = useState([]);
@@ -16,7 +17,7 @@ export default function Component() {
   const limit = 100;
   const apiUrl = "https://www.giantbomb.com/api/games/";
 
-  const fetchGames = (term = "") => {
+  const fetchGames = useCallback((term = "") => {
     setIsLoading(true);
     const params = {
       api_key: "54a0e172e4af5165c21d0517ca55f7c8f3d34aab",
@@ -40,45 +41,53 @@ export default function Component() {
         setGames(data.results);
       }
     });
-  };
+  }, []);
+
+  const debouncedFetchGames = useCallback(
+    debounce((term) => fetchGames(term), 300),
+    [fetchGames]
+  );
 
   useEffect(() => {
     fetchGames();
-  }, []);
+  }, [fetchGames]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       window.jsonpCallback = function (data) {
         window.jsonpData = data;
       };
     }
   }, []);
 
-  const handleSearch = () => {
-    setGames([]);
-    fetchGames(searchTerm);
-  };
-
   const handleInputChange = (event) => {
-    setSearchTerm(event.target.value);
+    const term = event.target.value;
+    setSearchTerm(term);
+    debouncedFetchGames(term);
   };
 
   if (error) {
-    return <div className="text-red-500">Error: {error.message}</div>;
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        <div className="text-red-500 text-xl bg-gray-800 p-6 rounded-lg shadow-lg">
+          Error: {error.message}
+        </div>
+      </div>
+    );
   }
 
   return (
     <>
       <TransparentNavbar />
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
         <div className="container mx-auto px-4 py-8">
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-5xl font-bold text-center mb-12 text-blue-400"
+            className="text-5xl font-bold text-center mb-12 text-blue-300"
           >
-            All Games
+            Discover Games
           </motion.h1>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -96,8 +105,7 @@ export default function Component() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={handleSearch}
-              className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
+              className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
             >
               <Search className="h-5 w-5" />
               <span>Search</span>
@@ -105,7 +113,7 @@ export default function Component() {
           </motion.div>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
+              <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
             </div>
           ) : (
             <AnimatePresence>
@@ -134,7 +142,7 @@ export default function Component() {
                           />
                         ) : (
                           <div className="flex items-center justify-center w-full h-full text-gray-500">
-                            No Image
+                            <Search className="h-12 w-12" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

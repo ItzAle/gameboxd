@@ -16,6 +16,7 @@
     "framer-motion": "^11.3.31",
     "igdb-api-node": "^5.0.2",
     "jsonp": "^0.2.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.429.0",
     "next": "^14.2.8",
     "next-auth": "^4.24.7",

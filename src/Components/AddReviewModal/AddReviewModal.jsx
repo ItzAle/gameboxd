@@ -12,6 +12,7 @@ import {
   arrayUnion,
   getDoc,
   setDoc,
+  arrayRemove,
 } from "firebase/firestore";
 import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { FaStar } from "react-icons/fa";
@@ -64,11 +65,52 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   const [comment, setComment] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [liked, setLiked] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const { user } = useAuth();
   const [isBrowser, setIsBrowser] = useState(false);
 
-  const handleToggleFavorite = () => {
-    setLiked((prevLiked) => !prevLiked);
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      toast.error(
+        "Necesitas iniciar sesión para marcar un juego como favorito."
+      );
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const likedGames = userData.likedGames || [];
+
+        const gameToSave = {
+          gameId: game.id,
+          name: game.name,
+          image: game.image?.small_url || null,
+        };
+
+        if (isFavorite) {
+          // El juego ya está en favoritos, lo eliminamos
+          await updateDoc(userRef, {
+            likedGames: arrayRemove(gameToSave),
+          });
+          setIsFavorite(false);
+          toast.success("Juego eliminado de favoritos.");
+        } else {
+          // El juego no está en favoritos, lo añadimos
+          await updateDoc(userRef, {
+            likedGames: arrayUnion(gameToSave),
+          });
+          setIsFavorite(true);
+          toast.success("Juego añadido a favoritos.");
+        }
+      }
+    } catch (error) {
+      console.error("Error al actualizar el estado de favorito:", error);
+      toast.error("Ocurrió un error al actualizar el estado de favorito.");
+    }
   };
 
   useEffect(() => {
@@ -210,12 +252,14 @@ export default function AddReviewModal({ game, onClose, onSave }) {
               whileTap={{ scale: 0.9 }}
               className="flex items-center text-gray-300 hover:text-white"
             >
-              {liked ? (
+              {isFavorite ? (
                 <AiFillHeart className="text-red-500 text-2xl mr-2" />
               ) : (
                 <AiOutlineHeart className="text-2xl mr-2" />
               )}
-              <span>Add to Liked Games</span>
+              <span>
+                {isFavorite ? "Remove from favorites" : "Add to favorites"}
+              </span>
             </motion.button>
           </motion.div>
 

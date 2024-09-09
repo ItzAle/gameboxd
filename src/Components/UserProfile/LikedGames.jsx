@@ -1,108 +1,79 @@
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { FaHeart, FaTimes } from "react-icons/fa";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../../lib/firebase"; // Asegúrate de que la ruta sea correcta
+import { FaHeart, FaTrash } from "react-icons/fa";
+import Link from "next/link";
+import { doc, updateDoc, arrayRemove } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 
-const LikedGames = ({ likedGames, covers, userEmail }) => {
-  const handleRemoveFavorite = async (gameId) => {
-    if (!userEmail) {
-      console.error("userEmail is undefined.");
-      toast.error("User email is not defined.");
+const LikedGames = ({ userEmail, likedGames, setUserProfile }) => {
+  const { user } = useAuth();
+
+  const handleUnlike = async (game) => {
+    if (!user) {
+      toast.error("Necesitas iniciar sesión para realizar esta acción.");
       return;
     }
 
-    if (
-      confirm("Are you sure you want to remove this game from your favorites?")
-    ) {
-      try {
-        const userRef = doc(db, "users", userEmail);
+    try {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        likedGames: arrayRemove(game),
+      });
 
-        // Filtramos los juegos para excluir el juego con el gameId específico
-        const updatedLikedGames = likedGames.filter(
-          (likedGame) => likedGame.gameId !== gameId
-        );
+      // Actualizar el estado local
+      setUserProfile((prevProfile) => ({
+        ...prevProfile,
+        likedGames: prevProfile.likedGames.filter(
+          (g) => g.gameId !== game.gameId
+        ),
+      }));
 
-        await updateDoc(userRef, {
-          likedGames: updatedLikedGames,
-        });
-
-        toast.success("The game has been removed from your favorites.");
-      } catch (error) {
-        console.error("Error removing favorite:", error);
-        toast.error(
-          "An error occurred while removing the game from your favorites."
-        );
-      }
+      toast.success("Juego eliminado de favoritos.");
+    } catch (error) {
+      console.error("Error al quitar el juego de favoritos:", error);
+      toast.error("Ocurrió un error al quitar el juego de favoritos.");
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30"
-    >
-      <h2 className="text-2xl font-semibold mb-4 flex items-center text-white">
-        <FaHeart className="mr-2 text-red-500" /> Liked Games
+    <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+      <h2 className="text-2xl font-semibold mb-2 flex items-center">
+        <FaHeart className="mr-2 text-red-500" /> Favorite Games
       </h2>
       {likedGames.length > 0 ? (
-        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 overflow-y-auto max-h-80 overflow-hidden">
-          {likedGames.map((game, index) => (
-            <motion.li
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {likedGames.map((game) => (
+            <motion.div
               key={game.gameId}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-              className="relative overflow-hidden"
+              whileHover={{ scale: 1.05 }}
+              className="relative group"
             >
               <Link href={`/games/${game.gameId}`}>
-                <motion.div
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 h-full bg-gray-700"
-                >
-                  <div className="aspect-w-3 aspect-h-4">
-                    <img
-                      src={
-                        covers[game.gameId] || "/path/to/placeholder-image.png"
-                      }
-                      alt={game.gameName}
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent opacity-70"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
-                    <p className="text-center font-medium text-sm">
-                      {game.gameName}
-                    </p>
-                  </div>
-                </motion.div>
+                <img
+                  src={game.image || "/placeholder-image.jpg"}
+                  alt={game.name}
+                  className="w-full h-40 object-cover rounded-lg"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-2 rounded-b-lg">
+                  <p className="text-sm text-white truncate">{game.name}</p>
+                </div>
               </Link>
-
-              {/* Botón de eliminación */}
-              <button
-                onClick={() => handleRemoveFavorite(game.gameId)}
-                className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 focus:outline-none"
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                onClick={() => handleUnlike(game)}
               >
-                <FaTimes />
-              </button>
-            </motion.li>
+                <FaTrash />
+              </motion.button>
+            </motion.div>
           ))}
-        </ul>
+        </div>
       ) : (
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-lg text-gray-300"
-        >
-          You have not liked any games yet.
-        </motion.p>
+        <p className="text-lg"> You have no favorite games yet. </p>
       )}
-    </motion.div>
+    </div>
   );
 };
 
