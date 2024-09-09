@@ -6,12 +6,11 @@ import { db } from "../../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 
-const LikedGames = ({ userEmail, likedGames, setUserProfile }) => {
+const LikedGames = ({ userEmail, likedGames, setUserProfile, isOwnProfile }) => {
   const { user } = useAuth();
 
   const handleUnlike = async (game) => {
-    if (!user) {
-      toast.error("Necesitas iniciar sesión para realizar esta acción.");
+    if (!user || !isOwnProfile) {
       return;
     }
 
@@ -39,7 +38,7 @@ const LikedGames = ({ userEmail, likedGames, setUserProfile }) => {
   return (
     <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
       <h2 className="text-2xl font-semibold mb-2 flex items-center">
-        <FaHeart className="mr-2 text-red-500" /> Favorite Games
+        <FaHeart className="mr-2 text-red-500" /> Juegos Favoritos
       </h2>
       {likedGames.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -59,19 +58,21 @@ const LikedGames = ({ userEmail, likedGames, setUserProfile }) => {
                   <p className="text-sm text-white truncate">{game.name}</p>
                 </div>
               </Link>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                onClick={() => handleUnlike(game)}
-              >
-                <FaTrash />
-              </motion.button>
+              {isOwnProfile && (
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                  onClick={() => handleUnlike(game)}
+                >
+                  <FaTrash />
+                </motion.button>
+              )}
             </motion.div>
           ))}
         </div>
       ) : (
-        <p className="text-lg"> You have no favorite games yet. </p>
+        <p className="text-lg">Aún no tienes juegos favoritos.</p>
       )}
     </div>
   );

@@ -309,6 +309,7 @@ export default function UserProfile() {
                   userEmail={user.email}
                   likedGames={userProfile.likedGames || []}
                   setUserProfile={setUserProfile}
+                  isOwnProfile={true}
                 />
               </motion.div>
             </motion.div>
@@ -330,6 +331,7 @@ export default function UserProfile() {
                       reviews={userReviews}
                       onEditReview={onEditReview}
                       onDeleteReview={onDeleteReview}
+                      isOwnProfile={true}
                     />
                   ) : (
                     <motion.p

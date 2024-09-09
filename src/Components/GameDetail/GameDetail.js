@@ -189,6 +189,7 @@ export default function GameDetailsPage({ id }) {
               const loadedReviews = reviewsSnapshot.docs.map((doc) => ({
                 id: doc.id,
                 ...doc.data(),
+                userId: doc.data().userId,
               }));
               setReviews(loadedReviews);
 
@@ -416,7 +417,7 @@ export default function GameDetailsPage({ id }) {
                           <div className="flex justify-between items-center mb-2">
                             <Link
                               href={`/profile/${encodeURIComponent(
-                                review.username
+                                review.userId
                               )}`}
                               className="font-bold text-blue-400 hover:underline"
                             >

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaEdit, FaTrash, FaStar } from "react-icons/fa";
 import Link from "next/link";
 
-const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
+const Reviews = ({ reviews, onEditReview, onDeleteReview, isOwnProfile }) => {
   const [editingReview, setEditingReview] = useState(null);
   const [editedComment, setEditedComment] = useState("");
   const [editedRating, setEditedRating] = useState(0);
@@ -24,10 +24,6 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
     }
   };
 
-  const handleDeleteClick = async (reviewId) => {
-    await onDeleteReview(reviewId);
-  };
-
   return (
     <div>
       {reviews.length > 0 ? (
@@ -40,7 +36,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
               >
                 <h3 className="text-xl font-semibold">{review.gameName}</h3>
               </Link>
-              {editingReview && editingReview.id === review.id ? (
+              {isOwnProfile && editingReview && editingReview.id === review.id ? (
                 <div className="space-y-2">
                   <textarea
                     value={editedComment}
@@ -84,27 +80,29 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                     ))}
                   </div>
                   <p className="mt-2">{review.comment}</p>
-                  <div className="mt-2 space-x-2">
-                    <button
-                      onClick={() => handleEditClick(review)}
-                      className="text-blue-500 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick(review.id)}
-                      className="text-red-500 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  {isOwnProfile && (
+                    <div className="mt-2 space-x-2">
+                      <button
+                        onClick={() => handleEditClick(review)}
+                        className="text-blue-500 hover:underline"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => onDeleteReview(review.id)}
+                        className="text-red-500 hover:underline"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-lg">You have no reviews yet.</p>
+        <p className="text-lg">Aún no tienes reseñas.</p>
       )}
     </div>
   );
