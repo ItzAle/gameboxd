@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useAuth } from "../../../context/AuthContext";
 import jsonp from "jsonp";
 import AddReviewModal from "../../../Components/AddReviewModal/AddReviewModal";
 import { db } from "../../../../lib/firebase";
@@ -27,7 +27,7 @@ import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 
 export default function GameDetailsPage({ params }) {
   const { id } = params;
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [game, setGame] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [showModal, setShowModal] = useState(false);
@@ -36,7 +36,7 @@ export default function GameDetailsPage({ params }) {
   const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
 
   const handleAddReviewClick = async () => {
-    if (!session || !session.user) {
+    if (!user) {
       toast.error("You need to be logged in to add a review.");
       return;
     }
@@ -45,7 +45,7 @@ export default function GameDetailsPage({ params }) {
       const reviewsQuery = query(
         collection(db, "reviews"),
         where("gameId", "==", id),
-        where("user", "==", session.user.name)
+        where("userId", "==", user.uid)
       );
 
       const reviewsSnapshot = await getDocs(reviewsQuery);
@@ -61,14 +61,54 @@ export default function GameDetailsPage({ params }) {
     }
   };
 
+  const handleSaveReview = async (newReview) => {
+    if (!user) {
+      toast.error("You need to be logged in to add a review.");
+      return;
+    }
+
+    try {
+      // Obtener el documento del usuario para conseguir el nombre de usuario
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      const username = userData?.username || user.displayName || "Usuario";
+
+      const reviewToSave = {
+        ...newReview,
+        userId: user.uid,
+        username: username, // Usar el nombre de usuario aquí
+        gameId: id,
+        createdAt: new Date().toISOString(),
+      };
+
+      const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
+      const savedReview = { ...reviewToSave, id: docRef.id };
+
+      setReviews((prevReviews) => [...prevReviews, savedReview]);
+      setGlobalReviews((prevReviews) => [...prevReviews, savedReview]);
+
+      // Actualizar el documento del usuario
+      await updateDoc(userRef, {
+        reviews: arrayUnion(docRef.id)
+      });
+
+      toast.success("Review added successfully.");
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error saving review:", error);
+      toast.error("An error occurred while saving the review.");
+    }
+  };
+
   const handleLikeClick = async () => {
-    if (!session || !session.user) {
+    if (!user) {
       toast.error("You need to be logged in to like a game.");
       return;
     }
 
     try {
-      const userRef = doc(db, "users", session.user.email);
+      const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
@@ -94,30 +134,6 @@ export default function GameDetailsPage({ params }) {
     } catch (error) {
       console.error("Error updating favorite status:", error);
       toast.error("An error occurred while updating favorite status.");
-    }
-  };
-
-  const handleRateGame = async (rating) => {
-    if (!session || !session.user) {
-      toast.error("You need to be logged in to rate a game.");
-      return;
-    }
-
-    try {
-      const reviewToSave = {
-        rating,
-        user: session.user.name,
-        gameId: id,
-      };
-      const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
-      setReviews((prevReviews) => [
-        ...prevReviews,
-        { ...reviewToSave, id: docRef.id },
-      ]);
-      toast.success("Game rated successfully.");
-    } catch (error) {
-      console.error("Error rating game:", error);
-      toast.error("An error occurred while rating the game.");
     }
   };
 
@@ -166,13 +182,13 @@ export default function GameDetailsPage({ params }) {
               setReviews(loadedReviews);
 
               // Verificar si el juego está en favoritos
-              if (session?.user?.email) {
-                const userRef = doc(db, "users", session.user.email);
+              if (user) {
+                const userRef = doc(db, "users", user.uid);
                 const userDoc = await getDoc(userRef);
 
                 if (userDoc.exists()) {
                   const userData = userDoc.data();
-                  setIsFavorite(userData.likedGames.includes(id));
+                  setIsFavorite(userData.likedGames?.includes(id) || false);
                 }
               }
             } catch (firestoreError) {
@@ -188,41 +204,13 @@ export default function GameDetailsPage({ params }) {
     };
 
     fetchGameDetails();
-  }, [id, session]);
+  }, [id, user]);
 
   useEffect(() => {
     // Filtrar las reseñas para este juego
     const gameReviews = globalReviews.filter((review) => review.gameId === id);
     setReviews(gameReviews);
   }, [id, globalReviews]);
-
-  const handleSaveReview = async (newReview) => {
-    try {
-      if (newReview.rating > 0 || newReview.comment) {
-        const reviewToSave = {
-          ...newReview,
-          user: session.user.name,
-          gameId: id,
-        };
-        const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
-        setReviews((prevReviews) => [
-          ...prevReviews,
-          { ...reviewToSave, id: docRef.id },
-        ]);
-        setGlobalReviews((prevReviews) => [
-          ...prevReviews,
-          { ...reviewToSave, id: docRef.id },
-        ]);
-      }
-
-      // Si el usuario ha dado "like", añadir el juego a la lista de juegos favoritos
-      if (newReview.liked) {
-        setLikedGames((prevLikedGames) => [...prevLikedGames, game]);
-      }
-    } catch (error) {
-      console.error("Error saving review:", error);
-    }
-  };
 
   if (error) {
     return <div className="text-red-500">Error: {error.message}</div>;
@@ -347,7 +335,7 @@ export default function GameDetailsPage({ params }) {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="flex items-center space-x-4 mb-6"
               >
-                {session ? (
+                {user ? (
                   <>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -374,9 +362,13 @@ export default function GameDetailsPage({ params }) {
                     </motion.button>
                   </>
                 ) : (
-                  <p className="text-red-400">
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-red-400"
+                  >
                     You need to log in to add a review, rate, or like a game.
-                  </p>
+                  </motion.p>
                 )}
               </motion.div>
 
@@ -402,10 +394,10 @@ export default function GameDetailsPage({ params }) {
                           className="p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-md"
                         >
                           <Link
-                            href={`/profile/${encodeURIComponent(review.user)}`}
+                            href={`/profile/${encodeURIComponent(review.username)}`}
                             className="font-bold text-blue-400 hover:underline"
                           >
-                            {review.user}
+                            {review.username}
                           </Link>
                           <p className="text-yellow-400">
                             <FaStar className="inline-block mr-1" />

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "../../context/AuthContext"; // Importa useAuth
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaSearch, FaUser, FaSignOutAlt, FaGamepad } from "react-icons/fa";
+import { signOut } from "firebase/auth";
+import { auth } from "../../../lib/firebase";
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const { user } = useAuth(); // Usar useAuth en lugar de useSession
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const router = useRouter();
@@ -17,6 +19,15 @@ export default function Navbar() {
     e.preventDefault();
     if (searchTerm.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push("/");
+    } catch (error) {
+      console.error("Error signing out: ", error);
     }
   };
 
@@ -65,7 +76,7 @@ export default function Navbar() {
           <FaSearch />
         </motion.button>
 
-        {session ? (
+        {user ? (
           <>
             <Link
               href="/profile"
@@ -76,7 +87,7 @@ export default function Navbar() {
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => signOut()}
+              onClick={handleSignOut}
               className="text-gray-300 hover:text-white transition"
             >
               <FaSignOutAlt />

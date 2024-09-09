@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,9 +12,11 @@ import {
   FaBars,
   FaTimes,
 } from "react-icons/fa";
+import { signOut } from "firebase/auth";
+import { auth } from "../../../lib/firebase";
 
 export default function TransparentNavbar() {
-  const { data: session } = useSession();
+  const { user } = useAuth(); // Usa useAuth en lugar de useSession
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -48,16 +50,26 @@ export default function TransparentNavbar() {
     setIsMobileMenuOpen(false);
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.push("/");
+      closeMobileMenu();
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
+  };
+
   const navItems = [
     { href: "/all", icon: <FaGamepad />, text: "All Games" },
-    ...(session
+    ...(user
       ? [
           { href: "/profile", icon: <FaUser />, text: "Profile" },
           {
             href: "#",
             icon: <FaSignOutAlt />,
             text: "Sign Out",
-            onClick: () => signOut(),
+            onClick: handleSignOut,
           },
         ]
       : [

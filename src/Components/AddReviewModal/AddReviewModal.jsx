@@ -17,7 +17,8 @@ import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
 import { FaStar } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { db } from "../../../lib/firebase";
-import { useSession } from "next-auth/react";
+import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-toastify";
 
 const StarRating = ({ rating, setRating }) => {
   const handleStarClick = (value) => {
@@ -63,9 +64,8 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   const [comment, setComment] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
   const [liked, setLiked] = useState(false);
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [isBrowser, setIsBrowser] = useState(false);
-  const user = session?.user;
 
   const handleToggleFavorite = () => {
     setLiked((prevLiked) => !prevLiked);
@@ -74,20 +74,21 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   useEffect(() => {
     const checkIfReviewExists = async () => {
       if (!user) {
-        alert("You need to be logged in to add a review.");
+        toast.error("You need to be logged in to add a review.");
+        onClose();
         return;
       }
 
       const reviewsQuery = query(
         collection(db, "reviews"),
         where("gameId", "==", game.id),
-        where("user", "==", user.name)
+        where("userId", "==", user.uid)
       );
 
       const reviewsSnapshot = await getDocs(reviewsQuery);
 
       if (!reviewsSnapshot.empty) {
-        alert("You have already submitted a review for this game.");
+        toast.error("You have already submitted a review for this game.");
         onClose();
       }
     };
@@ -96,67 +97,25 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   }, [user, game.id, onClose]);
 
   const handleSubmit = async () => {
-    if (comment && rating === 0) {
-      alert("Please provide a rating if you are writing a review.");
+    if (!user) {
+      toast.error("You need to be logged in to add a review.");
+      onClose();
       return;
     }
 
-    try {
-      const gameCover = game.cover || "";
-
-      const reviewData = {
-        gameId: game.id,
-        gameName: game.name,
-        gameCover: gameCover,
-        user: user.email,
-        rating,
-        comment,
-        containsSpoilers,
-        liked,
-      };
-
-      if (rating > 0 || comment) {
-        const reviewRef = await addDoc(collection(db, "reviews"), reviewData);
-
-        const userRef = doc(db, "users", user.email);
-        const userDoc = await getDoc(userRef);
-
-        if (!userDoc.exists()) {
-          await setDoc(userRef, {
-            email: user.email,
-            reviews: [],
-            likedGames: [],
-          });
-        }
-
-        await updateDoc(userRef, {
-          reviews: arrayUnion({
-            id: reviewRef.id,
-            gameId: game.id,
-            gameName: game.name,
-            rating,
-            comment,
-            containsSpoilers,
-          }),
-        });
-      }
-      if (liked) {
-        const userRef = doc(db, "users", user.email);
-        await updateDoc(userRef, {
-          likedGames: arrayUnion({
-            gameId: game.id,
-            gameName: game.name,
-            gameCover: gameCover,
-          }),
-        });
-      }
-
-      onSave(reviewData);
-      onClose();
-    } catch (error) {
-      console.error("Error adding review: ", error);
-      alert("There was an error submitting your review.");
+    if (rating === 0) {
+      toast.error("Please provide a rating for your review.");
+      return;
     }
+
+    const reviewData = {
+      rating,
+      comment,
+      containsSpoilers,
+      liked,
+    };
+
+    onSave(reviewData);
   };
 
   useEffect(() => {

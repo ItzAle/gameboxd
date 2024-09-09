@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import Modal from "../Modal/Modal";
 import Bio from "./Bio";
@@ -15,6 +14,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FaEdit, FaStar } from "react-icons/fa";
 import jsonp from "jsonp";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
+import { useAuth } from "../../context/AuthContext";
+import { useRouter } from "next/navigation";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -56,21 +57,23 @@ const StarField = ({ count = 100 }) => {
 };
 
 export default function UserProfile() {
-  const { data: session } = useSession();
+  const { user } = useAuth();
+  const router = useRouter();
   const [userProfile, setUserProfile] = useState(null);
+  const [userReviews, setUserReviews] = useState([]);
   const [covers, setCovers] = useState({});
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const { reviews, updateReview, deleteReview } = useReviews();
-  const user = session?.user;
   const apiUrl = "https://www.giantbomb.com/api/games/";
 
   useEffect(() => {
-    if (session?.user) {
+    if (user) {
       fetchUserProfile();
+      fetchUserReviews();
     }
-  }, [session]);
+  }, [user]);
 
   const fetchGameById = (gameId) => {
     return new Promise((resolve, reject) => {
@@ -99,7 +102,7 @@ export default function UserProfile() {
     if (!user) return;
 
     try {
-      const userRef = doc(db, "users", user.email);
+      const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
@@ -132,11 +135,30 @@ export default function UserProfile() {
     }
   };
 
+  const fetchUserReviews = async () => {
+    if (!user) return;
+
+    try {
+      const reviewsQuery = query(
+        collection(db, "reviews"),
+        where("userId", "==", user.uid)
+      );
+      const reviewsSnapshot = await getDocs(reviewsQuery);
+      const reviewsData = reviewsSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setUserReviews(reviewsData);
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
     try {
-      const userRef = doc(db, "users", user.email);
+      const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         bio,
         profilePicture,
@@ -172,7 +194,13 @@ export default function UserProfile() {
         rating: newRating,
       });
 
-      updateReview(reviewId, { comment: newComment, rating: newRating });
+      setUserReviews(prevReviews =>
+        prevReviews.map(review =>
+          review.id === reviewId
+            ? { ...review, comment: newComment, rating: newRating }
+            : review
+        )
+      );
 
       toast.success("Reseña actualizada con éxito");
       return true;
@@ -188,7 +216,7 @@ export default function UserProfile() {
       const reviewRef = doc(db, "reviews", reviewId);
       await deleteDoc(reviewRef);
 
-      deleteReview(reviewId);
+      setUserReviews(prevReviews => prevReviews.filter(review => review.id !== reviewId));
 
       toast.success("Reseña eliminada con éxito");
       return true;
@@ -200,22 +228,8 @@ export default function UserProfile() {
   };
 
   if (!user) {
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white"
-      >
-        <p className="text-red-500 mb-4">Please log in to view your profile.</p>
-        <Link
-          href="/login"
-          className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
-        >
-          Login here
-        </Link>
-      </motion.div>
-    );
+    router.push("/singin");
+    return null;
   }
 
   if (!userProfile) {
@@ -249,7 +263,7 @@ export default function UserProfile() {
             transition={{ duration: 0.5 }}
             className="text-4xl font-bold text-center mb-8"
           >
-            Welcome, {user.name}!
+            Welcome, {userProfile?.username || user?.displayName || "User"}!
           </motion.h1>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -300,9 +314,9 @@ export default function UserProfile() {
                   <FaStar className="mr-2 text-yellow-400" /> Sus Reseñas
                 </h2>
                 <AnimatePresence>
-                  {reviews.filter(review => review.user === user.name).length > 0 ? (
+                  {userReviews.length > 0 ? (
                     <Reviews
-                      reviews={reviews.filter(review => review.user === user.name)}
+                      reviews={userReviews}
                       onEditReview={onEditReview}
                       onDeleteReview={onDeleteReview}
                     />
