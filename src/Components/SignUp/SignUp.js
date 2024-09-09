@@ -59,7 +59,7 @@ export default function SignUp() {
     setUsername(newUsername);
     if (!validateUsername(newUsername)) {
       setUsernameError(
-        "The username must be no longer than 10 characters, must be at least 4 characters long, must not end in a period and must not contain “_” or spaces.s must not end in a period, and must not contain '_' or spaces."
+        "The username must be no longer than 10 characters, must be at least 4 characters long, must not end in a period and must not contain “_” or spaces."
       );
     } else {
       const usernameExists = await checkUsernameExists(newUsername);
