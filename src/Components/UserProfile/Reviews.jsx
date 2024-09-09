@@ -45,7 +45,7 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview }) => {
                   <textarea
                     value={editedComment}
                     onChange={(e) => setEditedComment(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border rounded bg-gray-700 text-white"
                   />
                   <div className="flex items-center">
                     <span className="mr-2">Rating:</span>
