@@ -1,17 +1,14 @@
-"use client";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import UserProfile from "../../Components/UserProfile/UserProfile";
-import ProtectedRoute from "../../Components/ProtectedRoute/ProtectedRoute";
-export default function ProfilePage() {
-  const { data: session } = useSession();
-  const router = useRouter();
+import ProfilePage from "./client.page";
 
+export const metadata = {
+  title: "Profile",
+  description: "Profile page",
+};
+
+export default function Profile() {
   return (
     <div>
-      <ProtectedRoute>
-        <UserProfile />
-      </ProtectedRoute>
+      <ProfilePage />
     </div>
   );
 }

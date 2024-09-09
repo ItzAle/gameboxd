@@ -3,7 +3,6 @@ import { useState } from "react";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  updateProfile,
 } from "firebase/auth";
 import {
   doc,
@@ -59,7 +58,7 @@ export default function SignUp() {
     setUsername(newUsername);
     if (!validateUsername(newUsername)) {
       setUsernameError(
-        "The username must be no longer than 10 characters, must be at least 4 characters long, must not end in a period and must not contain “_” or spaces."
+        "The username must be no longer than 10 characters, must be at least 4 characters long, must not end in a period and must not contain '_' or spaces."
       );
     } else {
       const usernameExists = await checkUsernameExists(newUsername);
@@ -154,21 +153,21 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-blue-900">
       <motion.div
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md"
+        className="backdrop-blur-md bg-white bg-opacity-10 p-8 rounded-xl shadow-2xl w-full max-w-md border border-white border-opacity-20"
       >
-        <h2 className="text-3xl font-bold mb-6 text-center text-white">
+        <h2 className="text-4xl font-bold mb-6 text-center text-white">
           Register
         </h2>
-        <form onSubmit={handleSignUp} className="space-y-4">
+        <form onSubmit={handleSignUp} className="space-y-6">
           <div>
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-gray-200"
             >
               Username
             </label>
@@ -177,18 +176,18 @@ export default function SignUp() {
               id="username"
               value={username}
               onChange={handleUsernameChange}
-              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
               placeholder="Your Username"
               required
             />
             {usernameError && (
-              <p className="text-red-500 text-xs mt-1">{usernameError}</p>
+              <p className="text-red-400 text-xs mt-1">{usernameError}</p>
             )}
           </div>
           <div>
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-gray-200"
             >
               Email
             </label>
@@ -197,14 +196,14 @@ export default function SignUp() {
               id="email"
               value={email}
               onChange={handleEmailChange}
-              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
               placeholder="your@email.com"
               required
             />
             {emailError && (
-              <div className="text-red-500 text-xs mt-1">
+              <div className="text-red-400 text-xs mt-1">
                 {emailError}{" "}
-                <Link href="/signin" className="text-blue-400 hover:underline">
+                <Link href="/signin" className="text-blue-300 hover:underline">
                   Do you want to sign in?
                 </Link>
               </div>
@@ -213,7 +212,7 @@ export default function SignUp() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-300"
+              className="block text-sm font-medium text-gray-200"
             >
               Password
             </label>
@@ -222,29 +221,29 @@ export default function SignUp() {
               id="password"
               value={password}
               onChange={handlePasswordChange}
-              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
               placeholder="••••••••"
               required
             />
             {passwordError && (
-              <p className="text-red-500 text-xs mt-1">{passwordError}</p>
+              <p className="text-red-400 text-xs mt-1">{passwordError}</p>
             )}
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-200"
             disabled={usernameError || passwordError || emailError}
           >
             Register
           </motion.button>
         </form>
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-400">
-            ¿Ya tienes una cuenta?{" "}
-            <Link href="/signin" className="text-blue-400 hover:underline">
-              Already have an account?
+          <p className="text-sm text-gray-300">
+            Already have an account?{" "}
+            <Link href="/signin" className="text-blue-300 hover:underline">
+              Sign in
             </Link>
           </p>
         </div>

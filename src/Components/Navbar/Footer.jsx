@@ -35,25 +35,16 @@ export default function Footer() {
         {/* Social Media Icons */}
         <div className="flex space-x-4 mt-2 md:mt-0">
           <a
-            href="https://facebook.com"
-            className="text-white hover:text-blue-400 transition"
-          >
-            <FaFacebook size={24} />
-          </a>
-          <a
-            href="https://twitter.com"
+            href="https://x.com/alehhdev"
+            target="_blank"
             className="text-white hover:text-blue-400 transition"
           >
             <FaTwitter size={24} />
           </a>
+
           <a
-            href="https://instagram.com"
-            className="text-white hover:text-blue-400 transition"
-          >
-            <FaInstagram size={24} />
-          </a>
-          <a
-            href="https://github.com"
+            href="https://github.com/ItzAle"
+            target="_blank"
             className="text-white hover:text-blue-400 transition"
           >
             <FaGithub size={24} />
