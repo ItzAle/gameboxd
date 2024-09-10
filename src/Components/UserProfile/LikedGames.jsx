@@ -5,9 +5,36 @@ import { doc, updateDoc, arrayRemove } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import { useState, useEffect } from "react";
 
-const LikedGames = ({ userEmail, likedGames, setUserProfile, isOwnProfile }) => {
+const LikedGames = ({
+  userEmail,
+  likedGames,
+  setUserProfile,
+  isOwnProfile,
+}) => {
   const { user } = useAuth();
+  const [gameDetails, setGameDetails] = useState({});
+
+  useEffect(() => {
+    const fetchGameDetails = async () => {
+      const details = {};
+      for (const game of likedGames) {
+        try {
+          const response = await fetch(`https://gbxd-api.vercel.app/api/game/${game.slug}`);
+          if (response.ok) {
+            const data = await response.json();
+            details[game.slug] = data;
+          }
+        } catch (error) {
+          console.error(`Error fetching details for game ${game.slug}:`, error);
+        }
+      }
+      setGameDetails(details);
+    };
+
+    fetchGameDetails();
+  }, [likedGames]);
 
   const handleUnlike = async (game) => {
     if (!user || !isOwnProfile) {
@@ -24,7 +51,7 @@ const LikedGames = ({ userEmail, likedGames, setUserProfile, isOwnProfile }) => 
       setUserProfile((prevProfile) => ({
         ...prevProfile,
         likedGames: prevProfile.likedGames.filter(
-          (g) => g.gameId !== game.gameId
+          (g) => g.slug !== game.slug
         ),
       }));
 
@@ -38,19 +65,19 @@ const LikedGames = ({ userEmail, likedGames, setUserProfile, isOwnProfile }) => 
   return (
     <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
       <h2 className="text-2xl font-semibold mb-2 flex items-center">
-        <FaHeart className="mr-2 text-red-500" /> Juegos Favoritos
+        <FaHeart className="mr-2 text-red-500" /> Favorite Games
       </h2>
       {likedGames.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {likedGames.map((game) => (
             <motion.div
-              key={game.gameId}
+              key={game.slug}
               whileHover={{ scale: 1.05 }}
               className="relative group"
             >
-              <Link href={`/games/${game.gameId}`}>
+              <Link href={`/games/${game.slug}`}>
                 <img
-                  src={game.image || "/placeholder-image.jpg"}
+                  src={gameDetails[game.slug]?.coverImageUrl || "/placeholder-image.jpg"}
                   alt={game.name}
                   className="w-full h-40 object-cover rounded-lg"
                 />
@@ -72,7 +99,7 @@ const LikedGames = ({ userEmail, likedGames, setUserProfile, isOwnProfile }) => 
           ))}
         </div>
       ) : (
-        <p className="text-lg">Aún no tienes juegos favoritos.</p>
+        <p className="text-lg">No favorite games yet.</p>
       )}
     </div>
   );

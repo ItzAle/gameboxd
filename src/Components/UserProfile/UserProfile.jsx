@@ -75,7 +75,7 @@ export default function UserProfile() {
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const { reviews, updateReview, deleteReview } = useReviews();
-  const apiUrl = "https://www.giantbomb.com/api/games/";
+  const apiUrl = "https://gbxd-api.vercel.app/api/games";
 
   useEffect(() => {
     if (user) {
@@ -84,27 +84,17 @@ export default function UserProfile() {
     }
   }, [user]);
 
-  const fetchGameById = (gameId) => {
-    return new Promise((resolve, reject) => {
-      const params = {
-        api_key: "54a0e172e4af5165c21d0517ca55f7c8f3d34aab",
-        format: "jsonp",
-        json_callback: "jsonpCallback",
-        filter: `id:${gameId}`,
-      };
-
-      const urlParams = new URLSearchParams(params).toString();
-      const apiUrlWithParams = `${apiUrl}?${urlParams}`;
-
-      jsonp(apiUrlWithParams, { param: "json_callback" }, (err, data) => {
-        if (err) {
-          console.error("Error fetching game data:", err);
-          reject(err);
-        } else {
-          resolve(data.results[0]);
-        }
-      });
-    });
+  const fetchGameDetails = async (slug) => {
+    try {
+      const response = await fetch(`https://gbxd-api.vercel.app/api/game/${slug}`);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return await response.json();
+    } catch (error) {
+      console.error(`Error fetching game data for ${slug}:`, error);
+      return null;
+    }
   };
 
   const fetchUserProfile = async () => {
@@ -123,13 +113,15 @@ export default function UserProfile() {
         // Obtener las carátulas de los juegos
         const newCovers = {};
         for (const game of userData.likedGames) {
-          if (game.gameId) {
+          if (game.slug) {
             try {
-              const gameData = await fetchGameById(game.gameId);
-              newCovers[game.gameId] = gameData.image.medium_url;
+              const gameData = await fetchGameDetails(game.slug);
+              if (gameData) {
+                newCovers[game.slug] = gameData.coverImageUrl;
+              }
             } catch (error) {
               console.error(
-                `Error al obtener la carátula del juego ${game.gameId}:`,
+                `Error al obtener la carátula del juego ${game.slug}:`,
                 error
               );
             }

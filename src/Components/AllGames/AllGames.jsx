@@ -1,69 +1,55 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import jsonp from "jsonp";
 import Link from "next/link";
 import { Search, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import "../../utils/global.css";
-import debounce from "lodash/debounce";
 
 export default function Component() {
-  const [games, setGames] = useState([]);
+  const [allGames, setAllGames] = useState([]);
+  const [displayedGames, setDisplayedGames] = useState([]);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const limit = 100;
-  const apiUrl = "https://www.giantbomb.com/api/games/";
+  const apiUrl = "https://gbxd-api.vercel.app/api/games";
 
-  const fetchGames = useCallback((term = "") => {
+  const fetchGames = useCallback(async () => {
     setIsLoading(true);
-    const params = {
-      api_key: "54a0e172e4af5165c21d0517ca55f7c8f3d34aab",
-      format: "jsonp",
-      json_callback: "jsonpCallback",
-      limit: limit,
-      sort: "date_added:desc",
-      field_list: "name,image,id,date_added",
-      filter: term ? `name:${term}` : "",
-    };
-
-    const urlParams = new URLSearchParams(params).toString();
-    const apiUrlWithParams = `${apiUrl}?${urlParams}`;
-
-    jsonp(apiUrlWithParams, { param: "json_callback" }, (err, data) => {
-      setIsLoading(false);
-      if (err) {
-        console.error("Error fetching data:", err);
-        setError(err);
-      } else {
-        setGames(data.results);
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    });
+      const data = await response.json();
+      setAllGames(data);
+      setDisplayedGames(data);
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError(err);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
-
-  const debouncedFetchGames = useCallback(
-    debounce((term) => fetchGames(term), 300),
-    [fetchGames]
-  );
 
   useEffect(() => {
     fetchGames();
   }, [fetchGames]);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.jsonpCallback = function (data) {
-        window.jsonpData = data;
-      };
-    }
-  }, []);
-
   const handleInputChange = (event) => {
-    const term = event.target.value;
-    setSearchTerm(term);
-    debouncedFetchGames(term);
+    setSearchTerm(event.target.value);
+  };
+
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const lowercasedTerm = searchTerm.toLowerCase();
+    const filteredGames = allGames.filter(game => 
+      game.name.toLowerCase().includes(lowercasedTerm) ||
+      (game.genres && game.genres.some(genre => genre.toLowerCase().includes(lowercasedTerm))) ||
+      (game.platforms && game.platforms.some(platform => platform.toLowerCase().includes(lowercasedTerm)))
+    );
+    setDisplayedGames(filteredGames);
   };
 
   if (error) {
@@ -89,7 +75,8 @@ export default function Component() {
           >
             Discover Games
           </motion.h1>
-          <motion.div
+          <motion.form
+            onSubmit={handleSearch}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
@@ -103,6 +90,7 @@ export default function Component() {
               className="flex-grow px-6 py-3 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
             <motion.button
+              type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300"
@@ -110,7 +98,7 @@ export default function Component() {
               <Search className="h-5 w-5" />
               <span>Search</span>
             </motion.button>
-          </motion.div>
+          </motion.form>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
@@ -124,19 +112,19 @@ export default function Component() {
                 transition={{ duration: 0.5 }}
                 className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
               >
-                {games.map((game, index) => (
+                {displayedGames.map((game) => (
                   <motion.div
-                    key={game.id}
+                    key={game.slug}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                    transition={{ duration: 0.3 }}
                   >
-                    <Link href={`/games/${game.id}`} className="group">
+                    <Link href={`/games/${game.slug}`} className="group">
                       <div className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-gray-800 aspect-[3/4]">
-                        {game.image ? (
+                        {game.coverImageUrl ? (
                           <img
-                            src={game.image.small_url}
+                            src={game.coverImageUrl}
                             alt={`${game.name} cover`}
                             className="object-cover w-full h-full"
                           />
@@ -150,10 +138,11 @@ export default function Component() {
                           <h2 className="text-lg font-semibold line-clamp-2">
                             {game.name}
                           </h2>
-                          <p className="text-sm mt-1 text-gray-300">
-                            Added:{" "}
-                            {new Date(game.date_added).toLocaleDateString()}
-                          </p>
+                          {game.releaseDate && (
+                            <p className="text-sm mt-1 text-gray-300">
+                              Released: {new Date(game.releaseDate).getFullYear()}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </Link>

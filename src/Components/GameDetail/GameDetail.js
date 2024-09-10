@@ -67,42 +67,18 @@ export default function GameDetailsPage({ id }) {
   };
 
   const handleSaveReview = async (newReview) => {
-    if (!user) {
-      toast.error("You need to be logged in to add a review.");
-      return;
-    }
+    // No necesitamos crear un nuevo objeto de reseña aquí,
+    // ya que lo recibimos completo desde AddReviewModal
+    setReviews((prevReviews) => {
+      // Verificar si la reseña ya existe en el array
+      const reviewExists = prevReviews.some(review => review.id === newReview.id);
+      if (reviewExists) {
+        return prevReviews; // No añadir si ya existe
+      }
+      return [...prevReviews, newReview]; // Añadir solo si es nueva
+    });
 
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userRef);
-      const userData = userDoc.data();
-      const username = userData?.username || user.displayName || "Usuario";
-
-      const reviewToSave = {
-        ...newReview,
-        userId: user.uid,
-        username: username,
-        gameId: id,
-        gameName: game.name,
-        createdAt: new Date().toISOString(),
-      };
-
-      const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
-      const savedReview = { ...reviewToSave, id: docRef.id };
-
-      setReviews((prevReviews) => [...prevReviews, savedReview]);
-      setGlobalReviews((prevReviews) => [...prevReviews, savedReview]);
-
-      await updateDoc(userRef, {
-        reviews: arrayUnion(docRef.id),
-      });
-
-      toast.success("Review added successfully.");
-      setShowModal(false);
-    } catch (error) {
-      console.error("Error saving review:", error);
-      toast.error("An error occurred while saving the review.");
-    }
+    setShowModal(false);
   };
 
   const handleLikeClick = async () => {
@@ -120,12 +96,12 @@ export default function GameDetailsPage({ id }) {
         const likedGames = userData.likedGames || [];
 
         const gameToSave = {
-          gameId: game.id,
+          slug: game.slug,
           name: game.name,
-          image: game.image?.small_url || null
+          coverImageUrl: game.coverImageUrl
         };
 
-        const gameIndex = likedGames.findIndex(g => g.gameId === game.id);
+        const gameIndex = likedGames.findIndex(g => g.slug === game.slug);
 
         if (gameIndex !== -1) {
           // El juego ya está en favoritos, lo eliminamos
@@ -152,62 +128,39 @@ export default function GameDetailsPage({ id }) {
   useEffect(() => {
     const fetchGameDetails = async () => {
       try {
-        const apiUrl = `https://www.giantbomb.com/api/game/${id}/`;
-        const params = {
-          api_key: "54a0e172e4af5165c21d0517ca55f7c8f3d34aab",
-          format: "jsonp",
-          json_callback: "jsonpCallback",
-        };
+        const response = await fetch(`https://gbxd-api.vercel.app/api/game/${id}`);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        setGame(data);
 
-        const urlParams = new URLSearchParams(params).toString();
-        const apiUrlWithParams = `${apiUrl}?${urlParams}`;
+        try {
+          const reviewsQuery = query(
+            collection(db, "reviews"),
+            where("gameId", "==", id)
+          );
+          const reviewsSnapshot = await getDocs(reviewsQuery);
+          const loadedReviews = reviewsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            userId: doc.data().userId,
+          }));
+          setReviews(loadedReviews);
 
-        jsonp(
-          apiUrlWithParams,
-          { param: "json_callback" },
-          async (err, data) => {
-            if (err) {
-              console.error("Error fetching game details:", err);
-              setError(err);
-              return;
-            }
+          if (user) {
+            const userRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userRef);
 
-            if (!data || !data.results) {
-              console.error("Invalid data received from API");
-              setError(new Error("Invalid data received from API"));
-              return;
-            }
-
-            setGame(data.results);
-
-            try {
-              const reviewsQuery = query(
-                collection(db, "reviews"),
-                where("gameId", "==", id)
-              );
-              const reviewsSnapshot = await getDocs(reviewsQuery);
-              const loadedReviews = reviewsSnapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-                userId: doc.data().userId,
-              }));
-              setReviews(loadedReviews);
-
-              if (user) {
-                const userRef = doc(db, "users", user.uid);
-                const userDoc = await getDoc(userRef);
-
-                if (userDoc.exists()) {
-                  const userData = userDoc.data();
-                  setIsFavorite(userData.likedGames?.includes(id) || false);
-                }
-              }
-            } catch (firestoreError) {
-              console.error("Error accessing Firestore:", firestoreError);
-              setError(firestoreError);
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              setIsFavorite(userData.likedGames?.some(g => g.slug === id) || false);
             }
           }
-        );
+        } catch (firestoreError) {
+          console.error("Error accessing Firestore:", firestoreError);
+          setError(firestoreError);
+        }
       } catch (error) {
         console.error("Error in fetchGameDetails:", error);
         setError(error);
@@ -230,8 +183,8 @@ export default function GameDetailsPage({ id }) {
     return <div className="text-center">Loading...</div>;
   }
 
-  const formattedReleaseDate = game.original_release_date
-    ? new Date(game.original_release_date).toLocaleDateString("en-US", {
+  const formattedReleaseDate = game.releaseDate
+    ? new Date(game.releaseDate).toLocaleDateString("en-US", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -260,9 +213,9 @@ export default function GameDetailsPage({ id }) {
               transition={{ duration: 0.5 }}
               className="w-full lg:w-1/3"
             >
-              {game.image && (
+              {game.coverImageUrl && (
                 <img
-                  src={game.image.medium_url}
+                  src={game.coverImageUrl}
                   alt={`${game.name} cover`}
                   className="w-full h-auto object-cover rounded-lg shadow-lg"
                 />
@@ -300,14 +253,14 @@ export default function GameDetailsPage({ id }) {
                     <FaDesktop className="text-blue-400 mr-2" />
                     <p>
                       <strong className="text-blue-300">Platforms:</strong>{" "}
-                      {game.platforms?.map((p) => p.name).join(", ") || "N/A"}
+                      {game.platforms?.join(", ") || "N/A"}
                     </p>
                   </div>
                   <div className="flex items-center">
                     <FaTags className="text-blue-400 mr-2" />
                     <p>
                       <strong className="text-blue-300">Genres:</strong>{" "}
-                      {game.genres?.map((g) => g.name).join(", ") || "N/A"}
+                      {game.genres?.join(", ") || "N/A"}
                     </p>
                   </div>
                 </div>
@@ -323,7 +276,7 @@ export default function GameDetailsPage({ id }) {
                   Description
                 </h2>
                 <p className="text-gray-300">
-                  {game.deck || "No description available."}
+                  {game.description || "No description available."}
                 </p>
               </motion.div>
 
@@ -451,7 +404,11 @@ export default function GameDetailsPage({ id }) {
 
       {showModal && (
         <AddReviewModal
-          game={game}
+          game={{
+            slug: game.slug,
+            name: game.name,
+            coverImageUrl: game.coverImageUrl
+          }}
           onClose={() => setShowModal(false)}
           onSave={handleSaveReview}
         />
