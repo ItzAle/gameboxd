@@ -56,6 +56,17 @@ export default function Footer() {
       <div className="text-center text-white text-sm mt-4">
         <p>© {new Date().getFullYear()} Gameboxd. All rights reserved.</p>
       </div>
+
+      {/* Privacy Policy Link */}
+      <div className="mt-4 text-center">
+        <Link
+          target="_blank"
+          href="/privacy-policy"
+          className="text-blue-400 hover:underline"
+        >
+          Privacy Policy
+        </Link>
+      </div>
     </motion.footer>
   );
 }
