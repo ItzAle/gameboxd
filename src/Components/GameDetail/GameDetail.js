@@ -24,10 +24,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FaHeart,
   FaStar,
-  FaGamepad,
   FaCalendarAlt,
   FaDesktop,
   FaTags,
+  FaRegHeart,
+  FaSteam,
+  FaPlaystation,
+  FaXbox,
+  FaGamepad,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
@@ -40,6 +44,7 @@ export default function GameDetailsPage({ id }) {
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleAddReviewClick = async () => {
     if (!user) {
@@ -132,6 +137,7 @@ export default function GameDetailsPage({ id }) {
 
   useEffect(() => {
     const fetchGameDetails = async () => {
+      setIsLoading(true);
       try {
         const response = await fetch(
           `https://gbxd-api.vercel.app/api/game/${id}`
@@ -173,6 +179,8 @@ export default function GameDetailsPage({ id }) {
       } catch (error) {
         console.error("Error in fetchGameDetails:", error);
         setError(error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -184,12 +192,16 @@ export default function GameDetailsPage({ id }) {
     setReviews(gameReviews);
   }, [id, globalReviews]);
 
+  if (isLoading) {
+    return <div className="text-center">Cargando...</div>;
+  }
+
   if (error) {
     return <div className="text-red-500">Error: {error.message}</div>;
   }
 
   if (!game) {
-    return <div className="text-center">Loading...</div>;
+    return <div className="text-center">No se encontró información del juego.</div>;
   }
 
   const formattedReleaseDate = game.releaseDate
@@ -336,13 +348,22 @@ export default function GameDetailsPage({ id }) {
                       whileTap={{ scale: 0.95 }}
                       className={`text-lg rounded-md text-white px-6 py-3 transition duration-300 ease-in-out shadow-md ${
                         isFavorite
-                          ? "bg-red-600 hover:bg-red-700"
+                          ? "bg-blue-600"
                           : "bg-gray-600 hover:bg-gray-700"
                       }`}
                       onClick={handleLikeClick}
                     >
-                      <FaHeart className="inline-block mr-2" />
-                      {isFavorite ? "" : ""}
+                      <motion.div
+                        initial={{ scale: 1 }}
+                        animate={{ scale: isFavorite ? [1, 1.2, 1] : 1 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        {isFavorite ? (
+                          <FaHeart className="inline-block text-blue-300" />
+                        ) : (
+                          <FaRegHeart className="inline-block" />
+                        )}
+                      </motion.div>
                     </motion.button>
                   </>
                 ) : (

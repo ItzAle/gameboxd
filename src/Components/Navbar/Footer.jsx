@@ -2,70 +2,65 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { FaFacebook, FaTwitter, FaInstagram, FaGithub } from "react-icons/fa";
+import { FaTwitter, FaGithub } from "react-icons/fa";
 
 export default function Footer() {
   return (
     <motion.footer
-      className="bg-transparent text-white py-6 absolute bottom-0 left-0 right-0 backdrop-blur-md"
+      className="bg-transparent text-white py-2 absolute bottom-0 left-0 right-0 backdrop-blur-md"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="container mx-auto flex flex-col md:flex-row justify-between items-center px-4">
-        {/* Footer Links */}
-        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4">
-          <Link href="/" className="text-white hover:text-blue-400 transition">
-            Home
-          </Link>
-          <Link
-            href="/about"
-            className="text-white hover:text-blue-400 transition"
-          >
-            About
-          </Link>
-          <Link
-            href="/contact"
-            className="text-white hover:text-blue-400 transition"
-          >
-            Contact
-          </Link>
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row justify-between items-center">
+          {/* Footer links */}
+          <div className="flex flex-wrap justify-center md:justify-start space-x-3 mb-2 md:mb-0">
+            <Link
+              href="/about"
+              className="text-white hover:text-blue-400 transition text-xs"
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="text-white hover:text-blue-400 transition text-xs"
+            >
+              Contact
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-white hover:text-blue-400 transition text-xs"
+            >
+              Privacy Policy
+            </Link>
+          </div>
+
+          {/* Social media icons */}
+          <div className="flex space-x-3 mt-2 md:mt-0">
+            <a
+              href="https://x.com/alehhdev"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-blue-400 transition"
+            >
+              <FaTwitter size={16} />
+            </a>
+            <a
+              href="https://github.com/ItzAle"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-blue-400 transition"
+            >
+              <FaGithub size={16} />
+            </a>
+          </div>
         </div>
 
-        {/* Social Media Icons */}
-        <div className="flex space-x-4 mt-2 md:mt-0">
-          <a
-            href="https://x.com/alehhdev"
-            target="_blank"
-            className="text-white hover:text-blue-400 transition"
-          >
-            <FaTwitter size={24} />
-          </a>
-
-          <a
-            href="https://github.com/ItzAle"
-            target="_blank"
-            className="text-white hover:text-blue-400 transition"
-          >
-            <FaGithub size={24} />
-          </a>
+        {/* Copyright text */}
+        <div className="text-center text-white text-xs mt-1">
+          <p>© {new Date().getFullYear()} Gameboxd. All rights reserved.</p>
         </div>
-      </div>
-
-      {/* Bottom Text */}
-      <div className="text-center text-white text-sm mt-4">
-        <p>© {new Date().getFullYear()} Gameboxd. All rights reserved.</p>
-      </div>
-
-      {/* Privacy Policy Link */}
-      <div className="mt-4 text-center">
-        <Link
-          target="_blank"
-          href="/privacy-policy"
-          className="text-blue-400 hover:underline"
-        >
-          Privacy Policy
-        </Link>
       </div>
     </motion.footer>
   );

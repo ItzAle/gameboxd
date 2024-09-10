@@ -7,6 +7,7 @@ import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaGamepad, FaSearch, FaStar } from "react-icons/fa";
 import Footer from "../Navbar/Footer";
+import { useMediaQuery } from "react-responsive";
 
 const gameCoverUrls = [
   "https://cdn.hobbyconsolas.com/sites/navi.axelspringer.es/public/media/image/2024/03/gta-6-3282307.jpg?tf=3840x",
@@ -22,6 +23,13 @@ export default function LandingPage() {
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
+  const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
+  const [isMounted, setIsMounted] = useState(false);
+  const isMobile = useMediaQuery({ maxWidth: 767 });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,12 +39,83 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (isMounted && isMobile) {
+      const featureInterval = setInterval(() => {
+        setCurrentFeatureIndex((prevIndex) => (prevIndex + 1) % 3);
+      }, 5000);
+
+      return () => clearInterval(featureInterval);
+    }
+  }, [isMounted, isMobile]);
+
+  const features = [
+    {
+      icon: <FaGamepad className="text-4xl mb-4 text-blue-400" />,
+      title: "Extensive Library",
+      description: "Access a vast collection of games across all platforms.",
+    },
+    {
+      icon: <FaStar className="text-4xl mb-4 text-yellow-400" />,
+      title: "Rate and Review",
+      description: "Share your thoughts and see what others are saying.",
+    },
+    {
+      icon: <FaSearch className="text-4xl mb-4 text-green-400" />,
+      title: "Discover New Games",
+      description: "Find your next favorite game.",
+    },
+  ];
+
+  const renderFeatures = () => {
+    if (!isMounted) return null;
+
+    if (isMobile) {
+      return (
+        <div className="relative h-64 overflow-hidden">
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={currentFeatureIndex}
+              className="absolute inset-0 flex items-center justify-center"
+              initial={{ opacity: 0, x: 300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -300 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="bg-gray-800 p-6 rounded-lg w-full mx-4 flex flex-col items-center justify-center text-center">
+                {features[currentFeatureIndex].icon}
+                <h2 className="text-xl font-semibold mb-2">{features[currentFeatureIndex].title}</h2>
+                <p>{features[currentFeatureIndex].description}</p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      );
+    } else {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
+          {features.map((feature, index) => (
+            <div key={index} className="bg-gray-800 p-6 rounded-lg flex flex-col items-center justify-center text-center h-full">
+              <div className="mb-4">{feature.icon}</div>
+              <h2 className="text-xl font-semibold mb-2">{feature.title}</h2>
+              <p>{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
     }
   };
+
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <>
@@ -92,14 +171,6 @@ export default function LandingPage() {
               </motion.button>
             </Link>
             <motion.div className="relative">
-              {/* <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowSearchBar(!showSearchBar)}
-                  className="bg-green-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-green-600 transition flex items-center"
-                >
-                  <FaSearch className="mr-2" /> Search
-                </motion.button> */}
               <AnimatePresence>
                 {showSearchBar && (
                   <motion.form
@@ -123,28 +194,13 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          {/* Features section */}
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.7 }}
-            className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl"
+            className="mt-16 w-full max-w-4xl"
           >
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <FaGamepad className="text-4xl mb-4 text-blue-400 mx-auto" />
-              <h2 className="text-xl font-semibold mb-2">Extensive Library</h2>
-              <p>Access a vast collection of games across all platforms.</p>
-            </div>
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <FaStar className="text-4xl mb-4 text-yellow-400 mx-auto" />
-              <h2 className="text-xl font-semibold mb-2">Rate and Review</h2>
-              <p>Share your thoughts and see what others are saying.</p>
-            </div>
-            <div className="bg-gray-800 p-6 rounded-lg">
-              <FaSearch className="text-4xl mb-4 text-green-400 mx-auto" />
-              <h2 className="text-xl font-semibold mb-2">Discover New Games</h2>
-              <p>Find your next favorite game..</p>
-            </div>
+            {renderFeatures()}
           </motion.div>
           <Footer />
         </div>

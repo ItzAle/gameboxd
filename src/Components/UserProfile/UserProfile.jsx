@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useMediaQuery } from "react-responsive";
 import {
   doc,
   getDoc,
@@ -76,6 +77,7 @@ export default function UserProfile() {
   const [profilePicture, setProfilePicture] = useState("");
   const { reviews, updateReview, deleteReview } = useReviews();
   const apiUrl = "https://gbxd-api.vercel.app/api/games";
+  const isMobile = useMediaQuery({ maxWidth: 767 });
 
   useEffect(() => {
     if (user) {
@@ -86,9 +88,11 @@ export default function UserProfile() {
 
   const fetchGameDetails = async (slug) => {
     try {
-      const response = await fetch(`https://gbxd-api.vercel.app/api/game/${slug}`);
+      const response = await fetch(
+        `https://gbxd-api.vercel.app/api/game/${slug}`
+      );
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
       return await response.json();
     } catch (error) {
@@ -254,91 +258,155 @@ export default function UserProfile() {
     );
   }
 
+  const MobileProfile = () => (
+    <div className="space-y-6">
+      <div className="flex items-center space-x-4">
+        <div className="w-24 h-24 rounded-full overflow-hidden">
+          <ProfilePicture profilePicture={profilePicture} />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {userProfile?.username || user?.displayName || "User"}
+          </h1>
+          {!editing && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleEditProfile}
+              className="bg-blue-500 text-white px-3 py-1 rounded-full mt-2 text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center"
+            >
+              <FaEdit className="mr-1" /> Edit Profile
+            </motion.button>
+          )}
+        </div>
+      </div>
+
+      <div className="p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+        <Bio bio={bio} setBio={setBio} editing={editing} />
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-2">Favorite Games</h2>
+        <LikedGames
+          userEmail={user.email}
+          likedGames={userProfile.likedGames || []}
+          setUserProfile={setUserProfile}
+          isOwnProfile={true}
+        />
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-2 flex items-center">
+          <FaStar className="mr-2 text-yellow-400" /> Your Reviews
+        </h2>
+        <AnimatePresence>
+          {userReviews.length > 0 ? (
+            <Reviews
+              reviews={userReviews}
+              onEditReview={onEditReview}
+              onDeleteReview={onDeleteReview}
+              isOwnProfile={true}
+            />
+          ) : (
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-lg"
+            >
+              You have no reviews yet.
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+
+  const DesktopProfile = () => (
+    <div
+      className={`grid ${
+        isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"
+      } gap-8`}
+    >
+      {/* Profile Section */}
+      <motion.div
+        initial={{ opacity: 0, x: -50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className={isMobile ? "order-1" : "md:col-span-1"}
+      >
+        <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+          <ProfilePicture profilePicture={profilePicture} />
+          <Bio bio={bio} setBio={setBio} editing={editing} />
+          {!editing && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleEditProfile}
+              className="bg-blue-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
+            >
+              <FaEdit className="mr-2" /> Edit Profile
+            </motion.button>
+          )}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+        >
+          <LikedGames
+            userEmail={user.email}
+            likedGames={userProfile.likedGames || []}
+            setUserProfile={setUserProfile}
+            isOwnProfile={true}
+          />
+        </motion.div>
+      </motion.div>
+
+      {/* Reviews Section */}
+      <motion.div
+        initial={{ opacity: 0, x: 50 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, delay: 0.6 }}
+        className={isMobile ? "order-2" : "md:col-span-2"}
+      >
+        <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+          <h2 className="text-2xl font-semibold mb-2 flex items-center">
+            <FaStar className="mr-2 text-yellow-400" /> Your Reviews
+          </h2>
+          <AnimatePresence>
+            {userReviews.length > 0 ? (
+              <Reviews
+                reviews={userReviews}
+                onEditReview={onEditReview}
+                onDeleteReview={onDeleteReview}
+                isOwnProfile={true}
+              />
+            ) : (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-lg"
+              >
+                You have no reviews yet.
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
+    </div>
+  );
+
   return (
     <>
       <div className="min-h-screen bg-gray-900 text-white">
         <StarField count={200} />
         <div className="container mx-auto p-4 space-y-8 relative z-10">
           <TransparentNavbar />
-          <motion.h1
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-4xl font-bold text-center mb-8"
-          >
-            Welcome, {userProfile?.username || user?.displayName || "User"}!
-          </motion.h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Profile Section */}
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="md:col-span-1"
-            >
-              <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-                <ProfilePicture profilePicture={profilePicture} />
-                <Bio bio={bio} setBio={setBio} editing={editing} />
-                {!editing && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleEditProfile}
-                    className="bg-blue-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center"
-                  >
-                    <FaEdit className="mr-2" /> Edit Profile
-                  </motion.button>
-                )}
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-              >
-                <LikedGames
-                  userEmail={user.email}
-                  likedGames={userProfile.likedGames || []}
-                  setUserProfile={setUserProfile}
-                  isOwnProfile={true}
-                />
-              </motion.div>
-            </motion.div>
-
-            {/* Reviews Section */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-              className="md:col-span-2"
-            >
-              <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-                <h2 className="text-2xl font-semibold mb-2 flex items-center">
-                  <FaStar className="mr-2 text-yellow-400" /> Your Reviews
-                </h2>
-                <AnimatePresence>
-                  {userReviews.length > 0 ? (
-                    <Reviews
-                      reviews={userReviews}
-                      onEditReview={onEditReview}
-                      onDeleteReview={onDeleteReview}
-                      isOwnProfile={true}
-                    />
-                  ) : (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-lg"
-                    >
-                      You have no reviews yet.
-                    </motion.p>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          </div>
+          {isMobile ? <MobileProfile /> : <DesktopProfile />}
 
           {/* Modal para editar perfil */}
           <AnimatePresence>

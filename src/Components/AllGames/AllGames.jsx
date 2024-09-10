@@ -6,7 +6,7 @@ import { Search, Loader2, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import "../../utils/global.css";
-import GoogleAdSense from '../Ads/GoogleAdSense';
+import GoogleAdSense from "../Ads/GoogleAdSense";
 
 export default function Component() {
   const [allGames, setAllGames] = useState([]);
@@ -26,16 +26,29 @@ export default function Component() {
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log("Fetched games:", data); // Log fetched data
-      setAllGames(data);
-      setDisplayedGames(data);
+      console.log("Fetched games:", data);
 
-      const uniqueYears = [...new Set(data.map(game => new Date(game.releaseDate).getFullYear()).filter(year => !isNaN(year)))];
-      const uniqueGenres = [...new Set(data.flatMap(game => game.genres || []))];
-      
+      const sortedGames = data.sort(
+        (a, b) => new Date(b.releaseDate) - new Date(a.releaseDate)
+      );
+
+      setAllGames(sortedGames);
+      setDisplayedGames(sortedGames);
+
+      const uniqueYears = [
+        ...new Set(
+          data
+            .map((game) => new Date(game.releaseDate).getFullYear())
+            .filter((year) => !isNaN(year))
+        ),
+      ];
+      const uniqueGenres = [
+        ...new Set(data.flatMap((game) => game.genres || [])),
+      ];
+
       setYears(uniqueYears.sort((a, b) => b - a));
       setGenres(uniqueGenres.sort());
     } catch (err) {
@@ -51,27 +64,39 @@ export default function Component() {
   }, [fetchGames]);
 
   const applyFilters = useCallback(() => {
-    console.log("Applying filters. Current state:", { searchTerm, selectedYear, selectedGenre });
+    console.log("Applying filters. Current state:", {
+      searchTerm,
+      selectedYear,
+      selectedGenre,
+    });
     let filteredGames = allGames;
 
     if (searchTerm) {
       const lowercasedTerm = searchTerm.toLowerCase();
-      filteredGames = filteredGames.filter(game => 
-        game.name.toLowerCase().includes(lowercasedTerm) ||
-        (game.genres && game.genres.some(genre => genre.toLowerCase().includes(lowercasedTerm))) ||
-        (game.platforms && game.platforms.some(platform => platform.toLowerCase().includes(lowercasedTerm)))
+      filteredGames = filteredGames.filter(
+        (game) =>
+          game.name.toLowerCase().includes(lowercasedTerm) ||
+          (game.genres &&
+            game.genres.some((genre) =>
+              genre.toLowerCase().includes(lowercasedTerm)
+            )) ||
+          (game.platforms &&
+            game.platforms.some((platform) =>
+              platform.toLowerCase().includes(lowercasedTerm)
+            ))
       );
     }
 
     if (selectedYear) {
-      filteredGames = filteredGames.filter(game => 
-        new Date(game.releaseDate).getFullYear() === parseInt(selectedYear)
+      filteredGames = filteredGames.filter(
+        (game) =>
+          new Date(game.releaseDate).getFullYear() === parseInt(selectedYear)
       );
     }
 
     if (selectedGenre) {
-      filteredGames = filteredGames.filter(game => 
-        game.genres && game.genres.includes(selectedGenre)
+      filteredGames = filteredGames.filter(
+        (game) => game.genres && game.genres.includes(selectedGenre)
       );
     }
 
@@ -159,8 +184,10 @@ export default function Component() {
                   className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
                 >
                   <option value="">All Years</option>
-                  {years.map(year => (
-                    <option key={year} value={year}>{year}</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
                   ))}
                 </select>
                 <select
@@ -169,15 +196,20 @@ export default function Component() {
                   className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
                 >
                   <option value="">All Genres</option>
-                  {genres.map(genre => (
-                    <option key={genre} value={genre}>{genre}</option>
+                  {genres.map((genre) => (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
                   ))}
                 </select>
               </motion.div>
             )}
           </motion.div>
           <div className="mb-8">
-            <GoogleAdSense client="ca-pub-3043119271393042" slot="REEMPLAZAR_CON_TU_SLOT" />
+            <GoogleAdSense
+              client="ca-pub-3043119271393042"
+              slot="REEMPLAZAR_CON_TU_SLOT"
+            />
           </div>
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -221,7 +253,8 @@ export default function Component() {
                             </h2>
                             {game.releaseDate && (
                               <p className="text-sm mt-1 text-gray-300">
-                                Released: {new Date(game.releaseDate).getFullYear()}
+                                Released:{" "}
+                                {new Date(game.releaseDate).getFullYear()}
                               </p>
                             )}
                           </div>

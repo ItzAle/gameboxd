@@ -136,8 +136,7 @@ export default function TransparentNavbar() {
       </motion.nav>
 
       {/* Spacer for mobile */}
-      <div className="h-16 md:h-0"></div>
-
+      <div className="h-4 md:h-1"></div>
       {/* Mobile menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
