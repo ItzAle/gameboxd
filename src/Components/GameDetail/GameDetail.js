@@ -30,6 +30,8 @@ import {
   FaTags,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
+import { getAffiliateLink } from '../../utils/affiliateUtils';
+import GoogleAdSense from '../Ads/GoogleAdSense';
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -415,6 +417,8 @@ export default function GameDetailsPage({ id }) {
       )}
 
       <ToastContainer position="bottom-right" theme="dark" />
+
+      <GoogleAdSense client="ca-pub-3043119271393042" slot="REEMPLAZAR_CON_TU_SLOT" />
     </>
   );
 }
