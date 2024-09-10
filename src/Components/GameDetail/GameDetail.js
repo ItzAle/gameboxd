@@ -143,7 +143,7 @@ export default function GameDetailsPage({ id }) {
           `https://gbxd-api.vercel.app/api/game/${id}`
         );
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          throw new Error(`Error en la red: ${response.status} ${response.statusText}`);
         }
         const data = await response.json();
         setGame(data);
@@ -201,7 +201,9 @@ export default function GameDetailsPage({ id }) {
   }
 
   if (!game) {
-    return <div className="text-center">No se encontró información del juego.</div>;
+    return (
+      <div className="text-center">No se encontró información del juego.</div>
+    );
   }
 
   const formattedReleaseDate = game.releaseDate
@@ -445,11 +447,6 @@ export default function GameDetailsPage({ id }) {
       )}
 
       <ToastContainer position="bottom-right" theme="dark" />
-
-      <GoogleAdSense
-        client="ca-pub-3043119271393042"
-        slot="REEMPLAZAR_CON_TU_SLOT"
-      />
     </>
   );
 }
