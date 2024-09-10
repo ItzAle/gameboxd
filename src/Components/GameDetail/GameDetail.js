@@ -30,8 +30,7 @@ import {
   FaTags,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
-import { getAffiliateLink } from '../../utils/affiliateUtils';
-import GoogleAdSense from '../Ads/GoogleAdSense';
+import GoogleAdSense from "../Ads/GoogleAdSense";
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -73,7 +72,9 @@ export default function GameDetailsPage({ id }) {
     // ya que lo recibimos completo desde AddReviewModal
     setReviews((prevReviews) => {
       // Verificar si la reseña ya existe en el array
-      const reviewExists = prevReviews.some(review => review.id === newReview.id);
+      const reviewExists = prevReviews.some(
+        (review) => review.id === newReview.id
+      );
       if (reviewExists) {
         return prevReviews; // No añadir si ya existe
       }
@@ -85,7 +86,9 @@ export default function GameDetailsPage({ id }) {
 
   const handleLikeClick = async () => {
     if (!user) {
-      toast.error("Necesitas iniciar sesión para marcar un juego como favorito.");
+      toast.error(
+        "Necesitas iniciar sesión para marcar un juego como favorito."
+      );
       return;
     }
 
@@ -100,22 +103,22 @@ export default function GameDetailsPage({ id }) {
         const gameToSave = {
           slug: game.slug,
           name: game.name,
-          coverImageUrl: game.coverImageUrl
+          coverImageUrl: game.coverImageUrl,
         };
 
-        const gameIndex = likedGames.findIndex(g => g.slug === game.slug);
+        const gameIndex = likedGames.findIndex((g) => g.slug === game.slug);
 
         if (gameIndex !== -1) {
           // El juego ya está en favoritos, lo eliminamos
           await updateDoc(userRef, {
-            likedGames: arrayRemove(likedGames[gameIndex])
+            likedGames: arrayRemove(likedGames[gameIndex]),
           });
           setIsFavorite(false);
           toast.success("Juego eliminado de favoritos.");
         } else {
           // El juego no está en favoritos, lo añadimos
           await updateDoc(userRef, {
-            likedGames: arrayUnion(gameToSave)
+            likedGames: arrayUnion(gameToSave),
           });
           setIsFavorite(true);
           toast.success("Juego añadido a favoritos.");
@@ -130,9 +133,11 @@ export default function GameDetailsPage({ id }) {
   useEffect(() => {
     const fetchGameDetails = async () => {
       try {
-        const response = await fetch(`https://gbxd-api.vercel.app/api/game/${id}`);
+        const response = await fetch(
+          `https://gbxd-api.vercel.app/api/game/${id}`
+        );
         if (!response.ok) {
-          throw new Error('Network response was not ok');
+          throw new Error("Network response was not ok");
         }
         const data = await response.json();
         setGame(data);
@@ -156,7 +161,9 @@ export default function GameDetailsPage({ id }) {
 
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              setIsFavorite(userData.likedGames?.some(g => g.slug === id) || false);
+              setIsFavorite(
+                userData.likedGames?.some((g) => g.slug === id) || false
+              );
             }
           }
         } catch (firestoreError) {
@@ -409,7 +416,7 @@ export default function GameDetailsPage({ id }) {
           game={{
             slug: game.slug,
             name: game.name,
-            coverImageUrl: game.coverImageUrl
+            coverImageUrl: game.coverImageUrl,
           }}
           onClose={() => setShowModal(false)}
           onSave={handleSaveReview}
@@ -418,7 +425,10 @@ export default function GameDetailsPage({ id }) {
 
       <ToastContainer position="bottom-right" theme="dark" />
 
-      <GoogleAdSense client="ca-pub-3043119271393042" slot="REEMPLAZAR_CON_TU_SLOT" />
+      <GoogleAdSense
+        client="ca-pub-3043119271393042"
+        slot="REEMPLAZAR_CON_TU_SLOT"
+      />
     </>
   );
 }
