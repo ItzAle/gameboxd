@@ -9,6 +9,9 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,  // Añadir esta importación
+  arrayRemove,  // Añadir esta importación
+  arrayUnion  // Añadir esta importación
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import ProfilePicture from "./ProfilePicture";
@@ -16,11 +19,16 @@ import Bio from "./Bio";
 import LikedGames from "./LikedGames";
 import Reviews from "./Reviews";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
+import { useAuth } from "../../context/AuthContext";
+import { FaUserPlus, FaUserMinus } from "react-icons/fa";
+import { toast } from "react-toastify"; // Añadir esta importación
 
 export default function OtherUserProfile({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
   const [userReviews, setUserReviews] = useState([]);
   const router = useRouter();
+  const { user } = useAuth();
+  const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -55,7 +63,52 @@ export default function OtherUserProfile({ userId }) {
     };
 
     fetchUserProfile();
-  }, [userId, router]);
+
+    // Verificar si el usuario actual sigue a este perfil
+    const checkFollowStatus = async () => {
+      if (user) {
+        const currentUserRef = doc(db, "users", user.uid);
+        const currentUserDoc = await getDoc(currentUserRef);
+        const following = currentUserDoc.data().following || [];
+        setIsFollowing(following.includes(userId));
+      }
+    };
+
+    checkFollowStatus();
+  }, [userId, user, router]);
+
+  const handleFollowToggle = async () => {
+    if (!user) {
+      toast.error("Debes iniciar sesión para seguir a otros usuarios.");
+      return;
+    }
+
+    const currentUserRef = doc(db, "users", user.uid);
+    const targetUserRef = doc(db, "users", userId);
+
+    try {
+      if (isFollowing) {
+        await updateDoc(currentUserRef, {
+          following: arrayRemove(userId)
+        });
+        await updateDoc(targetUserRef, {
+          followers: arrayRemove(user.uid)
+        });
+      } else {
+        await updateDoc(currentUserRef, {
+          following: arrayUnion(userId)
+        });
+        await updateDoc(targetUserRef, {
+          followers: arrayUnion(user.uid)
+        });
+      }
+      setIsFollowing(!isFollowing);
+      toast.success(isFollowing ? "Usuario dejado de seguir" : "Usuario seguido");
+    } catch (error) {
+      console.error("Error al actualizar el estado de seguimiento:", error);
+      toast.error("Ocurrió un error al actualizar el estado de seguimiento");
+    }
+  };
 
   if (!userProfile) {
     return <p className="text-white">Cargando perfil...</p>;
@@ -65,9 +118,29 @@ export default function OtherUserProfile({ userId }) {
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto p-4 space-y-8 relative z-10">
         <TransparentNavbar />
-        <h1 className="text-4xl font-bold text-center mb-8">
-          Perfil de {userProfile.username || "Usuario"}
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-4xl font-bold mb-8">
+            Perfil de {userProfile.username || "Usuario"}
+          </h1>
+          {user && user.uid !== userId && (
+            <button
+              onClick={handleFollowToggle}
+              className={`px-4 py-2 rounded-full flex items-center ${
+                isFollowing ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+              }`}
+            >
+              {isFollowing ? (
+                <>
+                  <FaUserMinus className="mr-2" /> Dejar de seguir
+                </>
+              ) : (
+                <>
+                  <FaUserPlus className="mr-2" /> Seguir
+                </>
+              )}
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="md:col-span-1">

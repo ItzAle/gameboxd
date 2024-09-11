@@ -21,11 +21,12 @@ import { toast } from "react-toastify";
 import { useReviews } from "../../context/ReviewsProvider";
 import Navbar from "../Navbar/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaEdit, FaStar } from "react-icons/fa";
+import { FaEdit, FaStar, FaUserFriends } from "react-icons/fa";
 import jsonp from "jsonp";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
+import FollowList from "./FollowList";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -78,6 +79,8 @@ export default function UserProfile() {
   const { reviews, updateReview, deleteReview } = useReviews();
   const apiUrl = "https://gbxd-api.vercel.app/api/games";
   const isMobile = useMediaQuery({ maxWidth: 767 });
+  const [showFollowList, setShowFollowList] = useState(false);
+  const [followListType, setFollowListType] = useState("followers");
 
   useEffect(() => {
     if (user) {
@@ -110,7 +113,11 @@ export default function UserProfile() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setUserProfile(userData);
+        setUserProfile({
+          ...userData,
+          followers: userData.followers || [],
+          following: userData.following || []
+        });
         setBio(userData.bio || "");
         setProfilePicture(userData.profilePicture || "");
 
@@ -232,6 +239,11 @@ export default function UserProfile() {
       toast.error("Error al eliminar la reseña");
       return false;
     }
+  };
+
+  const handleShowFollowList = (type) => {
+    setFollowListType(type);
+    setShowFollowList(true);
   };
 
   if (!user) {
@@ -405,6 +417,27 @@ export default function UserProfile() {
         <StarField count={200} />
         <div className="container mx-auto p-4 space-y-8 relative z-10">
           <TransparentNavbar />
+          <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold mb-8">
+              {userProfile?.username || user?.displayName || "User"}
+            </h1>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => handleShowFollowList("followers")}
+                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
+              >
+                <FaUserFriends className="mr-2 inline" />
+                Seguidores ({userProfile.followers.length})
+              </button>
+              <button
+                onClick={() => handleShowFollowList("following")}
+                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
+              >
+                <FaUserFriends className="mr-2 inline" />
+                Siguiendo ({userProfile.following.length})
+              </button>
+            </div>
+          </div>
 
           {isMobile ? <MobileProfile /> : <DesktopProfile />}
 
@@ -424,6 +457,13 @@ export default function UserProfile() {
           </AnimatePresence>
         </div>
       </div>
+      {showFollowList && (
+        <FollowList
+          type={followListType}
+          users={followListType === "followers" ? userProfile.followers : userProfile.following}
+          onClose={() => setShowFollowList(false)}
+        />
+      )}
     </>
   );
 }

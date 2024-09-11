@@ -8,16 +8,22 @@ export const useReviews = () => useContext(ReviewsContext);
 
 export const ReviewsProvider = ({ children }) => {
   const [reviews, setReviews] = useState([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchReviews = async () => {
-      const q = query(collection(db, "reviews"));
-      const querySnapshot = await getDocs(q);
-      const fetchedReviews = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setReviews(fetchedReviews);
+      try {
+        const q = query(collection(db, "reviews"));
+        const querySnapshot = await getDocs(q);
+        const fetchedReviews = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setReviews(fetchedReviews);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        setError("No se pudieron cargar las reseñas. Por favor, intenta de nuevo más tarde.");
+      }
     };
 
     fetchReviews();
@@ -39,7 +45,7 @@ export const ReviewsProvider = ({ children }) => {
 
   return (
     <ReviewsContext.Provider
-      value={{ reviews, setReviews, updateReview, deleteReview }}
+      value={{ reviews, setReviews, updateReview, deleteReview, error }}
     >
       {children}
     </ReviewsContext.Provider>

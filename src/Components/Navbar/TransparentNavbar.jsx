@@ -11,6 +11,7 @@ import {
   FaGamepad,
   FaBars,
   FaTimes,
+  FaBook,
 } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
@@ -65,6 +66,7 @@ export default function TransparentNavbar() {
     { href: "/all", icon: <FaGamepad />, text: "All Games" },
     ...(user
       ? [
+          { href: "/journal", icon: <FaBook />, text: "Journal" },
           { href: "/profile", icon: <FaUser />, text: "Profile" },
           {
             href: "https://gbxd-api.vercel.app/",
