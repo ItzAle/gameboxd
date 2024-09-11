@@ -1,27 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  FaUser,
-  FaSignOutAlt,
-  FaGamepad,
-  FaBars,
-  FaTimes,
-  FaBook,
-} from "react-icons/fa";
+import { FaGamepad, FaBars, FaTimes, FaChevronDown } from "react-icons/fa";
 import { signOut } from "firebase/auth";
-import { auth } from "../../../lib/firebase";
-import { SiGoogledocs } from "react-icons/si";
+import { auth, db } from "../../../lib/firebase";
+import Image from "next/image";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function TransparentNavbar() {
-  const { user } = useAuth(); // Usa useAuth en lugar de useSession
+  const { user } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
   const router = useRouter();
+  const userMenuRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,62 +30,86 @@ export default function TransparentNavbar() {
   }, []);
 
   useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
+    if (user) {
+      fetchUserProfile();
     }
+  }, [user]);
 
-    return () => {
-      document.body.style.overflow = "unset";
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
     };
-  }, [isMobileMenuOpen]);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
-  const closeMobileMenu = () => {
-    setIsMobileMenuOpen(false);
+  const fetchUserProfile = async () => {
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserProfile({
+          ...userData,
+          id: user.uid,
+          displayName: userData.username || user.displayName,
+          photoURL: userData.profilePicture || user.photoURL,
+        });
+      } else {
+        setUserProfile({
+          id: user.uid,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+        });
+      }
+    } catch (error) {
+      console.error("Error al obtener el perfil del usuario:", error);
+    }
   };
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
       router.push("/");
-      closeMobileMenu();
+      setIsMobileMenuOpen(false);
+      setIsUserMenuOpen(false);
     } catch (error) {
       console.error("Error signing out: ", error);
     }
   };
 
   const navItems = [
-    { href: "/all", icon: <FaGamepad />, text: "All Games" },
     ...(user
       ? [
-          { href: "/journal", icon: <FaBook />, text: "Journal" },
-          { href: "/profile", icon: <FaUser />, text: "Profile" },
           {
-            href: "https://gbxd-api.vercel.app/",
-            icon: <SiGoogledocs />,
-            text: "API",
-          },
-          {
-            href: "#",
-            icon: <FaSignOutAlt />,
-            text: "Sign Out",
-            onClick: handleSignOut,
+            href: "/activity",
+            icon: (
+              <FaGamepad className="text-white hover:text-blue-400 transition" />
+            ),
+            text: "Activity",
+            tooltip: "Activity",
           },
         ]
-      : [
-          {
-            href: "/signin",
-            text: "Login",
-            className:
-              "bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition",
-          },
-        ]),
+      : []),
+    { href: "/all", text: "Games" },
   ];
+
+  const authButton = user ? null : (
+    <Link
+      href="/signin"
+      className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition"
+    >
+      Sign In
+    </Link>
+  );
 
   return (
     <>
@@ -111,25 +132,90 @@ export default function TransparentNavbar() {
 
           {/* Desktop menu */}
           <div className="hidden md:flex items-center space-x-4">
+            {user && (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
+                >
+                  <Image
+                    src={userProfile?.photoURL || "/default-avatar.png"}
+                    alt={userProfile?.displayName || "Usuario"}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                  <span>{userProfile?.displayName || "Usuario"}</span>
+                  <FaChevronDown
+                    className={`transition-transform ${
+                      isUserMenuOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <Link
+                      href="/"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Home
+                    </Link>
+                    <Link
+                      href="/profile"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      href="/all"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Games
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             {navItems.map((item, index) => (
-              <Link
-                key={index}
-                href={item.href}
-                className={`text-white hover:text-blue-400 transition flex items-center ${
-                  item.className || ""
-                }`}
-                onClick={item.onClick}
-              >
-                {item.icon && <span className="mr-2">{item.icon}</span>}
-                {item.text}
-              </Link>
+              <div key={index} className="relative group">
+                {item.icon ? (
+                  <Link
+                    href={item.href}
+                    className="flex items-center text-white hover:text-blue-400 transition"
+                  >
+                    {item.icon}
+                    {item.tooltip && (
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                        {item.tooltip}
+                      </span>
+                    )}
+                  </Link>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className={`text-white hover:text-blue-400 transition flex items-center ${
+                      item.className || ""
+                    }`}
+                    onClick={item.onClick}
+                  >
+                    {item.text}
+                  </Link>
+                )}
+              </div>
             ))}
+            {authButton}
           </div>
 
           {/* Mobile menu button */}
           <button
             className="md:hidden text-white focus:outline-none"
-            onClick={toggleMobileMenu}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
             {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
@@ -139,6 +225,7 @@ export default function TransparentNavbar() {
 
       {/* Spacer for mobile */}
       <div className="h-4 md:h-1"></div>
+
       {/* Mobile menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
@@ -150,6 +237,35 @@ export default function TransparentNavbar() {
             className="fixed inset-0 z-40 bg-gray-900/95 backdrop-blur-sm md:hidden"
           >
             <div className="container mx-auto py-4 px-4 h-full flex flex-col justify-center">
+              {user ? (
+                <>
+                  <Link
+                    href="/"
+                    className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
+                  >
+                    Inicio
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
+                  >
+                    Perfil
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
+                  >
+                    Cerrar sesión
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/signin"
+                  className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
+                >
+                  Iniciar sesión
+                </Link>
+              )}
               {navItems.map((item, index) => (
                 <Link
                   key={index}
@@ -158,7 +274,7 @@ export default function TransparentNavbar() {
                     item.className || ""
                   }`}
                   onClick={() => {
-                    closeMobileMenu();
+                    setIsMobileMenuOpen(false);
                     item.onClick && item.onClick();
                   }}
                 >
@@ -166,7 +282,7 @@ export default function TransparentNavbar() {
                     {item.icon && (
                       <span className="mr-4 text-3xl">{item.icon}</span>
                     )}
-                    {item.text}
+                    {item.text || item.tooltip}
                   </span>
                 </Link>
               ))}

@@ -109,6 +109,7 @@ export default function GameDetailsPage({ id }) {
           slug: game.slug,
           name: game.name,
           coverImageUrl: game.coverImageUrl,
+          likedAt: new Date().toISOString() // Añadimos el timestamp
         };
 
         const gameIndex = likedGames.findIndex((g) => g.slug === game.slug);
