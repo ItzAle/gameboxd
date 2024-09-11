@@ -150,23 +150,28 @@ export default function AddReviewModal({ game, onClose, onSave }) {
 
   const handleSubmit = async () => {
     if (!user) {
-      toast.error("You need to be logged in to add a review.");
+      toast.error("Necesitas iniciar sesión para añadir una reseña.");
       onClose();
       return;
     }
 
     if (rating === 0) {
-      toast.error("Please provide a rating for your review.");
+      toast.error("Por favor, proporciona una calificación para tu reseña.");
       return;
     }
 
     try {
+      // Obtener el documento del usuario para asegurar que tenemos el nombre de usuario más actualizado
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+      const username = userData?.username || user.displayName || "Anónimo";
+
       const reviewToSave = {
         rating,
         comment,
         containsSpoilers,
         userId: user.uid,
-        username: user.displayName || "Anonymous",
+        username: username, // Usar el nombre de usuario obtenido
         gameId: game.slug,
         gameName: game.name,
         createdAt: new Date().toISOString(),
