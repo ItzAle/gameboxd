@@ -84,7 +84,9 @@ export default function LandingPage() {
             >
               <div className="bg-gray-800 p-6 rounded-lg w-full mx-4 flex flex-col items-center justify-center text-center">
                 {features[currentFeatureIndex].icon}
-                <h2 className="text-xl font-semibold mb-2">{features[currentFeatureIndex].title}</h2>
+                <h2 className="text-xl font-semibold mb-2">
+                  {features[currentFeatureIndex].title}
+                </h2>
                 <p>{features[currentFeatureIndex].description}</p>
               </div>
             </motion.div>
@@ -95,7 +97,10 @@ export default function LandingPage() {
       return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
           {features.map((feature, index) => (
-            <div key={index} className="bg-gray-800 p-6 rounded-lg flex flex-col items-center justify-center text-center h-full">
+            <div
+              key={index}
+              className="bg-gray-800 p-6 rounded-lg flex flex-col items-center justify-center text-center h-full"
+            >
               <div className="mb-4">{feature.icon}</div>
               <h2 className="text-xl font-semibold mb-2">{feature.title}</h2>
               <p>{feature.description}</p>
@@ -161,13 +166,13 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="flex flex-wrap justify-center gap-4"
           >
-            <Link href="/all">
+            <Link href="/signup">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-600 transition flex items-center"
               >
-                <FaGamepad className="mr-2" /> Browse Games
+                <FaGamepad className="mr-2" /> Get Started
               </motion.button>
             </Link>
             <motion.div className="relative">
