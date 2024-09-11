@@ -15,17 +15,18 @@ import { useAuth } from "../../context/AuthContext";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { useReviews } from "../../context/ReviewsProvider";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Star } from "lucide-react";
+import { Loader2, Star, Heart, Clock } from "lucide-react";
 import Link from "next/link";
 
 export default function Journal() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [followedUsersReviews, setFollowedUsersReviews] = useState([]);
   const { user } = useAuth();
   const { reviews: globalReviews, error: reviewsError } = useReviews();
 
   useEffect(() => {
-    const fetchReviews = async () => {
+    const fetchFollowedUsersReviews = async () => {
       if (!user) {
         setIsLoading(false);
         return;
@@ -41,6 +42,23 @@ export default function Journal() {
           return;
         }
 
+        const userData = userSnap.data();
+        const following = userData.following || [];
+
+        const reviewsQuery = query(
+          collection(db, "reviews"),
+          where("userId", "in", following),
+          orderBy("createdAt", "desc"),
+          limit(50)
+        );
+
+        const querySnapshot = await getDocs(reviewsQuery);
+        const reviewsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setFollowedUsersReviews(reviewsData);
         setIsLoading(false);
       } catch (error) {
         console.error("Error loading reviews:", error);
@@ -49,7 +67,7 @@ export default function Journal() {
       }
     };
 
-    fetchReviews();
+    fetchFollowedUsersReviews();
   }, [user]);
 
   if (isLoading)
@@ -67,13 +85,6 @@ export default function Journal() {
         </div>
       </div>
     );
-
-  const filteredReviews = globalReviews.filter(
-    (review) =>
-      user &&
-      (review.userId === user.uid ||
-        (user.following && user.following.includes(review.userId)))
-  );
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
@@ -95,8 +106,8 @@ export default function Journal() {
             transition={{ duration: 0.5 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {filteredReviews.length > 0 ? (
-              filteredReviews.map((review) => (
+            {followedUsersReviews.length > 0 ? (
+              followedUsersReviews.map((review) => (
                 <motion.div
                   key={review.id}
                   initial={{ opacity: 0, y: 20 }}
@@ -106,14 +117,16 @@ export default function Journal() {
                   className="bg-gray-800 rounded-lg shadow-lg overflow-hidden"
                 >
                   <div className="p-6">
-                    <Link
-                      href={`/games/${review.gameId}`}
-                      className="block mb-2"
-                    >
-                      <h2 className="text-xl font-semibold hover:text-blue-300 transition-colors">
-                        {review.gameName}
-                      </h2>
-                    </Link>
+                    <div className="flex justify-between items-start mb-2">
+                      <Link href={`/games/${review.gameId}`} className="block">
+                        <h2 className="text-xl font-semibold hover:text-blue-300 transition-colors">
+                          {review.gameName}
+                        </h2>
+                      </Link>
+                      {review.isLiked && (
+                        <Heart className="h-5 w-5 text-red-500 fill-current" />
+                      )}
+                    </div>
                     <p className="text-sm text-gray-400 mb-2">
                       By:{" "}
                       <Link
@@ -137,10 +150,18 @@ export default function Journal() {
                       ))}
                     </div>
                     <p className="text-gray-300">{review.comment}</p>
-                    <p className="text-sm text-gray-400 mt-4">
-                      {review.createdAt &&
-                        new Date(review.createdAt).toLocaleString()}
-                    </p>
+                    <div className="flex items-center justify-between mt-4 text-sm text-gray-400">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1" />
+                        {review.createdAt &&
+                          (typeof review.createdAt === "object" &&
+                          review.createdAt.toDate
+                            ? new Date(
+                                review.createdAt.toDate()
+                              ).toLocaleString()
+                            : new Date(review.createdAt).toLocaleString())}
+                      </div>
+                    </div>
                   </div>
                 </motion.div>
               ))
@@ -150,7 +171,8 @@ export default function Journal() {
                 animate={{ opacity: 1 }}
                 className="col-span-full text-center text-xl text-gray-400"
               >
-                No recent reviews. (Total reviews: {filteredReviews.length})
+                No recent reviews from followed users. (Total reviews:{" "}
+                {followedUsersReviews.length})
               </motion.div>
             )}
           </motion.div>
