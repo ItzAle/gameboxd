@@ -244,7 +244,7 @@ export default function TransparentNavbar() {
                     href="/"
                     className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
                   >
-                    Inicio
+                    Home
                   </Link>
                   <Link
                     href="/profile"
@@ -264,7 +264,7 @@ export default function TransparentNavbar() {
                   href="/signin"
                   className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
                 >
-                  Iniciar sesión
+                  Login
                 </Link>
               )}
               {navItems.map((item, index) => (
