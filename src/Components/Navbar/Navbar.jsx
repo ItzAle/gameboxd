@@ -1,16 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "../../context/AuthContext"; // Importa useAuth
+import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaSearch, FaUser, FaSignOutAlt, FaGamepad } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth } from "../../../lib/firebase";
+import { FiActivity } from "react-icons/fi";
 
 export default function Navbar() {
-  const { user } = useAuth(); // Usar useAuth en lugar de useSession
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function Navbar() {
           Gameboxd
         </Link>
         <Link href="/all" className="text-gray-300 hover:text-white transition">
-          <FaGamepad className="inline mr-2" />
+          <FiActivity className="inline mr-2" />
           All Games
         </Link>
       </div>

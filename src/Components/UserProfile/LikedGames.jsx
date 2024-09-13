@@ -21,7 +21,9 @@ const LikedGames = ({
       const details = {};
       for (const game of likedGames) {
         try {
-          const response = await fetch(`https://gbxd-api.vercel.app/api/game/${game.slug}`);
+          const response = await fetch(
+            `https://gbxd-api.vercel.app/api/game/${game.slug}`
+          );
           if (response.ok) {
             const data = await response.json();
             details[game.slug] = data;
@@ -50,9 +52,7 @@ const LikedGames = ({
       // Actualizar el estado local
       setUserProfile((prevProfile) => ({
         ...prevProfile,
-        likedGames: prevProfile.likedGames.filter(
-          (g) => g.slug !== game.slug
-        ),
+        likedGames: prevProfile.likedGames.filter((g) => g.slug !== game.slug),
       }));
 
       toast.success("Juego eliminado de favoritos.");
@@ -64,9 +64,7 @@ const LikedGames = ({
 
   return (
     <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-      <h2 className="text-2xl font-semibold mb-2 flex items-center">
-        <FaHeart className="mr-2 text-red-500" /> Favorite Games
-      </h2>
+      <h2 className="text-2xl font-semibold mb-2 flex items-center"></h2>
       {likedGames.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {likedGames.map((game) => (
@@ -77,7 +75,10 @@ const LikedGames = ({
             >
               <Link href={`/games/${game.slug}`}>
                 <img
-                  src={gameDetails[game.slug]?.coverImageUrl || "/placeholder-image.jpg"}
+                  src={
+                    gameDetails[game.slug]?.coverImageUrl ||
+                    "/placeholder-image.jpg"
+                  }
                   alt={game.name}
                   className="w-full h-40 object-cover rounded-lg"
                 />

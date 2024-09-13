@@ -10,6 +10,7 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
+import { FiActivity } from "react-icons/fi";
 
 export default function TransparentNavbar() {
   const { user } = useAuth();
@@ -92,7 +93,7 @@ export default function TransparentNavbar() {
           {
             href: "/activity",
             icon: (
-              <FaGamepad className="text-white hover:text-blue-400 transition" />
+              <FiActivity className="text-white hover:text-blue-400 transition" />
             ),
             text: "Activity",
             tooltip: "Activity",

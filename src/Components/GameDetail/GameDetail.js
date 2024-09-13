@@ -35,6 +35,7 @@ import {
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
+import { Loader } from "lucide-react";
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -109,7 +110,7 @@ export default function GameDetailsPage({ id }) {
           slug: game.slug,
           name: game.name,
           coverImageUrl: game.coverImageUrl,
-          likedAt: new Date().toISOString() // Añadimos el timestamp
+          likedAt: new Date().toISOString(), // Añadimos el timestamp
         };
 
         const gameIndex = likedGames.findIndex((g) => g.slug === game.slug);
@@ -144,7 +145,9 @@ export default function GameDetailsPage({ id }) {
           `https://gbxd-api.vercel.app/api/game/${id}`
         );
         if (!response.ok) {
-          throw new Error(`Error en la red: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `Error en la red: ${response.status} ${response.statusText}`
+          );
         }
         const data = await response.json();
         setGame(data);
@@ -194,7 +197,11 @@ export default function GameDetailsPage({ id }) {
   }, [id, globalReviews]);
 
   if (isLoading) {
-    return <div className="text-center">Cargando...</div>;
+    return (
+      <div className="text-center">
+        <Loader />
+      </div>
+    );
   }
 
   if (error) {

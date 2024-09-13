@@ -9,9 +9,9 @@ import {
   query,
   where,
   getDocs,
-  updateDoc,  // Añadir esta importación
-  arrayRemove,  // Añadir esta importación
-  arrayUnion  // Añadir esta importación
+  updateDoc,
+  arrayRemove,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import ProfilePicture from "./ProfilePicture";
@@ -21,7 +21,8 @@ import Reviews from "./Reviews";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { useAuth } from "../../context/AuthContext";
 import { FaUserPlus, FaUserMinus } from "react-icons/fa";
-import { toast } from "react-toastify"; // Añadir esta importación
+import { toast } from "react-toastify";
+import { Loader } from "lucide-react";
 
 export default function OtherUserProfile({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
@@ -89,21 +90,23 @@ export default function OtherUserProfile({ userId }) {
     try {
       if (isFollowing) {
         await updateDoc(currentUserRef, {
-          following: arrayRemove(userId)
+          following: arrayRemove(userId),
         });
         await updateDoc(targetUserRef, {
-          followers: arrayRemove(user.uid)
+          followers: arrayRemove(user.uid),
         });
       } else {
         await updateDoc(currentUserRef, {
-          following: arrayUnion(userId)
+          following: arrayUnion(userId),
         });
         await updateDoc(targetUserRef, {
-          followers: arrayUnion(user.uid)
+          followers: arrayUnion(user.uid),
         });
       }
       setIsFollowing(!isFollowing);
-      toast.success(isFollowing ? "Usuario dejado de seguir" : "Usuario seguido");
+      toast.success(
+        isFollowing ? "Usuario dejado de seguir" : "Usuario seguido"
+      );
     } catch (error) {
       console.error("Error al actualizar el estado de seguimiento:", error);
       toast.error("Ocurrió un error al actualizar el estado de seguimiento");
@@ -111,7 +114,11 @@ export default function OtherUserProfile({ userId }) {
   };
 
   if (!userProfile) {
-    return <p className="text-white">Cargando perfil...</p>;
+    return (
+      <p className="text-white">
+        <Loader />
+      </p>
+    );
   }
 
   return (
@@ -126,7 +133,9 @@ export default function OtherUserProfile({ userId }) {
             <button
               onClick={handleFollowToggle}
               className={`px-4 py-2 rounded-full flex items-center ${
-                isFollowing ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"
+                isFollowing
+                  ? "bg-red-500 hover:bg-red-600"
+                  : "bg-blue-500 hover:bg-blue-600"
               }`}
             >
               {isFollowing ? (

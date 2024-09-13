@@ -1,5 +1,7 @@
+"use client";
+
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useMediaQuery } from "react-responsive";
 import {
   doc,
@@ -17,16 +19,15 @@ import Bio from "./Bio";
 import LikedGames from "./LikedGames";
 import ProfilePicture from "./ProfilePicture";
 import Reviews from "./Reviews";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useReviews } from "../../context/ReviewsProvider";
-import Navbar from "../Navbar/Navbar";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaEdit, FaStar, FaUserFriends } from "react-icons/fa";
-import jsonp from "jsonp";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import FollowList from "./FollowList";
+import { FaEdit, FaStar, FaUserFriends, FaGamepad, FaPen } from "react-icons/fa";
+import { Loader } from "lucide-react";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -36,6 +37,7 @@ const StarField = ({ count = 100 }) => {
       x: Math.random(),
       y: Math.random(),
       size: Math.random() * 2 + 1,
+      opacity: Math.random() * 0.7 + 0.3,
     }));
     setStars(newStars);
   }, [count]);
@@ -43,7 +45,7 @@ const StarField = ({ count = 100 }) => {
   return (
     <div className="fixed inset-0 z-0">
       {stars.map((star, i) => (
-        <motion.div
+        <div
           key={i}
           className="absolute bg-white rounded-full"
           style={{
@@ -51,15 +53,7 @@ const StarField = ({ count = 100 }) => {
             height: star.size,
             left: `${star.x * 100}%`,
             top: `${star.y * 100}%`,
-          }}
-          animate={{
-            opacity: [0.2, 1, 0.2],
-            scale: [1, 1.2, 1],
-          }}
-          transition={{
-            duration: Math.random() * 3 + 2,
-            repeat: Infinity,
-            ease: "easeInOut",
+            opacity: star.opacity,
           }}
         />
       ))}
@@ -77,7 +71,6 @@ export default function UserProfile() {
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const { reviews, updateReview, deleteReview } = useReviews();
-  const apiUrl = "https://gbxd-api.vercel.app/api/games";
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const [showFollowList, setShowFollowList] = useState(false);
   const [followListType, setFollowListType] = useState("followers");
@@ -116,12 +109,11 @@ export default function UserProfile() {
         setUserProfile({
           ...userData,
           followers: userData.followers || [],
-          following: userData.following || []
+          following: userData.following || [],
         });
         setBio(userData.bio || "");
         setProfilePicture(userData.profilePicture || "");
 
-        // Obtener las carátulas de los juegos
         const newCovers = {};
         for (const game of userData.likedGames) {
           if (game.slug) {
@@ -176,7 +168,6 @@ export default function UserProfile() {
         profilePicture,
       });
 
-      // Actualizar el userProfile local después de guardar
       setUserProfile((prevProfile) => ({
         ...prevProfile,
         bio,
@@ -184,9 +175,10 @@ export default function UserProfile() {
       }));
 
       setEditing(false);
-      console.log("Profile updated successfully");
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
+      toast.error("Failed to update profile");
     }
   };
 
@@ -214,11 +206,11 @@ export default function UserProfile() {
         )
       );
 
-      toast.success("Reseña actualizada con éxito");
+      toast.success("Review updated successfully");
       return true;
     } catch (error) {
       console.error("Error updating review:", error);
-      toast.error("Error al actualizar la reseña");
+      toast.error("Failed to update review");
       return false;
     }
   };
@@ -232,19 +224,28 @@ export default function UserProfile() {
         prevReviews.filter((review) => review.id !== reviewId)
       );
 
-      toast.success("Reseña eliminada con éxito");
+      toast.success("Review deleted successfully");
       return true;
     } catch (error) {
       console.error("Error deleting review:", error);
-      toast.error("Error al eliminar la reseña");
+      toast.error("Failed to delete review");
       return false;
     }
   };
 
-  const handleShowFollowList = (type) => {
+  const handleShowFollowList = useCallback((type) => {
     setFollowListType(type);
     setShowFollowList(true);
-  };
+  }, []);
+
+  const memoizedLikedGames = useMemo(() => (
+    <LikedGames
+      userEmail={user.email}
+      likedGames={userProfile?.likedGames || []}
+      setUserProfile={setUserProfile}
+      isOwnProfile={true}
+    />
+  ), [user.email, userProfile?.likedGames, setUserProfile]);
 
   if (!user) {
     router.push("/signin");
@@ -253,65 +254,96 @@ export default function UserProfile() {
 
   if (!userProfile) {
     return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="flex items-center justify-center min-h-screen bg-gray-900 text-white"
-      >
-        <motion.p
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ repeat: Infinity, duration: 1 }}
-          className="text-blue-500 text-2xl"
-        >
-          Loading profile...
-        </motion.p>
-      </motion.div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+        <p className="text-blue-500 text-2xl"> <Loader /> </p>
+      </div>
     );
   }
 
+  const ProfileSection = ({ children }) => (
+    <div className="mb-8 p-6 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
+      {children}
+    </div>
+  );
+
   const MobileProfile = () => (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <div className="w-24 h-24 rounded-full overflow-hidden">
-          <ProfilePicture profilePicture={profilePicture} />
+      <ProfileSection>
+        <div className="flex items-center space-x-4">
+          <div className="w-24 h-24 rounded-full overflow-hidden">
+            <ProfilePicture profilePicture={profilePicture} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">
+              {userProfile?.username || user?.displayName || "User"}
+            </h1>
+            {!editing && (
+              <button
+                onClick={handleEditProfile}
+                className="bg-blue-500 text-white px-3 py-1 rounded-full mt-2 text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center"
+              >
+                <FaEdit className="mr-1" /> Edit Profile
+              </button>
+            )}
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold">
-            {userProfile?.username || user?.displayName || "User"}
-          </h1>
-          {!editing && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEditProfile}
-              className="bg-blue-500 text-white px-3 py-1 rounded-full mt-2 text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center"
-            >
-              <FaEdit className="mr-1" /> Edit Profile
-            </motion.button>
-          )}
-        </div>
-      </div>
-
-      <div className="p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
         <Bio bio={bio} setBio={setBio} editing={editing} />
-      </div>
+      </ProfileSection>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Favorite Games</h2>
-        <LikedGames
-          userEmail={user.email}
-          likedGames={userProfile.likedGames || []}
-          setUserProfile={setUserProfile}
-          isOwnProfile={true}
-        />
-      </div>
+      <ProfileSection>
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
+          <FaGamepad className="mr-2 text-green-400" /> Favorite Games
+        </h2>
+        {memoizedLikedGames}
+      </ProfileSection>
 
-      <div>
-        <h2 className="text-xl font-semibold mb-2 flex items-center">
+      <ProfileSection>
+        <h2 className="text-xl font-semibold mb-4 flex items-center">
           <FaStar className="mr-2 text-yellow-400" /> Your Reviews
         </h2>
-        <AnimatePresence>
+        {userReviews.length > 0 ? (
+          <Reviews
+            reviews={userReviews}
+            onEditReview={onEditReview}
+            onDeleteReview={onDeleteReview}
+            isOwnProfile={true}
+          />
+        ) : (
+          <p className="text-lg text-gray-400">You have no reviews yet.</p>
+        )}
+      </ProfileSection>
+    </div>
+  );
+
+  const DesktopProfile = () => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="md:col-span-1">
+        <ProfileSection>
+          <ProfilePicture profilePicture={profilePicture} />
+          <Bio bio={bio} setBio={setBio} editing={editing} />
+          {!editing && (
+            <button
+              onClick={handleEditProfile}
+              className="bg-blue-500 text-white px-4 py-2 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
+            >
+              <FaEdit className="mr-2" /> Edit Profile
+            </button>
+          )}
+        </ProfileSection>
+
+        <ProfileSection>
+          <h2 className="text-xl font-semibold mb-4 flex items-center">
+            <FaGamepad className="mr-2 text-green-400" /> Favorite Games
+          </h2>
+          {memoizedLikedGames}
+        </ProfileSection>
+      </div>
+
+      <div className="md:col-span-2">
+        <ProfileSection>
+          <h2 className="text-2xl font-semibold mb-4 flex items-center">
+            <FaStar className="mr-2 text-yellow-400" /> Your Reviews
+          </h2>
           {userReviews.length > 0 ? (
             <Reviews
               reviews={userReviews}
@@ -320,150 +352,68 @@ export default function UserProfile() {
               isOwnProfile={true}
             />
           ) : (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="text-lg"
-            >
-              You have no reviews yet.
-            </motion.p>
+            <p className="text-lg text-gray-400">You have no reviews yet.</p>
           )}
-        </AnimatePresence>
+        </ProfileSection>
       </div>
-    </div>
-  );
-
-  const DesktopProfile = () => (
-    <div
-      className={`grid ${
-        isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"
-      } gap-8`}
-    >
-      {/* Profile Section */}
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className={isMobile ? "order-1" : "md:col-span-1"}
-      >
-        <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-          <ProfilePicture profilePicture={profilePicture} />
-          <Bio bio={bio} setBio={setBio} editing={editing} />
-          {!editing && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleEditProfile}
-              className="bg-blue-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
-            >
-              <FaEdit className="mr-2" /> Edit Profile
-            </motion.button>
-          )}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          <LikedGames
-            userEmail={user.email}
-            likedGames={userProfile.likedGames || []}
-            setUserProfile={setUserProfile}
-            isOwnProfile={true}
-          />
-        </motion.div>
-      </motion.div>
-
-      {/* Reviews Section */}
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.6 }}
-        className={isMobile ? "order-2" : "md:col-span-2"}
-      >
-        <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-          <h2 className="text-2xl font-semibold mb-2 flex items-center">
-            <FaStar className="mr-2 text-yellow-400" /> Your Reviews
-          </h2>
-          <AnimatePresence>
-            {userReviews.length > 0 ? (
-              <Reviews
-                reviews={userReviews}
-                onEditReview={onEditReview}
-                onDeleteReview={onDeleteReview}
-                isOwnProfile={true}
-              />
-            ) : (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-lg"
-              >
-                You have no reviews yet.
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
     </div>
   );
 
   return (
     <>
-      <div className="min-h-screen bg-gray-900 text-white">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
         <StarField count={200} />
         <div className="container mx-auto p-4 space-y-8 relative z-10">
           <TransparentNavbar />
-          <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
+            <h1 className="text-4xl font-bold mb-4 md:mb-0">
               {userProfile?.username || user?.displayName || "User"}
             </h1>
             <div className="flex space-x-4">
               <button
                 onClick={() => handleShowFollowList("followers")}
-                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
+                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-300"
               >
                 <FaUserFriends className="mr-2 inline" />
-                Seguidores ({userProfile.followers.length})
+                Followers ({userProfile.followers.length})
               </button>
               <button
                 onClick={() => handleShowFollowList("following")}
-                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600"
+                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-300"
               >
                 <FaUserFriends className="mr-2 inline" />
-                Siguiendo ({userProfile.following.length})
+                Following ({userProfile.following.length})
               </button>
             </div>
           </div>
 
           {isMobile ? <MobileProfile /> : <DesktopProfile />}
 
-          {/* Modal para editar perfil */}
-          <AnimatePresence>
-            {editing && (
-              <Modal
-                isOpen={editing}
-                onClose={() => setEditing(false)}
-                onSave={handleSaveProfile}
-                setBio={setBio}
-                setProfilePicture={setProfilePicture}
-                bio={bio}
-                profilePicture={profilePicture}
-              />
-            )}
-          </AnimatePresence>
+          {editing && (
+            <Modal
+              isOpen={editing}
+              onClose={() => setEditing(false)}
+              onSave={handleSaveProfile}
+              setBio={setBio}
+              setProfilePicture={setProfilePicture}
+              bio={bio}
+              profilePicture={profilePicture}
+            />
+          )}
         </div>
       </div>
       {showFollowList && (
         <FollowList
           type={followListType}
-          users={followListType === "followers" ? userProfile.followers : userProfile.following}
+          users={
+            followListType === "followers"
+              ? userProfile.followers
+              : userProfile.following
+          }
           onClose={() => setShowFollowList(false)}
         />
       )}
+      <ToastContainer position="bottom-right" theme="dark" />
     </>
   );
 }
