@@ -252,11 +252,32 @@ export default function TransparentNavbar() {
                   >
                     Perfil
                   </Link>
+
+                  {navItems.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className={`block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition ${
+                        item.className || ""
+                      }`}
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        item.onClick && item.onClick();
+                      }}
+                    >
+                      <span className="flex items-center">
+                        {item.icon && (
+                          <span className="mr-4 text-3xl">{item.icon}</span>
+                        )}
+                        {item.text || item.tooltip}
+                      </span>
+                    </Link>
+                  ))}
                   <button
                     onClick={handleSignOut}
                     className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
                   >
-                    Cerrar sesión
+                    Sign Out
                   </button>
                 </>
               ) : (
@@ -267,26 +288,6 @@ export default function TransparentNavbar() {
                   Login
                 </Link>
               )}
-              {navItems.map((item, index) => (
-                <Link
-                  key={index}
-                  href={item.href}
-                  className={`block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition ${
-                    item.className || ""
-                  }`}
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    item.onClick && item.onClick();
-                  }}
-                >
-                  <span className="flex items-center">
-                    {item.icon && (
-                      <span className="mr-4 text-3xl">{item.icon}</span>
-                    )}
-                    {item.text || item.tooltip}
-                  </span>
-                </Link>
-              ))}
             </div>
           </motion.div>
         )}
