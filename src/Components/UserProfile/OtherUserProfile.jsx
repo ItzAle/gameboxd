@@ -140,11 +140,11 @@ export default function OtherUserProfile({ userId }) {
             >
               {isFollowing ? (
                 <>
-                  <FaUserMinus className="mr-2" /> Dejar de seguir
+                  <FaUserMinus className="mr-2" /> Unfollow
                 </>
               ) : (
                 <>
-                  <FaUserPlus className="mr-2" /> Seguir
+                  <FaUserPlus className="mr-2" /> Follow
                 </>
               )}
             </button>
