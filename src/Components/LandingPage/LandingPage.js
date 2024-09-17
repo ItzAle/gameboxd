@@ -261,7 +261,6 @@ const AuthenticatedContent = ({ currentImageIndex, renderFeatures }) => {
 
   return (
     <>
-      {/* Animated background */}
       <div className="absolute inset-0 opacity-20">
         <AnimatePresence mode="wait">
           <motion.img

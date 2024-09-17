@@ -74,6 +74,9 @@ export default function UserProfile() {
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const [showFollowList, setShowFollowList] = useState(false);
   const [followListType, setFollowListType] = useState("followers");
+  const [favoriteGames, setFavoriteGames] = useState([]);
+  const [likedGames, setLikedGames] = useState([]);
+  const [gameDetails, setGameDetails] = useState({});
 
   useEffect(() => {
     if (user) {
@@ -82,20 +85,31 @@ export default function UserProfile() {
     }
   }, [user]);
 
-  const fetchGameDetails = async (slug) => {
-    try {
-      const response = await fetch(
-        `https://gbxd-api.vercel.app/api/game/${slug}`
-      );
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
+  const fetchGameDetails = async (games) => {
+    const details = { ...gameDetails };
+    for (const game of games) {
+      if (!details[game.slug]) {
+        try {
+          const response = await fetch(`https://gbxd-api.vercel.app/api/game/${game.slug}`);
+          if (response.ok) {
+            const data = await response.json();
+            details[game.slug] = data;
+          }
+        } catch (error) {
+          console.error(`Error fetching details for game ${game.slug}:`, error);
+        }
       }
-      return await response.json();
-    } catch (error) {
-      console.error(`Error fetching game data for ${slug}:`, error);
-      return null;
     }
+    setGameDetails(details);
   };
+
+  useEffect(() => {
+    if (likedGames.length > 0) {
+      fetchGameDetails(likedGames);
+    }
+  }, [likedGames]);
+
+  const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
 
   const fetchUserProfile = async () => {
     if (!user) return;
@@ -113,6 +127,8 @@ export default function UserProfile() {
         });
         setBio(userData.bio || "");
         setProfilePicture(userData.profilePicture || "");
+        setFavoriteGames(userData.likedGames || []);
+        setLikedGames(userData.likedGames || []);
 
         const newCovers = {};
         for (const game of userData.likedGames) {
@@ -241,11 +257,12 @@ export default function UserProfile() {
   const memoizedLikedGames = useMemo(() => (
     <LikedGames
       userEmail={user.email}
-      likedGames={userProfile?.likedGames || []}
+      favoriteGames={favoriteGames}
       setUserProfile={setUserProfile}
       isOwnProfile={true}
+      gameDetails={memoizedGameDetails}
     />
-  ), [user.email, userProfile?.likedGames, setUserProfile]);
+  ), [user.email, favoriteGames, setUserProfile, memoizedGameDetails]);
 
   if (!user) {
     router.push("/signin");

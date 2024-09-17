@@ -64,61 +64,11 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [containsSpoilers, setContainsSpoilers] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
   const { user } = useAuth();
   const [isBrowser, setIsBrowser] = useState(false);
-
-  const handleToggleFavorite = async () => {
-    if (!user) {
-      toast.error(
-        "Necesitas iniciar sesión para marcar un juego como favorito."
-      );
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const likedGames = userData.likedGames || [];
-
-        const gameToSave = {
-          slug: game.slug,
-          name: game.name,
-          coverImageUrl: game.coverImageUrl
-        };
-
-        // Verificar que todos los campos necesarios estén presentes
-        if (!gameToSave.slug || !gameToSave.name || !gameToSave.coverImageUrl) {
-          console.error("Datos del juego incompletos:", gameToSave);
-          toast.error("No se pudo actualizar el estado de favorito debido a datos incompletos del juego.");
-          return;
-        }
-
-        if (isFavorite) {
-          // El juego ya está en favoritos, lo eliminamos
-          await updateDoc(userRef, {
-            likedGames: arrayRemove(gameToSave),
-          });
-          setIsFavorite(false);
-          toast.success("Juego eliminado de favoritos.");
-        } else {
-          // El juego no está en favoritos, lo añadimos
-          await updateDoc(userRef, {
-            likedGames: arrayUnion(gameToSave),
-          });
-          setIsFavorite(true);
-          toast.success("Juego añadido a favoritos.");
-        }
-      }
-    } catch (error) {
-      console.error("Error al actualizar el estado de favorito:", error);
-      toast.error("Ocurrió un error al actualizar el estado de favorito.");
-    }
-  };
 
   useEffect(() => {
     const checkIfReviewExists = async () => {
@@ -146,38 +96,118 @@ export default function AddReviewModal({ game, onClose, onSave }) {
     };
 
     checkIfReviewExists();
+    checkFavoriteStatus();
   }, [user, game.slug, onClose]);
 
-  const handleSubmit = async () => {
-    if (!user) {
-      toast.error("Necesitas iniciar sesión para añadir una reseña.");
-      onClose();
-      return;
-    }
+  const checkFavoriteStatus = async () => {
+    if (!user) return;
 
-    if (rating === 0) {
-      toast.error("Por favor, proporciona una calificación para tu reseña.");
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const likedGames = userData.likedGames || [];
+        setFavoriteGamesCount(likedGames.length);
+        setIsFavorite(likedGames.some((g) => g.slug === game.slug));
+      }
+    } catch (error) {
+      console.error("Error checking favorite status:", error);
+    }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!user) {
+      toast.error("You need to be logged in to mark a game as favorite.");
       return;
     }
 
     try {
-      // Obtener el documento del usuario para asegurar que tenemos el nombre de usuario más actualizado
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const likedGames = userData.likedGames || [];
+
+        const gameToSave = {
+          slug: game.slug,
+          name: game.name,
+          coverImageUrl: game.coverImageUrl
+        };
+
+        if (!gameToSave.slug || !gameToSave.name || !gameToSave.coverImageUrl) {
+          console.error("Incomplete game data:", gameToSave);
+          toast.error("Unable to update favorite status due to incomplete game data.");
+          return;
+        }
+
+        if (isFavorite) {
+          // Remove game from favorites
+          const updatedLikedGames = likedGames.filter(g => g.slug !== game.slug);
+          await updateDoc(userRef, {
+            likedGames: updatedLikedGames,
+          });
+          setIsFavorite(false);
+          setFavoriteGamesCount(prev => prev - 1);
+          toast.success("Game removed from favorites.");
+        } else {
+          // Add game to favorites
+          if (likedGames.length >= 6) {
+            toast.error("You can't add more than 6 favorite games. Please remove one to add another.");
+            return;
+          }
+          await updateDoc(userRef, {
+            likedGames: [...likedGames, gameToSave],
+          });
+          setIsFavorite(true);
+          setFavoriteGamesCount(prev => prev + 1);
+          toast.success("Game added to favorites.");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+      toast.error("An error occurred while updating favorite status.");
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!user) {
+      toast.error("You need to be logged in to add a review.");
+      onClose();
+      return;
+    }
+
+    if (liked === null) {
+      toast.error("Please indicate if you liked the game or not.");
+      return;
+    }
+
+    if (rating === 0) {
+      toast.error("Please provide a rating for your review.");
+      return;
+    }
+
+    try {
+      // Get the user document to ensure we have the latest username
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const userData = userDoc.data();
-      const username = userData?.username || user.displayName || "Anónimo";
+      const username = userData?.username || user.displayName || "Anonymous";
 
       const reviewToSave = {
         rating,
         comment,
         containsSpoilers,
         userId: user.uid,
-        username: username, // Usar el nombre de usuario obtenido
+        username: username, // Use the obtained username
         gameId: game.slug,
         gameName: game.name,
         createdAt: new Date().toISOString(),
+        liked: liked,
       };
 
-      // Verificar si ya existe una reseña para este juego y usuario
+      // Check if a review already exists for this game and user
       const reviewsQuery = query(
         collection(db, "reviews"),
         where("gameId", "==", game.slug),
@@ -193,7 +223,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
 
       const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
       
-      // Actualizar el documento del usuario con la nueva reseña
+      // Update the user document with the new review
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         reviews: arrayUnion(docRef.id)
@@ -241,6 +271,34 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           <h2 className="text-2xl font-bold mb-4 text-blue-400">
             Add Review for {game.name}
           </h2>
+
+          {/* Like/Dislike Option */}
+          <motion.div
+            className="mb-4"
+            initial={{ x: -20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <label className="block text-lg mb-2 text-blue-300">Did you like the game?</label>
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setLiked(true)}
+                className={`px-4 py-2 rounded ${
+                  liked === true ? 'bg-green-500' : 'bg-gray-700'
+                }`}
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setLiked(false)}
+                className={`px-4 py-2 rounded ${
+                  liked === false ? 'bg-red-500' : 'bg-gray-700'
+                }`}
+              >
+                No
+              </button>
+            </div>
+          </motion.div>
 
           {/* Star Rating Component */}
           <div className="mb-4">
@@ -299,6 +357,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               className="flex items-center text-gray-300 hover:text-white"
+              disabled={!isFavorite && favoriteGamesCount >= 6}
             >
               {isFavorite ? (
                 <AiFillHeart className="text-red-500 text-2xl mr-2" />
@@ -309,6 +368,11 @@ export default function AddReviewModal({ game, onClose, onSave }) {
                 {isFavorite ? "Remove from favorites" : "Add to favorites"}
               </span>
             </motion.button>
+            {!isFavorite && favoriteGamesCount >= 6 && (
+              <p className="text-sm text-red-400 mt-2">
+                You have reached the maximum of 6 favorite games. Remove one to add another.
+              </p>
+            )}
           </motion.div>
 
           {/* Action Buttons with animation */}

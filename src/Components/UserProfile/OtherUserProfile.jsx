@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   doc,
@@ -26,15 +26,15 @@ import { Loader } from "lucide-react";
 
 export default function OtherUserProfile({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
-  const [userReviews, setUserReviews] = useState([]);
+  const [favoriteGames, setFavoriteGames] = useState([]);
+  const [gameDetails, setGameDetails] = useState({});
+  const [userReviews, setUserReviews] = useState([]); // Añadimos este estado para las reseñas
   const router = useRouter();
   const { user } = useAuth();
   const [isFollowing, setIsFollowing] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!userId) return;
-
       try {
         const userRef = doc(db, "users", userId);
         const userDoc = await getDoc(userRef);
@@ -42,24 +42,29 @@ export default function OtherUserProfile({ userId }) {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserProfile(userData);
-
+          setFavoriteGames(userData.likedGames || []); // Asegúrate de que esto esté configurado
+          // Fetch game details for favorite games
+          if (userData.likedGames && userData.likedGames.length > 0) {
+            fetchGameDetails(userData.likedGames);
+          }
+          
           // Obtener las reseñas del usuario
           const reviewsQuery = query(
             collection(db, "reviews"),
             where("userId", "==", userId)
           );
           const reviewsSnapshot = await getDocs(reviewsQuery);
-          const reviewsData = reviewsSnapshot.docs.map((doc) => ({
+          const reviewsData = reviewsSnapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data(),
+            ...doc.data()
           }));
           setUserReviews(reviewsData);
         } else {
-          router.push("/404");
+          // Manejar el caso en que el usuario no existe
+          console.log("No such user!");
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        router.push("/404");
       }
     };
 
@@ -113,6 +118,32 @@ export default function OtherUserProfile({ userId }) {
     }
   };
 
+  useEffect(() => {
+    const fetchGameDetails = async () => {
+      if (userProfile && userProfile.likedGames) {
+        const details = { ...gameDetails };
+        for (const game of userProfile.likedGames) {
+          if (!details[game.slug]) {
+            try {
+              const response = await fetch(`https://gbxd-api.vercel.app/api/game/${game.slug}`);
+              if (response.ok) {
+                const data = await response.json();
+                details[game.slug] = data;
+              }
+            } catch (error) {
+              console.error(`Error fetching details for game ${game.slug}:`, error);
+            }
+          }
+        }
+        setGameDetails(details);
+      }
+    };
+
+    fetchGameDetails();
+  }, [userProfile]);
+
+  const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
+
   if (!userProfile) {
     return (
       <p className="text-white">
@@ -159,9 +190,10 @@ export default function OtherUserProfile({ userId }) {
             </div>
 
             <LikedGames
-              userEmail={userProfile.email}
-              likedGames={userProfile.likedGames || []}
+              userEmail={userProfile?.email}
+              favoriteGames={favoriteGames}
               isOwnProfile={false}
+              gameDetails={gameDetails}
             />
           </div>
 

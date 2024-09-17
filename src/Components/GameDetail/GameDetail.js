@@ -46,6 +46,7 @@ export default function GameDetailsPage({ id }) {
   const [isFavorite, setIsFavorite] = useState(false);
   const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
   const [isLoading, setIsLoading] = useState(true);
+  const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
 
   const handleAddReviewClick = async () => {
     if (!user) {
@@ -113,22 +114,27 @@ export default function GameDetailsPage({ id }) {
           likedAt: new Date().toISOString(), // Añadimos el timestamp
         };
 
-        const gameIndex = likedGames.findIndex((g) => g.slug === game.slug);
-
-        if (gameIndex !== -1) {
-          // El juego ya está en favoritos, lo eliminamos
+        if (isFavorite) {
+          // Remove game from favorites
+          const updatedLikedGames = likedGames.filter(g => g.slug !== game.slug);
           await updateDoc(userRef, {
-            likedGames: arrayRemove(likedGames[gameIndex]),
+            likedGames: updatedLikedGames,
           });
           setIsFavorite(false);
-          toast.success("Juego eliminado de favoritos.");
+          setFavoriteGamesCount(prev => prev - 1);
+          toast.success("Game removed from favorites.");
         } else {
-          // El juego no está en favoritos, lo añadimos
+          // Add game to favorites
+          if (likedGames.length >= 6) {
+            toast.error("You can't add more than 6 favorite games. Please remove one to add another.");
+            return;
+          }
           await updateDoc(userRef, {
-            likedGames: arrayUnion(gameToSave),
+            likedGames: [...likedGames, gameToSave],
           });
           setIsFavorite(true);
-          toast.success("Juego añadido a favoritos.");
+          setFavoriteGamesCount(prev => prev + 1);
+          toast.success("Game added to favorites.");
         }
       }
     } catch (error) {
@@ -171,9 +177,9 @@ export default function GameDetailsPage({ id }) {
 
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              setIsFavorite(
-                userData.likedGames?.some((g) => g.slug === id) || false
-              );
+              const likedGames = userData.likedGames || [];
+              setIsFavorite(likedGames.some((g) => g.slug === id));
+              setFavoriteGamesCount(likedGames.length);
             }
           }
         } catch (firestoreError) {
@@ -362,6 +368,7 @@ export default function GameDetailsPage({ id }) {
                           : "bg-gray-600 hover:bg-gray-700"
                       }`}
                       onClick={handleLikeClick}
+                      disabled={!isFavorite && favoriteGamesCount >= 6}
                     >
                       <motion.div
                         initial={{ scale: 1 }}
@@ -375,6 +382,11 @@ export default function GameDetailsPage({ id }) {
                         )}
                       </motion.div>
                     </motion.button>
+                    {!isFavorite && favoriteGamesCount >= 6 && (
+                      <p className="text-sm text-red-400 mt-2">
+                        You have reached the maximum of 6 favorite games. Remove one to add another.
+                      </p>
+                    )}
                   </>
                 ) : (
                   <motion.p

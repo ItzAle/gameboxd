@@ -1,73 +1,19 @@
 import { motion } from "framer-motion";
-import { FaHeart, FaTrash } from "react-icons/fa";
 import Link from "next/link";
-import { doc, updateDoc, arrayRemove } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-import { useAuth } from "../../context/AuthContext";
-import { toast } from "react-toastify";
-import { useState, useEffect } from "react";
+import Image from "next/image";
 
-const LikedGames = ({
-  userEmail,
-  likedGames,
-  setUserProfile,
-  isOwnProfile,
-}) => {
-  const { user } = useAuth();
-  const [gameDetails, setGameDetails] = useState({});
-
-  useEffect(() => {
-    const fetchGameDetails = async () => {
-      const details = {};
-      for (const game of likedGames) {
-        try {
-          const response = await fetch(
-            `https://gbxd-api.vercel.app/api/game/${game.slug}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            details[game.slug] = data;
-          }
-        } catch (error) {
-          console.error(`Error fetching details for game ${game.slug}:`, error);
-        }
-      }
-      setGameDetails(details);
-    };
-
-    fetchGameDetails();
-  }, [likedGames]);
-
-  const handleUnlike = async (game) => {
-    if (!user || !isOwnProfile) {
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        likedGames: arrayRemove(game),
-      });
-
-      // Actualizar el estado local
-      setUserProfile((prevProfile) => ({
-        ...prevProfile,
-        likedGames: prevProfile.likedGames.filter((g) => g.slug !== game.slug),
-      }));
-
-      toast.success("Juego eliminado de favoritos.");
-    } catch (error) {
-      console.error("Error al quitar el juego de favoritos:", error);
-      toast.error("Ocurrió un error al quitar el juego de favoritos.");
-    }
-  };
+const LikedGames = ({ userEmail, favoriteGames, isOwnProfile, gameDetails }) => {
+  // Verificar si favoriteGames es undefined o null, y proporcionar un array vacío como valor predeterminado
+  const games = favoriteGames || [];
 
   return (
     <div className="mb-8 p-4 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-      <h2 className="text-2xl font-semibold mb-2 flex items-center"></h2>
-      {likedGames.length > 0 ? (
+      <h2 className="text-2xl font-semibold mb-2 flex items-center">
+        Favorite Games
+      </h2>
+      {games.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {likedGames.map((game) => (
+          {games.slice(0, 6).map((game) => (
             <motion.div
               key={game.slug}
               whileHover={{ scale: 1.05 }}
@@ -77,25 +23,19 @@ const LikedGames = ({
                 <img
                   src={
                     gameDetails[game.slug]?.coverImageUrl ||
+                    game.coverImageUrl ||
                     "/placeholder-image.jpg"
                   }
                   alt={game.name}
+                  width={300}
+                  height={400}
                   className="w-full h-40 object-cover rounded-lg"
+                  loading="lazy"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-2 rounded-b-lg">
                   <p className="text-sm text-white truncate">{game.name}</p>
                 </div>
               </Link>
-              {isOwnProfile && (
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                  onClick={() => handleUnlike(game)}
-                >
-                  <FaTrash />
-                </motion.button>
-              )}
             </motion.div>
           ))}
         </div>

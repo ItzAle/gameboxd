@@ -86,6 +86,11 @@ const Reviews = ({ reviews, onEditReview, onDeleteReview, isOwnProfile }) => {
           />
         ))}
       </div>
+      <p className="text-gray-300 mb-2">
+        {review.liked
+          ? "User liked this game"
+          : "User did not like this game"}
+      </p>
       <p className="text-gray-300 mb-4">{review.comment}</p>
       {isOwnProfile && (
         <div className="flex space-x-4">
