@@ -26,7 +26,13 @@ import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import FollowList from "./FollowList";
-import { FaEdit, FaStar, FaUserFriends, FaGamepad, FaPen } from "react-icons/fa";
+import {
+  FaEdit,
+  FaStar,
+  FaUserFriends,
+  FaGamepad,
+  FaPen,
+} from "react-icons/fa";
 import { Loader } from "lucide-react";
 
 const StarField = ({ count = 100 }) => {
@@ -69,6 +75,7 @@ export default function UserProfile() {
   const [covers, setCovers] = useState({});
   const [editing, setEditing] = useState(false);
   const [bio, setBio] = useState("");
+  const [editingBio, setEditingBio] = useState("");
   const [profilePicture, setProfilePicture] = useState("");
   const { reviews, updateReview, deleteReview } = useReviews();
   const isMobile = useMediaQuery({ maxWidth: 767 });
@@ -90,7 +97,9 @@ export default function UserProfile() {
     for (const game of games) {
       if (!details[game.slug]) {
         try {
-          const response = await fetch(`https://gbxd-api.vercel.app/api/game/${game.slug}`);
+          const response = await fetch(
+            `https://gbxd-api.vercel.app/api/game/${game.slug}`
+          );
           if (response.ok) {
             const data = await response.json();
             details[game.slug] = data;
@@ -180,15 +189,16 @@ export default function UserProfile() {
     try {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
-        bio,
+        bio: editingBio,
         profilePicture,
       });
 
       setUserProfile((prevProfile) => ({
         ...prevProfile,
-        bio,
+        bio: editingBio,
         profilePicture,
       }));
+      setBio(editingBio);
 
       setEditing(false);
       toast.success("Profile updated successfully");
@@ -200,7 +210,7 @@ export default function UserProfile() {
 
   const handleEditProfile = () => {
     if (userProfile) {
-      setBio(userProfile.bio || "");
+      setEditingBio(userProfile.bio || "");
       setProfilePicture(userProfile.profilePicture || "");
     }
     setEditing(true);
@@ -254,15 +264,18 @@ export default function UserProfile() {
     setShowFollowList(true);
   }, []);
 
-  const memoizedLikedGames = useMemo(() => (
-    <LikedGames
-      userEmail={user.email}
-      favoriteGames={favoriteGames}
-      setUserProfile={setUserProfile}
-      isOwnProfile={true}
-      gameDetails={memoizedGameDetails}
-    />
-  ), [user.email, favoriteGames, setUserProfile, memoizedGameDetails]);
+  const memoizedLikedGames = useMemo(
+    () => (
+      <LikedGames
+        userEmail={user.email}
+        favoriteGames={favoriteGames}
+        setUserProfile={setUserProfile}
+        isOwnProfile={true}
+        gameDetails={memoizedGameDetails}
+      />
+    ),
+    [user.email, favoriteGames, setUserProfile, memoizedGameDetails]
+  );
 
   if (!user) {
     router.push("/signin");
@@ -272,7 +285,10 @@ export default function UserProfile() {
   if (!userProfile) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
-        <p className="text-blue-500 text-2xl"> <Loader /> </p>
+        <p className="text-blue-500 text-2xl">
+          {" "}
+          <Loader />{" "}
+        </p>
       </div>
     );
   }
@@ -411,9 +427,9 @@ export default function UserProfile() {
               isOpen={editing}
               onClose={() => setEditing(false)}
               onSave={handleSaveProfile}
-              setBio={setBio}
+              setBio={setEditingBio}
               setProfilePicture={setProfilePicture}
-              bio={bio}
+              bio={editingBio}
               profilePicture={profilePicture}
             />
           )}
