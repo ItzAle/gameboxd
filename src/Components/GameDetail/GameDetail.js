@@ -116,24 +116,28 @@ export default function GameDetailsPage({ id }) {
 
         if (isFavorite) {
           // Remove game from favorites
-          const updatedLikedGames = likedGames.filter(g => g.slug !== game.slug);
+          const updatedLikedGames = likedGames.filter(
+            (g) => g.slug !== game.slug
+          );
           await updateDoc(userRef, {
             likedGames: updatedLikedGames,
           });
           setIsFavorite(false);
-          setFavoriteGamesCount(prev => prev - 1);
+          setFavoriteGamesCount((prev) => prev - 1);
           toast.success("Game removed from favorites.");
         } else {
           // Add game to favorites
           if (likedGames.length >= 6) {
-            toast.error("You can't add more than 6 favorite games. Please remove one to add another.");
+            toast.error(
+              "You can't add more than 6 favorite games. Please remove one to add another."
+            );
             return;
           }
           await updateDoc(userRef, {
             likedGames: [...likedGames, gameToSave],
           });
           setIsFavorite(true);
-          setFavoriteGamesCount(prev => prev + 1);
+          setFavoriteGamesCount((prev) => prev + 1);
           toast.success("Game added to favorites.");
         }
       }
@@ -384,7 +388,8 @@ export default function GameDetailsPage({ id }) {
                     </motion.button>
                     {!isFavorite && favoriteGamesCount >= 6 && (
                       <p className="text-sm text-red-400 mt-2">
-                        You have reached the maximum of 6 favorite games. Remove one to add another.
+                        You have reached the maximum of 6 favorite games. Remove
+                        one to add another.
                       </p>
                     )}
                   </>

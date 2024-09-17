@@ -142,6 +142,7 @@ export default function SignUp() {
         reviews: [],
         likedGames: [],
         emailVerified: false,
+        isPro: false,
       });
 
       toast.success("Registration successful. Please verify your email.");

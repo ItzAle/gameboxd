@@ -12,6 +12,9 @@ import { useAuth } from "../../context/AuthContext";
 import ActivityFeed from "../Activity/Activity";
 import RecentGames from "../RecentGames/RecentGames";
 import HomeFeed from "../HomeFeed/HomeFeed";
+import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
+import UpcomingGames from "../UpcomingGames/UpcomingGames";
+import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
 
 const gameCoverUrls = [
   "https://imgs.callofduty.com/content/dam/atvi/callofduty/cod-touchui/blackops6/meta/BO6_LP-meta_image.jpg",
@@ -140,6 +143,9 @@ export default function LandingPage() {
           <AuthenticatedContent
             currentImageIndex={currentImageIndex}
             renderFeatures={renderFeatures}
+            username={
+              user.displayName || user.email?.split("@")[0] || "Usuario"
+            }
           />
         ) : (
           <UnauthenticatedContent
@@ -152,6 +158,11 @@ export default function LandingPage() {
             renderFeatures={renderFeatures}
           />
         )}
+        <div className="mb-16">
+          {" "}
+          {/* Añadido: margen inferior */}
+          <UpgradeBanner />
+        </div>
         <Footer />
       </div>
     </>
@@ -255,10 +266,11 @@ const UnauthenticatedContent = ({
   );
 };
 
-const AuthenticatedContent = ({ currentImageIndex, renderFeatures }) => {
-  const { user } = useAuth();
-  const username = user?.displayName || user?.email?.split("@")[0] || "Usuario";
-
+const AuthenticatedContent = ({
+  currentImageIndex,
+  renderFeatures,
+  username,
+}) => {
   return (
     <>
       <div className="absolute inset-0 opacity-20">
@@ -284,7 +296,7 @@ const AuthenticatedContent = ({ currentImageIndex, renderFeatures }) => {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-5xl font-bold mb-12 text-blue-400"
         >
-          Welcome back, {username}
+          Welcome, {username}
         </motion.h1>
         <motion.div
           initial={{ opacity: 0, y: 50 }}
@@ -292,16 +304,8 @@ const AuthenticatedContent = ({ currentImageIndex, renderFeatures }) => {
           transition={{ duration: 0.6, delay: 0.7 }}
           className="w-full max-w-7xl"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div>
-              <h2 className="text-3xl font-semibold mb-6">Friends activity</h2>
-              <HomeFeed />
-            </div>
-            <div>
-              <h2 className="text-3xl font-semibold mb-6">Recent games</h2>
-              <RecentGames />
-            </div>
-          </div>
+          <h2 className="text-3xl font-semibold mb-6">Upcoming Games</h2>
+          <RecentGamesGrid />
         </motion.div>
       </div>
     </>
