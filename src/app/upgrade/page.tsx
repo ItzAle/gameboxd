@@ -2,11 +2,6 @@
 
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { loadStripe } from "@stripe/stripe-js";
-
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
 
 export default function UpgradePage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,34 +11,31 @@ export default function UpgradePage() {
     if (!user) return;
 
     setIsLoading(true);
-    const response = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: user.uid,
-        priceId: "price_1Q0KxI092lcEL3ag0Y7QpFrt",
-      }),
-    });
+    try {
+      const response = await fetch("/api/create-payment-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.uid }),
+      });
 
-    if (response.ok) {
-      const { sessionId } = await response.json();
-      const stripe = await stripePromise;
-      const { error } = await stripe!.redirectToCheckout({ sessionId });
-
-      if (error) {
-        console.error("Error:", error);
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        throw new Error("Failed to create checkout session");
       }
-    } else {
-      console.error("Failed to create checkout session");
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
     <div>
       <h1>Actualiza a Pro</h1>
       <button onClick={handleUpgrade} disabled={isLoading}>
-        {isLoading ? "Procesando..." : "Actualizar por 8€"}
+        {isLoading ? "Procesando..." : "Actualizar a Pro"}
       </button>
     </div>
   );

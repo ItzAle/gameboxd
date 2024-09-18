@@ -7,11 +7,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
-    const { userId, priceId } = await request.json();
+    const { userId } = await request.json();
 
-    if (!userId || !priceId) {
+    if (!userId) {
       return NextResponse.json(
-        { error: "User ID and Price ID are required" },
+        { error: "User ID is required" },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: priceId,
+          price: "price_1Q0KxI092lcEL3ag0Y7QpFrt", // Reemplaza con tu ID de precio real
           quantity: 1,
         },
       ],
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       client_reference_id: userId,
     });
 
-    return NextResponse.json({ sessionId: session.id });
+    return NextResponse.json({ url: session.url });
   } catch (err: any) {
     console.error("Error creating checkout session:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
