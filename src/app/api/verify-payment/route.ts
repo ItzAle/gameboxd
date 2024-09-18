@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "../../../../lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-06-20",
@@ -9,40 +9,35 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await request.json();
+    const { sessionId, userId } = await request.json();
 
-    if (!userId) {
+    if (!sessionId || !userId) {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "Missing sessionId or userId" },
         { status: 400 }
       );
     }
 
-    // Obtener el ID de la sesión de Stripe del usuario
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userData = userSnap.data();
-    const stripeSessionId = userData.stripeSessionId;
-
-    if (!stripeSessionId) {
-      return NextResponse.json(
-        { error: "No payment session found" },
-        { status: 400 }
-      );
-    }
-
-    // Verificar el estado del pago con Stripe
-    const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
 
     if (session.payment_status === "paid") {
-      return NextResponse.json({ verified: true });
+      const userRef = doc(db, "users", userId);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        await updateDoc(userRef, { isPro: true });
+        return NextResponse.json({
+          success: true,
+          message: "User upgraded to Pro",
+        });
+      } else {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
     } else {
-      return NextResponse.json({ verified: false });
+      return NextResponse.json(
+        { error: "Payment not completed" },
+        { status: 400 }
+      );
     }
   } catch (error) {
     console.error("Error verifying payment:", error);
