@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       amount: 800, // 8 euros en centavos
       currency: "eur",
       metadata: { userId },
-      payment_method_types: ["card", "apple_pay"],
+      payment_method_types: ["card"],
     });
 
     // Configurar Apple Pay
