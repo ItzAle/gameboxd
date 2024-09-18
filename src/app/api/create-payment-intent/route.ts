@@ -4,7 +4,7 @@ import { db } from "../../../../lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2024-06-20", // Asegúrate de usar la versión más reciente
 });
 
 export async function POST(request: Request) {
@@ -36,22 +36,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Obtener los métodos de pago disponibles
-    const paymentMethods = await stripe.paymentMethods.list({
-      type: "card",
-    });
-
-    console.log(
-      "Métodos de pago disponibles:",
-      paymentMethods.data.map((pm) => pm.type)
-    );
-
     // Crear un PaymentIntent con el monto y la moneda
     const paymentIntent = await stripe.paymentIntents.create({
       amount: 800, // 8 euros en centavos
       currency: "eur",
       metadata: { userId },
-      payment_method_types: ["card"], // Comienza solo con 'card'
+      payment_method_types: ["card", "apple_pay"],
+    });
+
+    // Configurar Apple Pay
+    await stripe.applePayDomains.create({
+      domain_name: "gameboxd-pi.vercel.app", // Reemplaza con tu dominio real
     });
 
     console.log("PaymentIntent creado exitosamente");
