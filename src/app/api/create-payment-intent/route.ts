@@ -7,11 +7,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await request.json();
+    const { userId, priceId } = await request.json();
 
-    if (!userId) {
+    if (!userId || !priceId) {
       return NextResponse.json(
-        { error: "User ID is required" },
+        { error: "User ID and Price ID are required" },
         { status: 400 }
       );
     }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: "price_1Q0KxI092lcEL3ag0Y7QpFrt",
+          price: priceId,
           quantity: 1,
         },
       ],
@@ -35,4 +35,11 @@ export async function POST(request: Request) {
     console.error("Error creating checkout session:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return NextResponse.json(
+    { message: "This endpoint only supports POST requests" },
+    { status: 405 }
+  );
 }
