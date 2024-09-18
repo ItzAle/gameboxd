@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { doc, updateDoc } from "firebase/firestore";
@@ -9,28 +9,52 @@ import { db } from "../../../lib/firebase";
 export default function UpgradeSuccess() {
   const router = useRouter();
   const { user } = useAuth();
+  const [isVerifying, setIsVerifying] = useState(true);
 
   useEffect(() => {
-    const updateUserStatus = async () => {
-      if (user) {
-        const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, { isPro: true });
-        // Redirigir al usuario a su perfil o a una página de confirmación
-        router.push("/profile");
+    const verifyPayment = async () => {
+      if (!user) return;
+
+      const sessionId = new URLSearchParams(window.location.search).get(
+        "session_id"
+      );
+      if (!sessionId) {
+        router.push("/upgrade");
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, userId: user.uid }),
+        });
+
+        if (response.ok) {
+          const userRef = doc(db, "users", user.uid);
+          await updateDoc(userRef, { isPro: true });
+        } else {
+          throw new Error("Payment verification failed");
+        }
+      } catch (error) {
+        console.error("Error verifying payment:", error);
+        router.push("/upgrade");
+      } finally {
+        setIsVerifying(false);
       }
     };
 
-    updateUserStatus();
+    verifyPayment();
   }, [user, router]);
 
+  if (isVerifying) {
+    return <div>Verificando tu pago...</div>;
+  }
+
   return (
-    <div className="container mx-auto px-4 py-8 text-center">
-      <h1 className="text-3xl font-bold mb-4">
-        ¡Gracias por actualizar a Pro!
-      </h1>
-      <p className="text-xl">
-        Estamos procesando tu pago y actualizando tu cuenta...
-      </p>
+    <div>
+      <h1>¡Gracias por actualizar a Pro!</h1>
+      <p>Tu cuenta ha sido actualizada exitosamente.</p>
     </div>
   );
 }

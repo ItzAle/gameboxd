@@ -1,17 +1,13 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { db } from "../../../../lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-06-20", // Asegúrate de usar la versión más reciente
+  apiVersion: "2024-06-20",
 });
 
 export async function POST(request: Request) {
   try {
-    console.log("Iniciando create-payment-intent");
     const { userId } = await request.json();
-    console.log("UserId recibido:", userId);
 
     if (!userId) {
       return NextResponse.json(
@@ -20,39 +16,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar si el usuario ya es Pro
-    const userRef = doc(db, "users", userId);
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const userData = userSnap.data();
-    if (userData.isPro) {
-      return NextResponse.json(
-        { error: "User is already Pro" },
-        { status: 400 }
-      );
-    }
-
-    // Crear un PaymentIntent con el monto y la moneda
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: 800, // 8 euros en centavos
-      currency: "eur",
-      metadata: { userId },
+    const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
+      line_items: [
+        {
+          price: "price_1Q0KxI092lcEL3ag0Y7QpFrt.",
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/upgrade-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/upgrade`,
+      client_reference_id: userId,
     });
 
-    // Configurar Apple Pay
-    await stripe.applePayDomains.create({
-      domain_name: "gameboxd-pi.vercel.app", // Reemplaza con tu dominio real
-    });
-
-    console.log("PaymentIntent creado exitosamente");
-    return NextResponse.json({ clientSecret: paymentIntent.client_secret });
+    return NextResponse.json({ sessionId: session.id });
   } catch (err: any) {
-    console.error("Error detallado en create-payment-intent:", err);
+    console.error("Error creating checkout session:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
