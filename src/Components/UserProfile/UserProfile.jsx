@@ -34,6 +34,7 @@ import {
   FaPen,
 } from "react-icons/fa";
 import { Loader } from "lucide-react";
+import ProBadge from "../common/ProBadge";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -307,8 +308,9 @@ export default function UserProfile() {
             <ProfilePicture profilePicture={profilePicture} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold flex items-center">
               {userProfile?.username || user?.displayName || "User"}
+              {userProfile?.isPro && <ProBadge />}
             </h1>
             {!editing && (
               <button
@@ -399,8 +401,9 @@ export default function UserProfile() {
         <div className="container mx-auto p-4 space-y-8 relative z-10">
           <TransparentNavbar />
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold mb-4 md:mb-0">
+            <h1 className="text-4xl font-bold mb-4 md:mb-0 flex items-center">
               {userProfile?.username || user?.displayName || "User"}
+              {userProfile?.isPro && <ProBadge />}
             </h1>
             <div className="flex space-x-4">
               <button

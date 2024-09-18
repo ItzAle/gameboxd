@@ -10,6 +10,7 @@ import { signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
+import ProBadge from "../common/ProBadge";
 import { FiActivity } from "react-icons/fi";
 
 export default function TransparentNavbar() {
@@ -147,6 +148,7 @@ export default function TransparentNavbar() {
                     className="rounded-full"
                   />
                   <span>{userProfile?.displayName || "Usuario"}</span>
+                  {userProfile?.isPro && <ProBadge />}
                   <FaChevronDown
                     className={`transition-transform ${
                       isUserMenuOpen ? "rotate-180" : ""

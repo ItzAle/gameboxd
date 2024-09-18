@@ -23,6 +23,7 @@ import { useAuth } from "../../context/AuthContext";
 import { FaUserPlus, FaUserMinus } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { Loader } from "lucide-react";
+import ProBadge from "../common/ProBadge";
 
 export default function OtherUserProfile({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
@@ -47,16 +48,16 @@ export default function OtherUserProfile({ userId }) {
           if (userData.likedGames && userData.likedGames.length > 0) {
             fetchGameDetails(userData.likedGames);
           }
-          
+
           // Obtener las reseñas del usuario
           const reviewsQuery = query(
             collection(db, "reviews"),
             where("userId", "==", userId)
           );
           const reviewsSnapshot = await getDocs(reviewsQuery);
-          const reviewsData = reviewsSnapshot.docs.map(doc => ({
+          const reviewsData = reviewsSnapshot.docs.map((doc) => ({
             id: doc.id,
-            ...doc.data()
+            ...doc.data(),
           }));
           setUserReviews(reviewsData);
         } else {
@@ -125,13 +126,18 @@ export default function OtherUserProfile({ userId }) {
         for (const game of userProfile.likedGames) {
           if (!details[game.slug]) {
             try {
-              const response = await fetch(`https://gbxd-api.vercel.app/api/game/${game.slug}`);
+              const response = await fetch(
+                `https://gbxd-api.vercel.app/api/game/${game.slug}`
+              );
               if (response.ok) {
                 const data = await response.json();
                 details[game.slug] = data;
               }
             } catch (error) {
-              console.error(`Error fetching details for game ${game.slug}:`, error);
+              console.error(
+                `Error fetching details for game ${game.slug}:`,
+                error
+              );
             }
           }
         }
@@ -157,8 +163,9 @@ export default function OtherUserProfile({ userId }) {
       <div className="container mx-auto p-4 space-y-8 relative z-10">
         <TransparentNavbar />
         <div className="flex justify-between items-center">
-          <h1 className="text-4xl font-bold mb-8">
-            Perfil de {userProfile.username || "Usuario"}
+          <h1 className="text-4xl font-bold mb-8 flex items-center">
+            {userProfile.username || "Usuario"}
+            {userProfile.isPro && <ProBadge />}
           </h1>
           {user && user.uid !== userId && (
             <button
