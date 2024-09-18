@@ -56,6 +56,7 @@ export default function UpgradePage() {
     "Exclusive notifications to new releases",
     "Ad-free experience",
     "Priority customer support",
+    "Up to 1000 characters in your reviews",
     "Lifetime access",
   ];
 

@@ -1,0 +1,91 @@
+"use client";
+
+import React from "react";
+import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
+import { motion } from "framer-motion";
+
+export default function Guidelines() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
+      <TransparentNavbar />
+      <div className="container mx-auto px-4 py-16">
+        <motion.h1
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl font-bold mb-8 text-center text-blue-300"
+        >
+          Community Guidelines
+        </motion.h1>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="max-w-3xl mx-auto space-y-6 text-lg"
+        >
+          <p>
+            At Gameboxd, we strive to maintain a respectful and inclusive
+            community. Please follow these guidelines when writing reviews and
+            interacting with other users:
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-300">
+            1. Be Respectful
+          </h2>
+          <p>
+            Treat others with respect. Do not use hate speech, discriminatory
+            language, or personal attacks. Criticism should be constructive and
+            focused on the game, not the developers or other users.
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-300">
+            2. No Spoilers Without Warning
+          </h2>
+          <p>
+            If your review contains spoilers, please use the spoiler tag or give
+            a clear warning at the beginning of your review.
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-300">
+            3. Keep It Clean
+          </h2>
+          <p>
+            Avoid excessive profanity or explicit content. While we understand
+            that some games may contain mature themes, please keep your language
+            appropriate for a general audience.
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-300">
+            4. Stay On Topic
+          </h2>
+          <p>
+            Reviews should be about the game itself. Avoid off-topic discussions
+            or using reviews for personal promotions.
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-300">
+            5. No Harassment or Bullying
+          </h2>
+          <p>
+            Do not engage in or encourage harassment of any kind. This includes
+            targeting specific users, developers, or groups.
+          </p>
+
+          <h2 className="text-2xl font-semibold mt-8 mb-4 text-blue-300">
+            6. Respect Intellectual Property
+          </h2>
+          <p>
+            Do not post copyrighted material without permission. When quoting
+            others, give proper credit.
+          </p>
+
+          <p className="mt-8">
+            Violation of these guidelines may result in content removal or
+            account suspension. We appreciate your cooperation in making
+            Gameboxd a positive community for all game enthusiasts.
+          </p>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

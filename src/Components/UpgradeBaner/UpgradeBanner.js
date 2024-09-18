@@ -20,8 +20,8 @@ const UpgradeBanner = () => {
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-2xl font-bold text-white mb-4">Upgrade to PRO</h2>
         <p className="text-white mb-6">
-          Get annual statistics, filtered by your favorite streaming services,
-          wishlist notifications, no third-party ads, and more...
+          Get annual statistics, wishlist notifications, no third-party ads, and
+          more...
         </p>
         <Link href="/upgrade">
           <motion.button
@@ -29,7 +29,7 @@ const UpgradeBanner = () => {
             whileTap={{ scale: 0.95 }}
             className="bg-white text-blue-600 font-bold py-2 px-6 rounded-full hover:bg-blue-100 transition duration-300"
           >
-            Actualizar a PRO
+            Upgrade to PRO
           </motion.button>
         </Link>
       </div>

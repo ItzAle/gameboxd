@@ -134,6 +134,7 @@ export default function TransparentNavbar() {
 
           {/* Desktop menu */}
           <div className="hidden md:flex items-center space-x-4">
+            {userProfile?.isPro && <ProBadge />}
             {user && (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -148,7 +149,7 @@ export default function TransparentNavbar() {
                     className="rounded-full"
                   />
                   <span>{userProfile?.displayName || "Usuario"}</span>
-                  {userProfile?.isPro && <ProBadge />}
+
                   <FaChevronDown
                     className={`transition-transform ${
                       isUserMenuOpen ? "rotate-180" : ""

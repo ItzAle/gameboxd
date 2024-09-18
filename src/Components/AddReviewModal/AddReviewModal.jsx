@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { db } from "../../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import Link from 'next/link';
 
 const StarRating = ({ rating, setRating }) => {
   const handleStarClick = (value) => {
@@ -69,6 +70,39 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
   const { user } = useAuth();
   const [isBrowser, setIsBrowser] = useState(false);
+  const [containsProfanity, setContainsProfanity] = useState(false);
+  const [characterCount, setCharacterCount] = useState(0);
+  const [maxCharacters, setMaxCharacters] = useState(500);
+
+  const profanityList = ["nigger", "nigga"];
+
+  const checkProfanity = (text) => {
+    const words = text.toLowerCase().split(/\s+/);
+    return words.some((word) => profanityList.includes(word));
+  };
+
+  const handleCommentChange = (e) => {
+    const newComment = e.target.value;
+    if (newComment.length <= maxCharacters) {
+      setComment(newComment);
+      setCharacterCount(newComment.length);
+      setContainsProfanity(checkProfanity(newComment));
+    }
+  };
+
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.data();
+        if (userData?.isPro) {
+          setMaxCharacters(1000);
+        }
+      }
+    };
+
+    checkUserStatus();
+  }, [user]);
 
   useEffect(() => {
     const checkIfReviewExists = async () => {
@@ -134,35 +168,41 @@ export default function AddReviewModal({ game, onClose, onSave }) {
         const gameToSave = {
           slug: game.slug,
           name: game.name,
-          coverImageUrl: game.coverImageUrl
+          coverImageUrl: game.coverImageUrl,
         };
 
         if (!gameToSave.slug || !gameToSave.name || !gameToSave.coverImageUrl) {
           console.error("Incomplete game data:", gameToSave);
-          toast.error("Unable to update favorite status due to incomplete game data.");
+          toast.error(
+            "Unable to update favorite status due to incomplete game data."
+          );
           return;
         }
 
         if (isFavorite) {
           // Remove game from favorites
-          const updatedLikedGames = likedGames.filter(g => g.slug !== game.slug);
+          const updatedLikedGames = likedGames.filter(
+            (g) => g.slug !== game.slug
+          );
           await updateDoc(userRef, {
             likedGames: updatedLikedGames,
           });
           setIsFavorite(false);
-          setFavoriteGamesCount(prev => prev - 1);
+          setFavoriteGamesCount((prev) => prev - 1);
           toast.success("Game removed from favorites.");
         } else {
           // Add game to favorites
           if (likedGames.length >= 6) {
-            toast.error("You can't add more than 6 favorite games. Please remove one to add another.");
+            toast.error(
+              "You can't add more than 6 favorite games. Please remove one to add another."
+            );
             return;
           }
           await updateDoc(userRef, {
             likedGames: [...likedGames, gameToSave],
           });
           setIsFavorite(true);
-          setFavoriteGamesCount(prev => prev + 1);
+          setFavoriteGamesCount((prev) => prev + 1);
           toast.success("Game added to favorites.");
         }
       }
@@ -222,11 +262,11 @@ export default function AddReviewModal({ game, onClose, onSave }) {
       }
 
       const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
-      
+
       // Update the user document with the new review
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
-        reviews: arrayUnion(docRef.id)
+        reviews: arrayUnion(docRef.id),
       });
 
       toast.success("Review added successfully.");
@@ -272,6 +312,14 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             Add Review for {game.name}
           </h2>
 
+          <p className="text-sm text-gray-400 mb-4">
+            Please note that all reviews are subject to moderation. Make sure to follow our{" "}
+            <Link href="/guidelines" className="text-blue-400 hover:underline">
+              community guidelines
+            </Link>{" "}
+            when writing your review.
+          </p>
+
           {/* Like/Dislike Option */}
           <motion.div
             className="mb-4"
@@ -279,12 +327,14 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
           >
-            <label className="block text-lg mb-2 text-blue-300">Did you like the game?</label>
+            <label className="block text-lg mb-2 text-blue-300">
+              Did you like the game?
+            </label>
             <div className="flex space-x-4">
               <button
                 onClick={() => setLiked(true)}
                 className={`px-4 py-2 rounded ${
-                  liked === true ? 'bg-green-500' : 'bg-gray-700'
+                  liked === true ? "bg-green-500" : "bg-gray-700"
                 }`}
               >
                 Yes
@@ -292,7 +342,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
               <button
                 onClick={() => setLiked(false)}
                 className={`px-4 py-2 rounded ${
-                  liked === false ? 'bg-red-500' : 'bg-gray-700'
+                  liked === false ? "bg-red-500" : "bg-gray-700"
                 }`}
               >
                 No
@@ -316,14 +366,25 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             <label className="block text-lg mb-2 text-blue-300">Review:</label>
             <motion.textarea
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={handleCommentChange}
               rows="4"
               className="border border-gray-600 p-2 rounded w-full bg-gray-800 text-white"
               whileFocus={{
                 scale: 1.02,
                 boxShadow: "0px 0px 8px rgba(59, 130, 246, 0.5)",
               }}
+              maxLength={maxCharacters}
             ></motion.textarea>
+            <div className="flex justify-between mt-1">
+              <span className="text-sm text-gray-400">
+                {characterCount}/{maxCharacters}
+              </span>
+              {containsProfanity && (
+                <p className="text-red-500 text-sm">
+                  The review contains inappropriate language. Please review it.
+                </p>
+              )}
+            </div>
           </motion.div>
 
           {/* Spoilers Option with animation */}
@@ -370,7 +431,8 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             </motion.button>
             {!isFavorite && favoriteGamesCount >= 6 && (
               <p className="text-sm text-red-400 mt-2">
-                You have reached the maximum of 6 favorite games. Remove one to add another.
+                You have reached the maximum of 6 favorite games. Remove one to
+                add another.
               </p>
             )}
           </motion.div>
@@ -392,9 +454,12 @@ export default function AddReviewModal({ game, onClose, onSave }) {
             </motion.button>
             <motion.button
               onClick={handleSubmit}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className={`bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 ${
+                containsProfanity ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              whileHover={{ scale: containsProfanity ? 1 : 1.05 }}
+              whileTap={{ scale: containsProfanity ? 1 : 0.95 }}
+              disabled={containsProfanity}
             >
               Submit Review
             </motion.button>
