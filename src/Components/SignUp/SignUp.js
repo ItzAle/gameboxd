@@ -18,6 +18,8 @@ import { toast } from "react-toastify";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useAuth } from "../../../src/context/AuthContext";
+import GuidelinesModal from "../GuidelinesModal/GuidelinesModal";
+import Modal from "react-modal"; // Import Modal component
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -28,6 +30,10 @@ export default function SignUp() {
   const [emailError, setEmailError] = useState("");
   const router = useRouter();
   const { user } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
 
   if (user) {
     router.push("/profile");
@@ -80,6 +86,18 @@ export default function SignUp() {
     } else {
       setPasswordError("");
     }
+    // Password strength logic
+    if (newPassword.length < 6) {
+      setPasswordStrength("Weak");
+    } else if (newPassword.length < 10) {
+      setPasswordStrength("Medium");
+    } else {
+      setPasswordStrength("Strong");
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const checkEmailExists = async (email) => {
@@ -104,10 +122,27 @@ export default function SignUp() {
     }
   };
 
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleGuidelinesAcceptance = () => {
+    setGuidelinesAccepted(!guidelinesAccepted);
+    if (!guidelinesAccepted) {
+      closeModal();
+    }
+  };
+
   const handleSignUp = async (e) => {
     e.preventDefault();
-    if (usernameError || passwordError || emailError) {
-      toast.error("Please correct any errors before registering.");
+    if (usernameError || passwordError || emailError || !guidelinesAccepted) {
+      toast.error(
+        "Please correct any errors and accept the guidelines before registering."
+      );
       return;
     }
 
@@ -150,6 +185,19 @@ export default function SignUp() {
     } catch (error) {
       console.error("Error en el registro:", error);
       toast.error("Error registering. Please try again.");
+    }
+  };
+
+  const getPasswordStrengthColor = (strength) => {
+    switch (strength) {
+      case "Weak":
+        return "bg-red-500";
+      case "Medium":
+        return "bg-yellow-500";
+      case "Strong":
+        return "bg-green-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
@@ -217,25 +265,74 @@ export default function SignUp() {
             >
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={handlePasswordChange}
-              className="mt-1 block w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
-              placeholder="••••••••"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                value={password}
+                onChange={handlePasswordChange}
+                className="mt-1 block w-full px-3 py-2 bg-gray-700 bg-opacity-50 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 px-3 py-2 text-gray-400"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
             {passwordError && (
               <p className="text-red-400 text-xs mt-1">{passwordError}</p>
             )}
+            <div className="mt-1 flex items-center">
+              <div
+                className={`h-2 flex-1 rounded ${getPasswordStrengthColor(
+                  passwordStrength
+                )}`}
+              ></div>
+              <p className="text-xs ml-2 text-gray-400">{passwordStrength}</p>
+            </div>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={openModal}
+              className="text-blue-300 hover:underline"
+            >
+              Read Guidelines
+            </button>
+            <Modal
+              isOpen={isModalOpen}
+              onRequestClose={() => {}}
+              contentLabel="Guidelines Modal"
+              className="fixed inset-0 flex items-center justify-center z-50"
+              overlayClassName="fixed inset-0 bg-black bg-opacity-75"
+            >
+              <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg w-full overflow-y-auto max-h-[80vh]">
+                <GuidelinesModal onAccept={handleGuidelinesAcceptance} />
+                <button
+                  onClick={closeModal}
+                  className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md w-full"
+                  disabled={!guidelinesAccepted}
+                >
+                  Close
+                </button>
+              </div>
+            </Modal>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
             className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-200"
-            disabled={usernameError || passwordError || emailError}
+            disabled={
+              usernameError ||
+              passwordError ||
+              emailError ||
+              !guidelinesAccepted
+            }
           >
             Register
           </motion.button>

@@ -47,7 +47,7 @@ const FavoriteGames = ({ isEditing }) => {
         .filter((game) =>
           game.name.toLowerCase().includes(searchTerm.toLowerCase())
         )
-        .slice(0, 5); // Limitamos a 5 resultados
+        .slice(0, 5); 
 
       setSearchResults(filteredGames);
     } catch (error) {
@@ -60,6 +60,10 @@ const FavoriteGames = ({ isEditing }) => {
 
   const addToFavorites = async (game) => {
     if (user) {
+      if (favorites.length >= 4) {
+        alert("You can only add up to 4 favorite games.");
+        return;
+      }
       const userRef = doc(db, "users", user.uid);
       const newFavorites = [...favorites, game];
       await updateDoc(userRef, { favoriteGames: newFavorites });
@@ -105,12 +109,14 @@ const FavoriteGames = ({ isEditing }) => {
             </button>
           </div>
         ))}
-        <button
-          onClick={() => setIsSearching(true)}
-          className="flex items-center justify-center w-full h-40 bg-gray-800 rounded-lg transition-colors duration-200 hover:bg-gray-700"
-        >
-          <FaPlus className="text-4xl text-blue-500" />
-        </button>
+        {favorites.length < 4 && (
+          <button
+            onClick={() => setIsSearching(true)}
+            className="flex items-center justify-center w-full h-40 bg-gray-800 rounded-lg transition-colors duration-200 hover:bg-gray-700"
+          >
+            <FaPlus className="text-4xl text-blue-500" />
+          </button>
+        )}
       </div>
 
       <AnimatePresence>

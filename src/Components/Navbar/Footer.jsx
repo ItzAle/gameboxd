@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { FaTwitter, FaGithub } from "react-icons/fa";
+import { FaTwitter, FaInstagram, FaTiktok } from "react-icons/fa";
+import { RiThreadsLine } from "react-icons/ri";
 
 export default function Footer() {
   return (
@@ -29,7 +30,7 @@ export default function Footer() {
               Contact
             </Link>
             <Link
-              href="/privacy"
+              href="/privacy-policy"
               className="text-white hover:text-blue-400 transition text-xs"
             >
               Privacy Policy
@@ -45,7 +46,7 @@ export default function Footer() {
           {/* Social media icons */}
           <div className="flex space-x-3 mt-2 md:mt-0">
             <a
-              href="https://x.com/alehhdev"
+              href="https://x.com/gameboxdapp"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-blue-400 transition"
@@ -53,12 +54,28 @@ export default function Footer() {
               <FaTwitter size={16} />
             </a>
             <a
-              href="https://github.com/ItzAle"
+              href="https://www.instagram.com/gameboxdapp"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white hover:text-blue-400 transition"
             >
-              <FaGithub size={16} />
+              <FaInstagram size={16} />
+            </a>
+            <a
+              href="https://www.tiktok.com/@gameboxdapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-blue-400 transition"
+            >
+              <FaTiktok size={16} />
+            </a>
+            <a
+              href="https://www.threads.net/@gameboxdapp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-blue-400 transition"
+            >
+              <RiThreadsLine size={16} />
             </a>
           </div>
         </div>

@@ -173,14 +173,18 @@ const CustomizableHomePage = () => {
     }
   };
 
-  const maxRows = Math.floor((window.innerHeight - 164) / 100); // Ajusta 164px a la suma de la altura de tu navbar y footer
+  const maxRows = Math.floor((window.innerHeight - 164) / 100);
 
   return (
     <div
-      className="container mx-auto px-4 py-8 select-none min-h-screen"
+      className="container mx-auto px-4 py-8 select-none min-h-screen relative"
       onContextMenu={handleContextMenu}
-      style={{ paddingTop: "64px", paddingBottom: "100px" }} // Ajusta 64px a la altura de tu navbar y 100px a la altura de tu footer
+      style={{ paddingTop: "64px", paddingBottom: "100px" }}
     >
+      <div className="absolute top-12 right-0 text-gray-700 opacity-70 px-3 pt-1 rounded-md text-sm font-semibold">
+        Attention: This is a beta version. Some features may not work as
+        expected.
+      </div>
       {user?.isPro && (
         <div className="mb-4 flex justify-end mt-16">
           {isEditing ? (
@@ -209,7 +213,7 @@ const CustomizableHomePage = () => {
         </div>
       )}
       {showNotification && isEditing && (
-        <div className="fixed bottom-4 left-4 bg-blue-500 text-white p-4 rounded-md shadow-lg">
+        <div className="fixed bottom-12 left-4 bg-blue-500 text-white p-4 rounded-md shadow-lg">
           <p>
             Right-click anywhere to add components. Drag to move. Resize from
             corners.

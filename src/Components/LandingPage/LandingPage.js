@@ -15,7 +15,7 @@ import HomeFeed from "../HomeFeed/HomeFeed";
 import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 import UpcomingGames from "../UpcomingGames/UpcomingGames";
 import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
-import CustomizableHomePage from '../CustomizableHomePage/CustomizableHomePage';
+import CustomizableHomePage from "../CustomizableHomePage/CustomizableHomePage";
 
 const gameCoverUrls = [
   "https://imgs.callofduty.com/content/dam/atvi/callofduty/cod-touchui/blackops6/meta/BO6_LP-meta_image.jpg",
@@ -179,9 +179,8 @@ export default function LandingPage() {
             />
           )}
         </div>
+        <Footer />
       </div>
-
-      <Footer />
     </div>
   );
 }
