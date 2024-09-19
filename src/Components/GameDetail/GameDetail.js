@@ -38,6 +38,8 @@ import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
+import StyledUsername from '../common/StyledUsername';
+import { getUsernameStyle } from '../../utils/usernameStyles';
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -238,54 +240,17 @@ export default function GameDetailsPage({ id }) {
   }, [userPreferences, reviews, user]);
 
   const renderUsername = (review) => {
-    let style = {};
-    if (review.userId === user?.uid && userPreferences) {
-      // Usar las preferencias actuales del usuario para sus propias reviews
-      style.color = userPreferences.nameColor || review.userNameColor;
-      if (userPreferences.nameEffect || review.userNameEffect) {
-        switch (userPreferences.nameEffect || review.userNameEffect) {
-          case "glow":
-            style.textShadow = "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff";
-            break;
-          case "shadow":
-            style.textShadow = "2px 2px 4px rgba(0,0,0,0.5)";
-            break;
-          case "neon":
-            style.textShadow =
-              "0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff00de, 0 0 35px #ff00de, 0 0 40px #ff00de, 0 0 50px #ff00de, 0 0 75px #ff00de";
-            break;
-        }
-      }
-    } else {
-      // Usar los valores guardados en la review para otros usuarios
-      if (review.userNameColor) {
-        style.color = review.userNameColor;
-      }
-      if (review.userNameEffect) {
-        switch (review.userNameEffect) {
-          case "glow":
-            style.textShadow = "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff";
-            break;
-          case "shadow":
-            style.textShadow = "2px 2px 4px rgba(0,0,0,0.5)";
-            break;
-          case "neon":
-            style.textShadow =
-              "0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff00de, 0 0 35px #ff00de, 0 0 40px #ff00de, 0 0 50px #ff00de, 0 0 75px #ff00de";
-            break;
-        }
-      }
-    }
+    const style = getUsernameStyle(
+      review.userNameEffect || userPreferences?.nameEffect,
+      review.userNameColor || userPreferences?.nameColor
+    );
 
     return (
-      <Link href={`/profile/${review.userId}`}>
-        <span className="flex items-center cursor-pointer">
-          <span style={style}>{review.username}</span>
-          {(review.userId === user?.uid
-            ? userPreferences?.isPro
-            : review.isPro) && <ProBadge className="ml-2 text-xs" />}
-        </span>
-      </Link>
+      <StyledUsername
+        user={{ id: review.userId, username: review.username }}
+        style={style}
+        isPro={review.userId === user?.uid ? userPreferences?.isPro : review.isPro}
+      />
     );
   };
 

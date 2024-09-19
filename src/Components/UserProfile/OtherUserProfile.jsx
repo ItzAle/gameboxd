@@ -24,6 +24,8 @@ import { FaUserPlus, FaUserMinus } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
+import StyledUsername from '../common/StyledUsername';
+import { getUsernameStyle } from '../../utils/usernameStyles';
 
 export default function OtherUserProfile({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
@@ -150,6 +152,18 @@ export default function OtherUserProfile({ userId }) {
 
   const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
 
+  const renderUsername = () => {
+    const style = getUsernameStyle(userProfile.nameEffect, userProfile.nameColor);
+
+    return (
+      <StyledUsername
+        user={{ id: userId, username: userProfile.username || "Usuario" }}
+        style={style}
+        isPro={userProfile.isPro}
+      />
+    );
+  };
+
   if (!userProfile) {
     return (
       <p className="text-white">
@@ -164,8 +178,7 @@ export default function OtherUserProfile({ userId }) {
         <TransparentNavbar />
         <div className="flex justify-between items-center">
           <h1 className="text-4xl font-bold mb-8 flex items-center">
-            {userProfile.username || "Usuario"}
-            {userProfile.isPro && <ProBadge />}
+            {renderUsername()}
           </h1>
           {user && user.uid !== userId && (
             <button

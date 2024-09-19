@@ -36,6 +36,8 @@ import {
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import ProOptionsModal from "../ProOptionsModal/ProOptionsModal";
+import StyledUsername from '../common/StyledUsername';
+import { getUsernameStyle } from '../../utils/usernameStyles';
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -339,8 +341,7 @@ export default function UserProfile() {
           </div>
           <div>
             <h1 className="text-2xl font-bold flex items-center">
-              {userProfile?.username || user?.displayName || "User"}
-              {userProfile?.isPro && <ProBadge />}
+              {renderUsername()}
             </h1>
             {!editing && (
               <button
@@ -434,6 +435,18 @@ export default function UserProfile() {
     </div>
   );
 
+  const renderUsername = () => {
+    const style = getUsernameStyle(nameEffect, nameColor);
+
+    return (
+      <StyledUsername
+        user={{ id: user.uid, username: userProfile?.username || user?.displayName || "User" }}
+        style={style}
+        isPro={userProfile?.isPro}
+      />
+    );
+  };
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
@@ -442,8 +455,7 @@ export default function UserProfile() {
           <TransparentNavbar />
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
             <h1 className="text-4xl font-bold mb-4 md:mb-0 flex items-center">
-              {userProfile?.username || user?.displayName || "User"}
-              {userProfile?.isPro && <ProBadge />}
+              {renderUsername()}
             </h1>
             <div className="flex space-x-4">
               <button
