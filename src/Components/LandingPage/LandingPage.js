@@ -15,6 +15,7 @@ import HomeFeed from "../HomeFeed/HomeFeed";
 import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 import UpcomingGames from "../UpcomingGames/UpcomingGames";
 import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
+import CustomizableHomePage from '../CustomizableHomePage/CustomizableHomePage';
 
 const gameCoverUrls = [
   "https://imgs.callofduty.com/content/dam/atvi/callofduty/cod-touchui/blackops6/meta/BO6_LP-meta_image.jpg",
@@ -136,7 +137,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-white overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.img
@@ -158,11 +159,15 @@ export default function LandingPage() {
 
         <div className="container mx-auto px-4">
           {user ? (
-            <AuthenticatedContent
-              username={
-                user.displayName || user.email?.split("@")[0] || "Usuario"
-              }
-            />
+            user.isPro ? (
+              <CustomizableHomePage />
+            ) : (
+              <AuthenticatedContent
+                username={
+                  user.displayName || user.email?.split("@")[0] || "Usuario"
+                }
+              />
+            )
           ) : (
             <UnauthenticatedContent
               handleSearch={handleSearch}
@@ -191,7 +196,6 @@ const UnauthenticatedContent = ({
 }) => {
   return (
     <>
-      {/* Contenido */}
       <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
         <motion.h1
           initial={{ opacity: 0, y: -50 }}

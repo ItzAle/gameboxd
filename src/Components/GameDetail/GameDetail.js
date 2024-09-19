@@ -285,8 +285,8 @@ export default function GameDetailsPage({ id }) {
 
   if (isLoading) {
     return (
-      <div className="text-center">
-        <Loader />
+      <div className="text-center h-screen flex justify-center items-center bg-gradient-to-b from-gray-900 to-blue-900">
+        <Loader className="h-12 w-12 text-blue-500 animate-spin" />
       </div>
     );
   }
@@ -297,7 +297,9 @@ export default function GameDetailsPage({ id }) {
 
   if (!game) {
     return (
-      <div className="text-center">No se encontró información del juego.</div>
+      <div className="text-center">
+        No game found, please, try again later or reload the page.
+      </div>
     );
   }
 

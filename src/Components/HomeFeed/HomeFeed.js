@@ -175,8 +175,8 @@ const HomeFeed = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+      <div className="text-center h-screen flex justify-center items-center bg-gradient-to-b from-gray-900 to-blue-900">
+        <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
       </div>
     );
   }

@@ -1,0 +1,28 @@
+/* Estilo para la barra de desplazamiento completa */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+/* Estilo para el "thumb" de la barra de desplazamiento */
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+/* Estilo para el "thumb" al pasar el mouse */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Estilo para la pista de la barra de desplazamiento */
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+/* Para Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+}

@@ -47,7 +47,8 @@ const UpgradeBanner = () => {
             <FaTimes />
           </button>
           <p className="text-sm mb-3">
-            Upgrade to PRO for annual statistics, wishlist notifications, and more!
+            Upgrade to PRO for annual statistics, wishlist notifications, and
+            more!
           </p>
           <div className="flex justify-between items-center">
             <Link href="/upgrade">
@@ -63,7 +64,7 @@ const UpgradeBanner = () => {
               onClick={handleNeverShowAgain}
               className="text-xs text-gray-300 hover:text-white underline"
             >
-              Don't show again
+              Don&apos;t show again
             </button>
           </div>
         </motion.div>

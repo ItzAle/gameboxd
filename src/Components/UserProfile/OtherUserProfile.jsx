@@ -207,7 +207,7 @@ export default function OtherUserProfile({ userId }) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
         <p className="text-blue-500 text-2xl">
-          <Loader />
+          <Loader className="h-12 w-12 text-blue-500 animate-spin" />
         </p>
       </div>
     );

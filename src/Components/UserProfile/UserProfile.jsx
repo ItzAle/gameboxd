@@ -332,10 +332,10 @@ export default function UserProfile() {
 
   if (!userProfile) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">
+      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white bg-gradient-to-b from-gray-900 to-blue-900">
         <p className="text-blue-500 text-2xl">
           {" "}
-          <Loader />{" "}
+          <Loader className="h-12 w-12 text-blue-500 animate-spin" />
         </p>
       </div>
     );

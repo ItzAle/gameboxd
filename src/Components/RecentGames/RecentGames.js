@@ -17,7 +17,7 @@ const RecentGames = () => {
           throw new Error("Network response was not ok");
         }
         const data = await response.json();
-        
+
         // Ordenar los juegos por fecha de lanzamiento (más reciente primero)
         const sortedGames = data.sort(
           (a, b) => new Date(b.releaseDate) - new Date(a.releaseDate)
@@ -40,7 +40,7 @@ const RecentGames = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="text-center h-screen flex justify-center items-center bg-gradient-to-b from-gray-900 to-blue-900">
         <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
       </div>
     );
@@ -73,7 +73,9 @@ const RecentGames = () => {
                 </div>
               )}
               <div className="p-4 flex-grow flex flex-col justify-between">
-                <h3 className="text-lg font-semibold text-white mb-2">{game.name}</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  {game.name}
+                </h3>
                 <p className="text-sm text-gray-400">
                   {new Date(game.releaseDate).toLocaleDateString()}
                 </p>
