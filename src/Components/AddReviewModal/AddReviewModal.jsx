@@ -91,20 +91,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   };
 
   useEffect(() => {
-    const checkUserStatus = async () => {
-      if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        const userData = userDoc.data();
-        if (userData?.isPro) {
-          setMaxCharacters(1000);
-        }
-      }
-    };
-
-    checkUserStatus();
-  }, [user]);
-
-  useEffect(() => {
     const checkIfReviewExists = async () => {
       if (!user || !game.slug) {
         return;
@@ -131,7 +117,18 @@ export default function AddReviewModal({ game, onClose, onSave }) {
 
     checkIfReviewExists();
     checkFavoriteStatus();
+    checkUserStatus();
   }, [user, game.slug, onClose]);
+
+  const checkUserStatus = async () => {
+    if (user) {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+      if (userData?.isPro) {
+        setMaxCharacters(1000);
+      }
+    }
+  };
 
   const checkFavoriteStatus = async () => {
     if (!user) return;
@@ -230,41 +227,27 @@ export default function AddReviewModal({ game, onClose, onSave }) {
     }
 
     try {
-      // Get the user document to ensure we have the latest username
-      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
       const userData = userDoc.data();
-      const username = userData?.username || user.displayName || "Anonymous";
 
       const reviewToSave = {
         rating,
         comment,
         containsSpoilers,
         userId: user.uid,
-        username: username, // Use the obtained username
+        username: userData.username || user.displayName || "Anonymous",
         gameId: game.slug,
         gameName: game.name,
         createdAt: new Date().toISOString(),
-        liked: liked,
+        liked,
+        userNameEffect: userData.nameEffect || "",
+        userNameColor: userData.nameColor || "",
+        isPro: userData.isPro || false,
       };
-
-      // Check if a review already exists for this game and user
-      const reviewsQuery = query(
-        collection(db, "reviews"),
-        where("gameId", "==", game.slug),
-        where("userId", "==", user.uid)
-      );
-      const reviewsSnapshot = await getDocs(reviewsQuery);
-
-      if (!reviewsSnapshot.empty) {
-        toast.error("You have already submitted a review for this game.");
-        onClose();
-        return;
-      }
 
       const docRef = await addDoc(collection(db, "reviews"), reviewToSave);
 
-      // Update the user document with the new review
-      const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         reviews: arrayUnion(docRef.id),
       });

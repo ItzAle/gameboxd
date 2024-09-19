@@ -15,6 +15,7 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  onSnapshot,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -36,6 +37,7 @@ import {
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
 import { Loader } from "lucide-react";
+import ProBadge from "../common/ProBadge";
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -47,6 +49,7 @@ export default function GameDetailsPage({ id }) {
   const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
+  const [userPreferences, setUserPreferences] = useState(null);
 
   const handleAddReviewClick = async () => {
     if (!user) {
@@ -75,17 +78,24 @@ export default function GameDetailsPage({ id }) {
   };
 
   const handleSaveReview = async (newReview) => {
-    // No necesitamos crear un nuevo objeto de reseña aquí,
-    // ya que lo recibimos completo desde AddReviewModal
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    const userData = userDoc.data();
+
+    const reviewWithUserData = {
+      ...newReview,
+      userNameEffect: userData.nameEffect || "",
+      userNameColor: userData.nameColor || "",
+      isPro: userData.isPro || false,
+    };
+
     setReviews((prevReviews) => {
-      // Verificar si la reseña ya existe en el array
       const reviewExists = prevReviews.some(
-        (review) => review.id === newReview.id
+        (review) => review.id === reviewWithUserData.id
       );
       if (reviewExists) {
-        return prevReviews; // No añadir si ya existe
+        return prevReviews;
       }
-      return [...prevReviews, newReview]; // Añadir solo si es nueva
+      return [...prevReviews, reviewWithUserData];
     });
 
     setShowModal(false);
@@ -199,7 +209,85 @@ export default function GameDetailsPage({ id }) {
     };
 
     fetchGameDetails();
+
+    // Suscribirse a los cambios en las preferencias del usuario
+    if (user) {
+      const userRef = doc(db, "users", user.uid);
+      const unsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          const userData = doc.data();
+          setUserPreferences({
+            nameColor: userData.nameColor,
+            nameEffect: userData.nameEffect,
+            isPro: userData.isPro,
+          });
+        }
+      });
+
+      return () => unsubscribe();
+    }
   }, [id, user]);
+
+  useEffect(() => {
+    if (userPreferences && reviews.length > 0) {
+      const updatedReviews = reviews.map((review) =>
+        review.userId === user.uid ? { ...review, ...userPreferences } : review
+      );
+      setReviews(updatedReviews);
+    }
+  }, [userPreferences, reviews, user]);
+
+  const renderUsername = (review) => {
+    let style = {};
+    if (review.userId === user?.uid && userPreferences) {
+      // Usar las preferencias actuales del usuario para sus propias reviews
+      style.color = userPreferences.nameColor || review.userNameColor;
+      if (userPreferences.nameEffect || review.userNameEffect) {
+        switch (userPreferences.nameEffect || review.userNameEffect) {
+          case "glow":
+            style.textShadow = "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff";
+            break;
+          case "shadow":
+            style.textShadow = "2px 2px 4px rgba(0,0,0,0.5)";
+            break;
+          case "neon":
+            style.textShadow =
+              "0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff00de, 0 0 35px #ff00de, 0 0 40px #ff00de, 0 0 50px #ff00de, 0 0 75px #ff00de";
+            break;
+        }
+      }
+    } else {
+      // Usar los valores guardados en la review para otros usuarios
+      if (review.userNameColor) {
+        style.color = review.userNameColor;
+      }
+      if (review.userNameEffect) {
+        switch (review.userNameEffect) {
+          case "glow":
+            style.textShadow = "0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff";
+            break;
+          case "shadow":
+            style.textShadow = "2px 2px 4px rgba(0,0,0,0.5)";
+            break;
+          case "neon":
+            style.textShadow =
+              "0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff00de, 0 0 35px #ff00de, 0 0 40px #ff00de, 0 0 50px #ff00de, 0 0 75px #ff00de";
+            break;
+        }
+      }
+    }
+
+    return (
+      <Link href={`/profile/${review.userId}`}>
+        <span className="flex items-center cursor-pointer">
+          <span style={style}>{review.username}</span>
+          {(review.userId === user?.uid
+            ? userPreferences?.isPro
+            : review.isPro) && <ProBadge className="ml-2 text-xs" />}
+        </span>
+      </Link>
+    );
+  };
 
   useEffect(() => {
     const gameReviews = globalReviews.filter((review) => review.gameId === id);
@@ -415,24 +503,17 @@ export default function GameDetailsPage({ id }) {
                 {reviews.length > 0 ? (
                   <div className="space-y-4">
                     <AnimatePresence>
-                      {reviews.map((review, index) => (
+                      {reviews.map((review) => (
                         <motion.div
                           key={review.id}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.3, delay: index * 0.1 }}
+                          transition={{ duration: 0.3 }}
                           className="p-6 border border-gray-700 rounded-lg bg-gray-800 bg-opacity-50 shadow-md backdrop-blur-sm"
                         >
                           <div className="flex justify-between items-center mb-2">
-                            <Link
-                              href={`/profile/${encodeURIComponent(
-                                review.userId
-                              )}`}
-                              className="font-bold text-blue-400 hover:underline"
-                            >
-                              {review.username}
-                            </Link>
+                            {renderUsername(review)}
                             <p className="text-yellow-400 flex items-center">
                               <FaStar className="mr-1" />
                               {review.rating}

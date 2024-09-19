@@ -35,6 +35,7 @@ import {
 } from "react-icons/fa";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
+import ProOptionsModal from "../ProOptionsModal/ProOptionsModal";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -85,6 +86,9 @@ export default function UserProfile() {
   const [favoriteGames, setFavoriteGames] = useState([]);
   const [likedGames, setLikedGames] = useState([]);
   const [gameDetails, setGameDetails] = useState({});
+  const [nameEffect, setNameEffect] = useState("");
+  const [nameColor, setNameColor] = useState("");
+  const [showProOptions, setShowProOptions] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -134,11 +138,15 @@ export default function UserProfile() {
           ...userData,
           followers: userData.followers || [],
           following: userData.following || [],
+          nameEffect: userData.nameEffect || "",
+          nameColor: userData.nameColor || "",
         });
         setBio(userData.bio || "");
         setProfilePicture(userData.profilePicture || "");
         setFavoriteGames(userData.likedGames || []);
         setLikedGames(userData.likedGames || []);
+        setNameEffect(userData.nameEffect || "");
+        setNameColor(userData.nameColor || "");
 
         const newCovers = {};
         for (const game of userData.likedGames) {
@@ -265,6 +273,28 @@ export default function UserProfile() {
     setShowFollowList(true);
   }, []);
 
+  const handleNameEffectChange = async (effect) => {
+    setNameEffect(effect);
+    try {
+      await updateDoc(doc(db, "users", user.uid), { nameEffect: effect });
+      toast.success("Name effect updated successfully");
+    } catch (error) {
+      console.error("Error updating name effect:", error);
+      toast.error("Failed to update name effect");
+    }
+  };
+
+  const handleNameColorChange = async (color) => {
+    setNameColor(color);
+    try {
+      await updateDoc(doc(db, "users", user.uid), { nameColor: color });
+      toast.success("Name color updated successfully");
+    } catch (error) {
+      console.error("Error updating name color:", error);
+      toast.error("Failed to update name color");
+    }
+  };
+
   const memoizedLikedGames = useMemo(
     () => (
       <LikedGames
@@ -357,12 +387,22 @@ export default function UserProfile() {
           <ProfilePicture profilePicture={profilePicture} />
           <Bio bio={bio} setBio={setBio} editing={editing} />
           {!editing && (
-            <button
-              onClick={handleEditProfile}
-              className="bg-blue-500 text-white px-4 py-2 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
-            >
-              <FaEdit className="mr-2" /> Edit Profile
-            </button>
+            <>
+              <button
+                onClick={handleEditProfile}
+                className="bg-blue-500 text-white px-4 py-2 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
+              >
+                <FaEdit className="mr-2" /> Edit Profile
+              </button>
+              {userProfile?.isPro && (
+                <button
+                  onClick={() => setShowProOptions(true)}
+                  className="bg-purple-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
+                >
+                  <FaStar className="mr-2" /> PRO Options
+                </button>
+              )}
+            </>
           )}
         </ProfileSection>
 
@@ -434,6 +474,15 @@ export default function UserProfile() {
               setProfilePicture={setProfilePicture}
               bio={editingBio}
               profilePicture={profilePicture}
+            />
+          )}
+
+          {showProOptions && (
+            <ProOptionsModal
+              isOpen={showProOptions}
+              onClose={() => setShowProOptions(false)}
+              userProfile={userProfile}
+              onUpdate={fetchUserProfile}
             />
           )}
         </div>
