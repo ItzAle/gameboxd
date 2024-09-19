@@ -1,6 +1,6 @@
-import React from 'react';
-import Link from 'next/link';
-import ProBadge from './ProBadge';
+import React from "react";
+import Link from "next/link";
+import ProBadge from "./ProBadge";
 
 const StyledUsername = ({ user, style, isPro }) => {
   return (

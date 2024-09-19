@@ -90,14 +90,75 @@ export default function UserProfile() {
   const [gameDetails, setGameDetails] = useState({});
   const [nameEffect, setNameEffect] = useState("");
   const [nameColor, setNameColor] = useState("");
+  const [effectIntensity, setEffectIntensity] = useState(1);
   const [showProOptions, setShowProOptions] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchUserProfile();
-      fetchUserReviews();
+  const fetchUserProfile = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserProfile(userData);
+        setNameEffect(userData.nameEffect || "");
+        setNameColor(userData.nameColor || "");
+        setEffectIntensity(userData.effectIntensity || 1);
+        setBio(userData.bio || "");
+        setProfilePicture(userData.profilePicture || "");
+        setFavoriteGames(userData.likedGames || []);
+        setLikedGames(userData.likedGames || []);
+
+        const newCovers = {};
+        for (const game of userData.likedGames) {
+          if (game.slug) {
+            try {
+              const gameData = await fetchGameDetails(game.slug);
+              if (gameData) {
+                newCovers[game.slug] = gameData.coverImageUrl;
+              }
+            } catch (error) {
+              console.error(
+                `Error al obtener la carátula del juego ${game.slug}:`,
+                error
+              );
+            }
+          }
+        }
+        setCovers(newCovers);
+      } else {
+        setUserProfile({ likedGames: [], reviews: [] });
+      }
+    } catch (error) {
+      console.error("Error al obtener el perfil del usuario:", error);
     }
   }, [user]);
+
+  const fetchUserReviews = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const reviewsQuery = query(
+        collection(db, "reviews"),
+        where("userId", "==", user.uid)
+      );
+      const reviewsSnapshot = await getDocs(reviewsQuery);
+      const reviewsData = reviewsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUserReviews(reviewsData);
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchUserProfile();
+    fetchUserReviews();
+  }, [fetchUserProfile, fetchUserReviews]);
 
   const fetchGameDetails = async (games) => {
     const details = { ...gameDetails };
@@ -126,73 +187,6 @@ export default function UserProfile() {
   }, [likedGames]);
 
   const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
-
-  const fetchUserProfile = async () => {
-    if (!user) return;
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setUserProfile({
-          ...userData,
-          followers: userData.followers || [],
-          following: userData.following || [],
-          nameEffect: userData.nameEffect || "",
-          nameColor: userData.nameColor || "",
-        });
-        setBio(userData.bio || "");
-        setProfilePicture(userData.profilePicture || "");
-        setFavoriteGames(userData.likedGames || []);
-        setLikedGames(userData.likedGames || []);
-        setNameEffect(userData.nameEffect || "");
-        setNameColor(userData.nameColor || "");
-
-        const newCovers = {};
-        for (const game of userData.likedGames) {
-          if (game.slug) {
-            try {
-              const gameData = await fetchGameDetails(game.slug);
-              if (gameData) {
-                newCovers[game.slug] = gameData.coverImageUrl;
-              }
-            } catch (error) {
-              console.error(
-                `Error al obtener la carátula del juego ${game.slug}:`,
-                error
-              );
-            }
-          }
-        }
-        setCovers(newCovers);
-      } else {
-        setUserProfile({ likedGames: [], reviews: [] });
-      }
-    } catch (error) {
-      console.error("Error al obtener el perfil del usuario:", error);
-    }
-  };
-
-  const fetchUserReviews = async () => {
-    if (!user) return;
-
-    try {
-      const reviewsQuery = query(
-        collection(db, "reviews"),
-        where("userId", "==", user.uid)
-      );
-      const reviewsSnapshot = await getDocs(reviewsQuery);
-      const reviewsData = reviewsSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setUserReviews(reviewsData);
-    } catch (error) {
-      console.error("Error fetching user reviews:", error);
-    }
-  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -275,26 +269,43 @@ export default function UserProfile() {
     setShowFollowList(true);
   }, []);
 
-  const handleNameEffectChange = async (effect) => {
-    setNameEffect(effect);
+  const handleProOptionsUpdate = async (newOptions) => {
     try {
-      await updateDoc(doc(db, "users", user.uid), { nameEffect: effect });
-      toast.success("Name effect updated successfully");
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, {
+        nameEffect: newOptions.nameEffect,
+        nameColor: newOptions.nameColor,
+        effectIntensity: newOptions.effectIntensity
+      });
+
+      // Actualizar el estado local
+      setNameEffect(newOptions.nameEffect);
+      setNameColor(newOptions.nameColor);
+      setEffectIntensity(newOptions.effectIntensity);
+      setUserProfile(prevProfile => ({
+        ...prevProfile,
+        nameEffect: newOptions.nameEffect,
+        nameColor: newOptions.nameColor,
+        effectIntensity: newOptions.effectIntensity
+      }));
+
+      toast.success("Opciones PRO actualizadas con éxito");
     } catch (error) {
-      console.error("Error updating name effect:", error);
-      toast.error("Failed to update name effect");
+      console.error("Error al actualizar las opciones PRO:", error);
+      toast.error("Error al actualizar las opciones PRO");
     }
   };
 
-  const handleNameColorChange = async (color) => {
-    setNameColor(color);
-    try {
-      await updateDoc(doc(db, "users", user.uid), { nameColor: color });
-      toast.success("Name color updated successfully");
-    } catch (error) {
-      console.error("Error updating name color:", error);
-      toast.error("Failed to update name color");
-    }
+  const renderUsername = () => {
+    const style = getUsernameStyle(nameEffect, nameColor, effectIntensity);
+
+    return (
+      <StyledUsername
+        user={{ id: user.uid, username: userProfile?.username || user?.displayName || "User" }}
+        style={style}
+        isPro={userProfile?.isPro}
+      />
+    );
   };
 
   const memoizedLikedGames = useMemo(
@@ -435,18 +446,6 @@ export default function UserProfile() {
     </div>
   );
 
-  const renderUsername = () => {
-    const style = getUsernameStyle(nameEffect, nameColor);
-
-    return (
-      <StyledUsername
-        user={{ id: user.uid, username: userProfile?.username || user?.displayName || "User" }}
-        style={style}
-        isPro={userProfile?.isPro}
-      />
-    );
-  };
-
   return (
     <>
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
@@ -494,7 +493,7 @@ export default function UserProfile() {
               isOpen={showProOptions}
               onClose={() => setShowProOptions(false)}
               userProfile={userProfile}
-              onUpdate={fetchUserProfile}
+              onUpdate={handleProOptionsUpdate}
             />
           )}
         </div>

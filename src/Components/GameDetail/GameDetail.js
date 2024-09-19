@@ -1,21 +1,16 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import jsonp from "jsonp";
-import AddReviewModal from "../../Components/AddReviewModal/AddReviewModal";
 import { db } from "../../../lib/firebase";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
   doc,
   getDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
+  collection,
+  query,
+  where,
+  getDocs,
   onSnapshot,
+  updateDoc,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -25,6 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FaHeart,
   FaStar,
+  FaRegStar,
   FaCalendarAlt,
   FaDesktop,
   FaTags,
@@ -33,13 +29,17 @@ import {
   FaPlaystation,
   FaXbox,
   FaGamepad,
+  FaThumbsUp,
+  FaThumbsDown,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
-import StyledUsername from '../common/StyledUsername';
-import { getUsernameStyle } from '../../utils/usernameStyles';
+import StyledUsername from "../common/StyledUsername";
+import { getUsernameStyle } from "../../utils/usernameStyles";
+import Image from "next/image";
+import AddReviewModal from "../AddReviewModal/AddReviewModal";
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -88,6 +88,7 @@ export default function GameDetailsPage({ id }) {
       userNameEffect: userData.nameEffect || "",
       userNameColor: userData.nameColor || "",
       isPro: userData.isPro || false,
+      profilePicture: userData.profilePicture || null,
     };
 
     setReviews((prevReviews) => {
@@ -123,11 +124,10 @@ export default function GameDetailsPage({ id }) {
           slug: game.slug,
           name: game.name,
           coverImageUrl: game.coverImageUrl,
-          likedAt: new Date().toISOString(), // Añadimos el timestamp
+          likedAt: new Date().toISOString(),
         };
 
         if (isFavorite) {
-          // Remove game from favorites
           const updatedLikedGames = likedGames.filter(
             (g) => g.slug !== game.slug
           );
@@ -138,7 +138,6 @@ export default function GameDetailsPage({ id }) {
           setFavoriteGamesCount((prev) => prev - 1);
           toast.success("Game removed from favorites.");
         } else {
-          // Add game to favorites
           if (likedGames.length >= 6) {
             toast.error(
               "You can't add more than 6 favorite games. Please remove one to add another."
@@ -174,33 +173,39 @@ export default function GameDetailsPage({ id }) {
         const data = await response.json();
         setGame(data);
 
-        try {
+        const fetchReviews = async () => {
           const reviewsQuery = query(
             collection(db, "reviews"),
             where("gameId", "==", id)
           );
           const reviewsSnapshot = await getDocs(reviewsQuery);
-          const loadedReviews = reviewsSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            userId: doc.data().userId,
-          }));
-          setReviews(loadedReviews);
-
-          if (user) {
-            const userRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userRef);
-
-            if (userDoc.exists()) {
+          const reviewsData = await Promise.all(
+            reviewsSnapshot.docs.map(async (reviewDoc) => {
+              const reviewData = reviewDoc.data();
+              const userDoc = await getDoc(doc(db, "users", reviewData.userId));
               const userData = userDoc.data();
-              const likedGames = userData.likedGames || [];
-              setIsFavorite(likedGames.some((g) => g.slug === id));
-              setFavoriteGamesCount(likedGames.length);
-            }
+              return {
+                id: reviewDoc.id,
+                ...reviewData,
+                profilePicture: userData.profilePicture || null,
+              };
+            })
+          );
+          setReviews(reviewsData);
+        };
+
+        fetchReviews();
+
+        if (user) {
+          const userRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userRef);
+
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const likedGames = userData.likedGames || [];
+            setIsFavorite(likedGames.some((g) => g.slug === id));
+            setFavoriteGamesCount(likedGames.length);
           }
-        } catch (firestoreError) {
-          console.error("Error accessing Firestore:", firestoreError);
-          setError(firestoreError);
         }
       } catch (error) {
         console.error("Error in fetchGameDetails:", error);
@@ -212,7 +217,6 @@ export default function GameDetailsPage({ id }) {
 
     fetchGameDetails();
 
-    // Suscribirse a los cambios en las preferencias del usuario
     if (user) {
       const userRef = doc(db, "users", user.uid);
       const unsubscribe = onSnapshot(userRef, (doc) => {
@@ -221,6 +225,7 @@ export default function GameDetailsPage({ id }) {
           setUserPreferences({
             nameColor: userData.nameColor,
             nameEffect: userData.nameEffect,
+            effectIntensity: userData.effectIntensity,
             isPro: userData.isPro,
           });
         }
@@ -241,16 +246,34 @@ export default function GameDetailsPage({ id }) {
 
   const renderUsername = (review) => {
     const style = getUsernameStyle(
-      review.userNameEffect || userPreferences?.nameEffect,
-      review.userNameColor || userPreferences?.nameColor
+      review.nameEffect || userPreferences?.nameEffect,
+      review.nameColor || userPreferences?.nameColor,
+      review.effectIntensity || userPreferences?.effectIntensity || 1
     );
 
     return (
-      <StyledUsername
-        user={{ id: review.userId, username: review.username }}
-        style={style}
-        isPro={review.userId === user?.uid ? userPreferences?.isPro : review.isPro}
-      />
+      <Link href={`/profile/${review.userId}`}>
+        <div className="flex items-center">
+          {review.profilePicture && (
+            <Image
+              src={review.profilePicture}
+              alt={`${review.username}'s profile`}
+              width={32}
+              height={32}
+              className="rounded-full mr-2"
+            />
+          )}
+          <StyledUsername
+            user={{ id: review.userId, username: review.username }}
+            style={style}
+            isPro={
+              review.userId === user?.uid
+                ? userPreferences?.isPro
+                : review.isPro
+            }
+          />
+        </div>
+      </Link>
     );
   };
 
@@ -479,10 +502,33 @@ export default function GameDetailsPage({ id }) {
                         >
                           <div className="flex justify-between items-center mb-2">
                             {renderUsername(review)}
-                            <p className="text-yellow-400 flex items-center">
-                              <FaStar className="mr-1" />
-                              {review.rating}
-                            </p>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {[...Array(5)].map((_, index) => (
+                              <span key={index}>
+                                {index < review.rating ? (
+                                  <FaStar className="text-yellow-400" />
+                                ) : (
+                                  <FaRegStar className="text-gray-400" />
+                                )}
+                              </span>
+                            ))}
+                            <span className="ml-2 text-gray-300">
+                              {review.rating} / 5
+                            </span>
+                          </div>
+                          <div className="flex items-center mb-2">
+                            {review.liked ? (
+                              <>
+                                <FaThumbsUp className="text-green-500 mr-2" />{" "}
+                                Liked
+                              </>
+                            ) : (
+                              <>
+                                <FaThumbsDown className="text-red-500 mr-2" />{" "}
+                                Disliked
+                              </>
+                            )}
                           </div>
                           {review.containsSpoilers && (
                             <p className="text-red-400 mb-2">
