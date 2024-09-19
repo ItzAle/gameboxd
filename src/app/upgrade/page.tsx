@@ -58,6 +58,8 @@ export default function UpgradePage() {
     "Priority customer support",
     "Up to 1000 characters in your reviews",
     "Lifetime access",
+    "Custom Homepage",
+    "Custom Username colors and effects",
   ];
 
   if (isPro) {
