@@ -10,10 +10,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        await user.reload(); // Recarga el usuario para obtener el estado más reciente
-        setUser(user);
+    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+      if (authUser) {
+        const userDoc = await getDoc(doc(db, "users", authUser.uid));
+        const userData = userDoc.data();
+        setUser({
+          ...authUser,
+          isPro: userData?.isPro || false,
+        });
       } else {
         setUser(null);
       }

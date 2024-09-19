@@ -39,7 +39,7 @@ export default function LandingPage() {
   const [currentFeatureIndex, setCurrentFeatureIndex] = useState(0);
   const [isMounted, setIsMounted] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 767 });
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     setIsMounted(true);
@@ -155,18 +155,22 @@ export default function LandingPage() {
 
       <div className="relative z-10 flex-grow">
         <TransparentNavbar />
-        {user && !user.isPro && <UpgradeBanner />}
+        {!isLoading && user && !user.isPro && <UpgradeBanner />}
 
         <div className="container mx-auto px-4">
-          {user ? (
-            user.isPro ? (
-              <CustomizableHomePage />
+          {!isLoading && user ? (
+            typeof user.isPro !== "undefined" ? (
+              user.isPro ? (
+                <CustomizableHomePage />
+              ) : (
+                <AuthenticatedContent
+                  username={
+                    user.displayName || user.email?.split("@")[0] || "Usuario"
+                  }
+                />
+              )
             ) : (
-              <AuthenticatedContent
-                username={
-                  user.displayName || user.email?.split("@")[0] || "Usuario"
-                }
-              />
+              <div>Cargando estado Pro...</div>
             )
           ) : (
             <UnauthenticatedContent

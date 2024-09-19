@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
-import { sendEmailVerification } from "firebase/auth";
+import { sendEmailVerification, reload, getAuth } from "firebase/auth";
 
 export default function EmailVerification() {
   const { user } = useAuth();
@@ -12,12 +12,24 @@ export default function EmailVerification() {
 
   useEffect(() => {
     if (user) {
+      const auth = getAuth();
+      const firebaseUser = auth.currentUser;
+
+      if (!firebaseUser) {
+        console.error("No se pudo obtener el usuario de Firebase");
+        return;
+      }
+
       const checkEmailVerified = setInterval(async () => {
-        await user.reload();
-        if (user.emailVerified) {
-          clearInterval(checkEmailVerified);
-          toast.success("Correo electrónico verificado con éxito.");
-          router.push("/profile");
+        try {
+          await reload(firebaseUser);
+          if (firebaseUser.emailVerified) {
+            clearInterval(checkEmailVerified);
+            toast.success("Correo electrónico verificado con éxito.");
+            router.push("/profile");
+          }
+        } catch (error) {
+          console.error("Error al recargar el usuario:", error);
         }
       }, 5000); // Verifica cada 5 segundos
 
@@ -26,11 +38,19 @@ export default function EmailVerification() {
   }, [user, router]);
 
   const handleResendVerification = async () => {
+    const auth = getAuth();
+    const firebaseUser = auth.currentUser;
+
+    if (!firebaseUser) {
+      toast.error("No se pudo obtener el usuario actual. Por favor, inténtalo de nuevo.");
+      return;
+    }
+
     try {
-      await sendEmailVerification(user);
-      toast.info("A verification email has been sent to your email address.");
+      await sendEmailVerification(firebaseUser);
+      toast.info("Se ha enviado un correo de verificación a tu dirección de email.");
     } catch (error) {
-      toast.error("Error resending verification email. Please try again.");
+      toast.error("Error al reenviar el correo de verificación. Por favor, inténtalo de nuevo.");
     }
   };
 
