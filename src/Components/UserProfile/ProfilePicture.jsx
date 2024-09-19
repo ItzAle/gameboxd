@@ -1,11 +1,16 @@
+import Image from "next/image";
+import defaultProfilePicture from "../../utils/default-image.png";
+
 const ProfilePicture = ({ profilePicture }) => (
-    <div className="mb-4 flex flex-col items-center">
-      <img
-        src={profilePicture || "/path/to/default-profile-pic.png"}
-        alt="Profile Picture"
-        className="w-32 h-32 object-cover rounded-full shadow-lg"
-      />
-    </div>
-  );
-  
-  export default ProfilePicture;
+  <div className="mb-4 flex flex-col items-center">
+    <Image
+      src={profilePicture || defaultProfilePicture}
+      alt="Profile Picture"
+      width={128}
+      height={128}
+      className="object-cover rounded-full shadow-lg"
+    />
+  </div>
+);
+
+export default ProfilePicture;

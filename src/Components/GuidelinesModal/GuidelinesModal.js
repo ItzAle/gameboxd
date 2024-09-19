@@ -3,7 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-export default function GuidelinesModal({ onAccept }) {
+export default function GuidelinesModal() {
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg w-full text-white overflow-y-auto max-h-[80vh]">
       <motion.h1
@@ -125,16 +125,6 @@ export default function GuidelinesModal({ onAccept }) {
           positive community for all game enthusiasts.
         </p>
       </motion.div>
-      <div className="mt-4">
-        <label className="flex items-center">
-          <input
-            type="checkbox"
-            onChange={onAccept}
-            className="form-checkbox"
-          />
-          <span className="ml-2 text-gray-200">I accept the guidelines</span>
-        </label>
-      </div>
     </div>
   );
 }

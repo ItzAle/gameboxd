@@ -12,6 +12,7 @@ import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import ProBadge from "../common/ProBadge";
 import { FiActivity } from "react-icons/fi";
+import defaultAvatar from "../../utils/default-image.png";
 
 export default function TransparentNavbar() {
   const { user } = useAuth();
@@ -142,13 +143,13 @@ export default function TransparentNavbar() {
                   className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
                 >
                   <Image
-                    src={userProfile?.photoURL || "/default-avatar.png"}
-                    alt={userProfile?.displayName || "Usuario"}
+                    src={userProfile?.photoURL || defaultAvatar}
+                    alt={userProfile?.displayName || "User"}
                     width={32}
                     height={32}
                     className="rounded-full"
                   />
-                  <span>{userProfile?.displayName || "Usuario"}</span>
+                  <span>{userProfile?.displayName || "User"}</span>
 
                   <FaChevronDown
                     className={`transition-transform ${
@@ -253,7 +254,7 @@ export default function TransparentNavbar() {
                     href="/profile"
                     className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
                   >
-                    Perfil
+                    Profile
                   </Link>
 
                   {navItems.map((item, index) => (

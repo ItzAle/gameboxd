@@ -490,14 +490,14 @@ export default function UserProfile() {
                 className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-300"
               >
                 <FaUserFriends className="mr-2 inline" />
-                Followers ({userProfile.followers.length})
+                Followers ({userProfile?.followers?.length || 0})
               </button>
               <button
                 onClick={() => handleShowFollowList("following")}
                 className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-300"
               >
                 <FaUserFriends className="mr-2 inline" />
-                Following ({userProfile.following.length})
+                Following ({userProfile?.following?.length || 0})
               </button>
             </div>
           </div>

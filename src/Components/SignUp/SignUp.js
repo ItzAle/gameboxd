@@ -34,6 +34,7 @@ export default function SignUp() {
   const [passwordStrength, setPasswordStrength] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
+  const [guidelinesRead, setGuidelinesRead] = useState(false);
 
   if (user) {
     router.push("/profile");
@@ -128,13 +129,11 @@ export default function SignUp() {
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setGuidelinesRead(true);
   };
 
   const handleGuidelinesAcceptance = () => {
     setGuidelinesAccepted(!guidelinesAccepted);
-    if (!guidelinesAccepted) {
-      closeModal();
-    }
   };
 
   const handleSignUp = async (e) => {
@@ -176,6 +175,8 @@ export default function SignUp() {
         bio: "",
         reviews: [],
         likedGames: [],
+        followers: [],
+        following: [],
         emailVerified: false,
         isPro: false,
       });
@@ -308,19 +309,35 @@ export default function SignUp() {
             >
               Read Guidelines
             </button>
+            <div className="mt-2">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={guidelinesAccepted}
+                  onChange={handleGuidelinesAcceptance}
+                  className="form-checkbox"
+                  disabled={!guidelinesRead}
+                />
+                <span className="ml-2 text-gray-200">
+                  I accept the guidelines
+                </span>
+              </label>
+              {!guidelinesRead && (
+                <p className="text-red-400 text-xs mt-1">Please read the guidelines before accepting</p>
+              )}
+            </div>
             <Modal
               isOpen={isModalOpen}
-              onRequestClose={() => {}}
+              onRequestClose={closeModal}
               contentLabel="Guidelines Modal"
               className="fixed inset-0 flex items-center justify-center z-50"
               overlayClassName="fixed inset-0 bg-black bg-opacity-75"
             >
               <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg w-full overflow-y-auto max-h-[80vh]">
-                <GuidelinesModal onAccept={handleGuidelinesAcceptance} />
+                <GuidelinesModal />
                 <button
                   onClick={closeModal}
                   className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md w-full"
-                  disabled={!guidelinesAccepted}
                 >
                   Close
                 </button>
@@ -336,11 +353,15 @@ export default function SignUp() {
               usernameError ||
               passwordError ||
               emailError ||
-              !guidelinesAccepted
+              !guidelinesAccepted ||
+              !guidelinesRead
             }
           >
             Register
           </motion.button>
+          {(!guidelinesRead || !guidelinesAccepted) && (
+            <p className="text-red-400 text-xs mt-1">Please read and accept the guidelines before registering</p>
+          )}
         </form>
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-300">
