@@ -6,5 +6,9 @@ export const metadata = {
 };
 
 export default function GuidelinesPage() {
-  return <Guidelines />;
+  return (
+    <>
+      <Guidelines />
+    </>
+  );
 }

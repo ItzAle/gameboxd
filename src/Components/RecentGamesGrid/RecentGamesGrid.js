@@ -28,7 +28,7 @@ export default function RecentGamesGrid() {
           (a, b) => new Date(b.releaseDate) - new Date(a.releaseDate)
         );
 
-        const latestGames = sortedGames.slice(0, 4);
+        const latestGames = sortedGames.slice(0, 6);
 
         setRecentGames(latestGames);
       } catch (error) {
@@ -62,8 +62,8 @@ export default function RecentGamesGrid() {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-        gap: 3,
+        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+        gap: 2,
       }}
     >
       {recentGames.map((game) => (
@@ -74,7 +74,7 @@ export default function RecentGamesGrid() {
         >
           <Card
             sx={{
-              height: "300px",
+              height: "260px",
               position: "relative",
               overflow: "hidden",
               boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
@@ -116,7 +116,7 @@ export default function RecentGamesGrid() {
                 alignItems: "center",
                 bgcolor: "rgba(0, 0, 0, 0.5)",
                 color: "white",
-                padding: "20px",
+                padding: "16px",
                 opacity: 0,
                 transform: "translateZ(-50px)",
                 transition: "all 0.3s ease-in-out",
@@ -126,26 +126,38 @@ export default function RecentGamesGrid() {
                 },
               }}
             >
-              <Typography variant="h6" component="div" sx={{ marginBottom: "10px", textAlign: "center" }}>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{ marginBottom: "8px", textAlign: "center", fontSize: "1rem" }}
+              >
                 {game.name}
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
-                <FaCalendarAlt style={{ marginRight: "5px" }} />
-                <Typography variant="body2">
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "4px",
+                }}
+              >
+                <FaCalendarAlt style={{ marginRight: "4px", fontSize: "0.8rem" }} />
+                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>
                   {new Date(game.releaseDate).toLocaleDateString()}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", marginBottom: "5px" }}>
-                <FaCode style={{ marginRight: "5px" }} />
-                <Typography variant="body2">
-                  {game.developer}
-                </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "4px",
+                }}
+              >
+                <FaCode style={{ marginRight: "4px", fontSize: "0.8rem" }} />
+                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>{game.developer}</Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                <FaBuilding style={{ marginRight: "5px" }} />
-                <Typography variant="body2">
-                  {game.publisher}
-                </Typography>
+                <FaBuilding style={{ marginRight: "4px", fontSize: "0.8rem" }} />
+                <Typography variant="body2" sx={{ fontSize: "0.8rem" }}>{game.publisher}</Typography>
               </Box>
             </Box>
           </Card>

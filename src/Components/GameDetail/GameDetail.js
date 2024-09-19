@@ -40,6 +40,7 @@ import StyledUsername from "../common/StyledUsername";
 import { getUsernameStyle } from "../../utils/usernameStyles";
 import Image from "next/image";
 import AddReviewModal from "../AddReviewModal/AddReviewModal";
+import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -322,6 +323,7 @@ export default function GameDetailsPage({ id }) {
         className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white pt-20"
       >
         <TransparentNavbar />
+        {user && !user.isPro && <UpgradeBanner />}
         <div className="container mx-auto px-4 py-8">
           <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
             <motion.div

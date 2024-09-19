@@ -36,8 +36,9 @@ import {
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import ProOptionsModal from "../ProOptionsModal/ProOptionsModal";
-import StyledUsername from '../common/StyledUsername';
-import { getUsernameStyle } from '../../utils/usernameStyles';
+import StyledUsername from "../common/StyledUsername";
+import { getUsernameStyle } from "../../utils/usernameStyles";
+import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -275,18 +276,18 @@ export default function UserProfile() {
       await updateDoc(userRef, {
         nameEffect: newOptions.nameEffect,
         nameColor: newOptions.nameColor,
-        effectIntensity: newOptions.effectIntensity
+        effectIntensity: newOptions.effectIntensity,
       });
 
       // Actualizar el estado local
       setNameEffect(newOptions.nameEffect);
       setNameColor(newOptions.nameColor);
       setEffectIntensity(newOptions.effectIntensity);
-      setUserProfile(prevProfile => ({
+      setUserProfile((prevProfile) => ({
         ...prevProfile,
         nameEffect: newOptions.nameEffect,
         nameColor: newOptions.nameColor,
-        effectIntensity: newOptions.effectIntensity
+        effectIntensity: newOptions.effectIntensity,
       }));
 
       toast.success("Opciones PRO actualizadas con éxito");
@@ -301,7 +302,10 @@ export default function UserProfile() {
 
     return (
       <StyledUsername
-        user={{ id: user.uid, username: userProfile?.username || user?.displayName || "User" }}
+        user={{
+          id: user.uid,
+          username: userProfile?.username || user?.displayName || "User",
+        }}
         style={style}
         isPro={userProfile?.isPro}
       />
@@ -365,6 +369,18 @@ export default function UserProfile() {
           </div>
         </div>
         <Bio bio={bio} setBio={setBio} editing={editing} />
+        {!userProfile?.isPro && (
+          <div className="mt-4 p-4 bg-blue-900 bg-opacity-50 rounded-lg">
+            <p className="text-sm text-blue-200 mb-2">
+              Do you want to customize your profile and name more?
+            </p>
+            <Link href="/upgrade">
+              <p className="text-yellow-400 hover:text-yellow-300 transition duration-300 text-sm font-semibold">
+                Upgrade to PRO for more options →
+              </p>
+            </Link>
+          </div>
+        )}
       </ProfileSection>
 
       <ProfileSection>
@@ -406,13 +422,24 @@ export default function UserProfile() {
               >
                 <FaEdit className="mr-2" /> Edit Profile
               </button>
-              {userProfile?.isPro && (
+              {userProfile?.isPro ? (
                 <button
                   onClick={() => setShowProOptions(true)}
                   className="bg-purple-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
                 >
                   <FaStar className="mr-2" /> PRO Options
                 </button>
+              ) : (
+                <div className="mt-4 p-4 bg-blue-900 bg-opacity-50 rounded-lg">
+                  <p className="text-sm text-blue-200 mb-2">
+                    Do you want to customize your profile and name more?
+                  </p>
+                  <Link href="/upgrade">
+                    <p className="text-yellow-400 hover:text-yellow-300 transition duration-300 text-sm font-semibold">
+                      Upgrade to PRO for more options →
+                    </p>
+                  </Link>
+                </div>
               )}
             </>
           )}
@@ -452,6 +479,7 @@ export default function UserProfile() {
         <StarField count={200} />
         <div className="container mx-auto p-4 space-y-8 relative z-10">
           <TransparentNavbar />
+          {user && !user.isPro && <UpgradeBanner />}
           <div className="flex flex-col md:flex-row justify-between items-center mb-8">
             <h1 className="text-4xl font-bold mb-4 md:mb-0 flex items-center">
               {renderUsername()}

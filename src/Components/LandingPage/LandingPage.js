@@ -136,41 +136,52 @@ export default function LandingPage() {
   }
 
   return (
-    <>
-      <div className="relative min-h-screen bg-gray-900 text-white overflow-hidden">
-        <TransparentNavbar />
-        {user ? (
-          <AuthenticatedContent
-            currentImageIndex={currentImageIndex}
-            renderFeatures={renderFeatures}
-            username={
-              user.displayName || user.email?.split("@")[0] || "Usuario"
-            }
+    <div className="flex flex-col min-h-screen bg-gray-900 text-white overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentImageIndex}
+            src={gameCoverUrls[currentImageIndex]}
+            alt="Game cover"
+            className="absolute inset-0 w-full h-full object-cover opacity-20"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.2 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.0 }}
           />
-        ) : (
-          <UnauthenticatedContent
-            currentImageIndex={currentImageIndex}
-            handleSearch={handleSearch}
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            showSearchBar={showSearchBar}
-            setShowSearchBar={setShowSearchBar}
-            renderFeatures={renderFeatures}
-          />
-        )}
-        <div className="mb-16">
-          {" "}
-          {/* Añadido: margen inferior */}
-          <UpgradeBanner />
-        </div>
-        <Footer />
+        </AnimatePresence>
       </div>
-    </>
+
+      <div className="relative z-10 flex-grow">
+        <TransparentNavbar />
+        {user && !user.isPro && <UpgradeBanner />}
+
+        <div className="container mx-auto px-4">
+          {user ? (
+            <AuthenticatedContent
+              username={
+                user.displayName || user.email?.split("@")[0] || "Usuario"
+              }
+            />
+          ) : (
+            <UnauthenticatedContent
+              handleSearch={handleSearch}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              showSearchBar={showSearchBar}
+              setShowSearchBar={setShowSearchBar}
+              renderFeatures={renderFeatures}
+            />
+          )}
+        </div>
+      </div>
+
+      <Footer />
+    </div>
   );
 }
 
 const UnauthenticatedContent = ({
-  currentImageIndex,
   handleSearch,
   searchTerm,
   setSearchTerm,
@@ -180,24 +191,8 @@ const UnauthenticatedContent = ({
 }) => {
   return (
     <>
-      {/* Animated background */}
-      <div className="absolute inset-0 opacity-20">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentImageIndex}
-            src={gameCoverUrls[currentImageIndex]}
-            alt="Game cover"
-            className="absolute inset-0 w-full h-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.0 }}
-          />
-        </AnimatePresence>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4">
+      {/* Contenido */}
+      <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
         <motion.h1
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -266,48 +261,18 @@ const UnauthenticatedContent = ({
   );
 };
 
-const AuthenticatedContent = ({
-  currentImageIndex,
-  renderFeatures,
-  username,
-}) => {
+const AuthenticatedContent = ({ username }) => {
   return (
-    <>
-      <div className="absolute inset-0 opacity-20">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentImageIndex}
-            src={gameCoverUrls[currentImageIndex]}
-            alt="Game cover"
-            className="absolute inset-0 w-full h-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.0 }}
-          />
-        </AnimatePresence>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4 py-16">
-        <motion.h1
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-5xl font-bold mb-12 text-blue-400"
-        >
-          Welcome, {username}
-        </motion.h1>
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="w-full max-w-7xl"
-        >
-          <h2 className="text-3xl font-semibold mb-6">Upcoming Games</h2>
-          <RecentGamesGrid />
-        </motion.div>
-      </div>
-    </>
+    <div className="flex flex-col items-center justify-start text-center pt-32 pb-16">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="w-full max-w-4xl"
+      >
+        <h2 className="text-2xl font-semibold mb-3">Upcoming Games</h2>
+        <RecentGamesGrid />
+      </motion.div>
+    </div>
   );
 };

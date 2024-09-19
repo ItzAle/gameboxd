@@ -34,6 +34,12 @@ export default function Footer() {
             >
               Privacy Policy
             </Link>
+            <Link
+              href="/guidelines"
+              className="text-white hover:text-blue-400 transition text-xs"
+            >
+              Guidelines
+            </Link>
           </div>
 
           {/* Social media icons */}
@@ -57,7 +63,6 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright text */}
         <div className="text-center text-white text-xs mt-1">
           <p>© {new Date().getFullYear()} Gameboxd. All rights reserved.</p>
         </div>

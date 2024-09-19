@@ -32,6 +32,7 @@ import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import StyledUsername from "../common/StyledUsername";
 import { getUsernameStyle } from "../../utils/usernameStyles";
+import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 
 export default function OtherUserProfile({ userId }) {
   const [userProfile, setUserProfile] = useState(null);
@@ -223,6 +224,7 @@ export default function OtherUserProfile({ userId }) {
       <StarField count={200} />
       <div className="container mx-auto p-4 space-y-8 relative z-10">
         <TransparentNavbar />
+        {user && !user.isPro && <UpgradeBanner />}
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <h1 className="text-4xl font-bold mb-4 md:mb-0 flex items-center">
             {renderUsername()}
