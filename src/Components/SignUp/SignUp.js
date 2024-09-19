@@ -180,6 +180,11 @@ export default function SignUp() {
         isPro: false,
       });
 
+      console.log("Datos del usuario guardados:", {
+        email: user.email,
+        username: username,
+      });
+
       toast.success("Registration successful. Please verify your email.");
       router.push("/email-verification");
     } catch (error) {

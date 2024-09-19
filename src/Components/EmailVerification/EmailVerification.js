@@ -16,10 +16,10 @@ export default function EmailVerification() {
         await user.reload();
         if (user.emailVerified) {
           clearInterval(checkEmailVerified);
-          toast.success("Email verified successfully.");
+          toast.success("Correo electrónico verificado con éxito.");
           router.push("/profile");
         }
-      }, 5000); // Checks every 5 seconds
+      }, 5000); // Verifica cada 5 segundos
 
       return () => clearInterval(checkEmailVerified);
     }

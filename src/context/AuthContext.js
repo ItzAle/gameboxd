@@ -5,25 +5,15 @@ import { doc, getDoc } from "firebase/firestore";
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUser({
-            ...firebaseUser,
-            isPro: userData.isPro || false,
-            // Añade aquí cualquier otro dato del usuario que necesites
-          });
-        } else {
-          setUser(firebaseUser);
-        }
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await user.reload(); // Recarga el usuario para obtener el estado más reciente
+        setUser(user);
       } else {
         setUser(null);
       }
