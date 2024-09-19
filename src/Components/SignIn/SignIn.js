@@ -18,7 +18,7 @@ export default function SignIn() {
   const { user } = useAuth();
 
   if (user) {
-    router.push("/profile");
+    router.push("/");
     return null;
   }
 
