@@ -41,7 +41,7 @@ export default function SignUp() {
   }
 
   const validateUsername = (username) => {
-    const regex = /^[a-zA-Z0-9]{4,10}[^.]$/;
+    const regex = /^[a-zA-Z0-9]{3,10}[^.]$/;
     return (
       regex.test(username) && !username.includes("_") && !username.includes(" ")
     );
