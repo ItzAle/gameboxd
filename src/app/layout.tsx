@@ -15,7 +15,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta
           name="google-site-verification"
-          content="ObUINvCWZOrJ9bzO0kceilTZ566zmC7B-3WQvTdFW3s"
+          content="tQm5pduZAMOK3k12D8pd9XUnwyVfiU-erzVhd7TqAqo"
         />
         <Script
           async
