@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { db } from "../../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
-import Link from 'next/link';
+import Link from "next/link";
 
 const StarRating = ({ rating, setRating }) => {
   const handleStarClick = (value) => {
@@ -106,7 +106,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
         const reviewsSnapshot = await getDocs(reviewsQuery);
 
         if (!reviewsSnapshot.empty) {
-          toast.error("You have already submitted a review for this game.");
           onClose();
         }
       } catch (error) {
@@ -296,7 +295,8 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           </h2>
 
           <p className="text-sm text-gray-400 mb-4">
-            Please note that all reviews are subject to moderation. Make sure to follow our{" "}
+            Please note that all reviews are subject to moderation. Make sure to
+            follow our{" "}
             <Link href="/guidelines" className="text-blue-400 hover:underline">
               community guidelines
             </Link>{" "}

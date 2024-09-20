@@ -54,55 +54,50 @@ export default function GameDetailsPage({ id }) {
   const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
   const [userPreferences, setUserPreferences] = useState(null);
 
-  const handleAddReviewClick = async () => {
+  const handleAddReviewClick = () => {
     if (!user) {
-      toast.error("You need to be logged in to add a review.");
+      toast.error("Necesitas iniciar sesión para añadir una reseña.");
       return;
     }
 
-    try {
-      const reviewsQuery = query(
-        collection(db, "reviews"),
-        where("gameId", "==", id),
-        where("userId", "==", user.uid)
-      );
+    const userHasReviewed = reviews.some(
+      (review) => review.userId === user.uid
+    );
 
-      const reviewsSnapshot = await getDocs(reviewsQuery);
-
-      if (!reviewsSnapshot.empty) {
-        toast.error("You have already submitted a review for this game.");
-      } else {
-        setShowModal(true);
-      }
-    } catch (error) {
-      console.error("Error checking existing reviews:", error);
-      toast.error("An error occurred while checking for existing reviews.");
+    if (userHasReviewed) {
+      toast.error("You have already submitted a review for this game.");
+    } else {
+      setShowModal(true);
     }
   };
 
   const handleSaveReview = async (newReview) => {
-    const userDoc = await getDoc(doc(db, "users", user.uid));
-    const userData = userDoc.data();
+    try {
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
 
-    const reviewWithUserData = {
-      ...newReview,
-      userNameEffect: userData.nameEffect || "",
-      userNameColor: userData.nameColor || "",
-      isPro: userData.isPro || false,
-      profilePicture: userData.profilePicture || null,
-    };
+      const reviewWithUserData = {
+        ...newReview,
+        userNameEffect: userData.nameEffect || "",
+        userNameColor: userData.nameColor || "",
+        isPro: userData.isPro || false,
+        profilePicture: userData.profilePicture || null,
+        userId: user.uid,
+        gameId: id,
+      };
 
-    setReviews((prevReviews) => {
-      const reviewExists = prevReviews.some(
-        (review) => review.id === reviewWithUserData.id
-      );
-      if (reviewExists) {
-        return prevReviews;
-      }
-      return [...prevReviews, reviewWithUserData];
-    });
+      setReviews((prevReviews) => [...prevReviews, reviewWithUserData]);
+      setGlobalReviews((prevGlobalReviews) => [
+        ...prevGlobalReviews,
+        reviewWithUserData,
+      ]);
 
-    setShowModal(false);
+      setShowModal(false);
+      toast.success("Reseña añadida con éxito");
+    } catch (error) {
+      console.error("Error al guardar la reseña:", error);
+      toast.error("Ocurrió un error al guardar la reseña");
+    }
   };
 
   const handleLikeClick = async () => {
@@ -241,9 +236,11 @@ export default function GameDetailsPage({ id }) {
       const updatedReviews = reviews.map((review) =>
         review.userId === user.uid ? { ...review, ...userPreferences } : review
       );
-      setReviews(updatedReviews);
+      if (JSON.stringify(updatedReviews) !== JSON.stringify(reviews)) {
+        setReviews(updatedReviews);
+      }
     }
-  }, [userPreferences, reviews, user]);
+  }, [userPreferences, user]);
 
   const renderUsername = (review) => {
     const style = getUsernameStyle(
@@ -280,7 +277,9 @@ export default function GameDetailsPage({ id }) {
 
   useEffect(() => {
     const gameReviews = globalReviews.filter((review) => review.gameId === id);
-    setReviews(gameReviews);
+    if (JSON.stringify(gameReviews) !== JSON.stringify(reviews)) {
+      setReviews(gameReviews);
+    }
   }, [id, globalReviews]);
 
   if (isLoading) {
@@ -562,7 +561,10 @@ export default function GameDetailsPage({ id }) {
             name: game.name,
             coverImageUrl: game.coverImageUrl,
           }}
-          onClose={() => setShowModal(false)}
+          onClose={() => {
+            console.log("Closing modal");
+            setShowModal(false);
+          }}
           onSave={handleSaveReview}
         />
       )}
