@@ -12,6 +12,7 @@
     "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@floating-ui/react": "^0.26.23",
+    "@headlessui/react": "^2.1.8",
     "@heroicons/react": "^1.0.6",
     "@mui/icons-material": "^6.1.0",
     "@mui/material": "^6.1.0",

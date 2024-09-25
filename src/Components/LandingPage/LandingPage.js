@@ -16,6 +16,8 @@ import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 import UpcomingGames from "../UpcomingGames/UpcomingGames";
 import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
 import CustomizableHomePage from "../CustomizableHomePage/CustomizableHomePage";
+import { Switch } from "@headlessui/react";
+import { Loader2 } from "lucide-react";
 
 const gameCoverUrls = [
   "https://imgs.callofduty.com/content/dam/atvi/callofduty/cod-touchui/blackops6/meta/BO6_LP-meta_image.jpg",
@@ -40,6 +42,7 @@ export default function LandingPage() {
   const [isMounted, setIsMounted] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const { user, isLoading } = useAuth();
+  const [isCustomizable, setIsCustomizable] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -161,7 +164,36 @@ export default function LandingPage() {
           {!isLoading && user ? (
             typeof user.isPro !== "undefined" ? (
               user.isPro ? (
-                <CustomizableHomePage />
+                <>
+                  <div className="flex justify-end items-center mb-4 mt-16">
+                    <span className="mr-2 text-sm">Classic</span>
+                    <Switch
+                      checked={isCustomizable}
+                      onChange={setIsCustomizable}
+                      className={`${
+                        isCustomizable ? "bg-blue-600" : "bg-gray-200"
+                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+                    >
+                      <span
+                        className={`${
+                          isCustomizable ? "translate-x-6" : "translate-x-1"
+                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                      />
+                    </Switch>
+                    <span className="ml-2 text-sm">PRO</span>
+                  </div>
+                  {isCustomizable ? (
+                    <CustomizableHomePage />
+                  ) : (
+                    <AuthenticatedContent
+                      username={
+                        user.displayName ||
+                        user.email?.split("@")[0] ||
+                        "Usuario"
+                      }
+                    />
+                  )}
+                </>
               ) : (
                 <AuthenticatedContent
                   username={
@@ -170,7 +202,9 @@ export default function LandingPage() {
                 />
               )
             ) : (
-              <div>Cargando estado Pro...</div>
+              <div>
+                <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+              </div>
             )
           ) : (
             <UnauthenticatedContent

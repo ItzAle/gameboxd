@@ -4,8 +4,11 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { FaTwitter, FaInstagram, FaTiktok } from "react-icons/fa";
 import { RiThreadsLine } from "react-icons/ri";
+import { useAuth } from "../../context/AuthContext"; // Asegúrate de importar useAuth
 
 export default function Footer() {
+  const { user } = useAuth(); // Obtén la información del usuario
+
   return (
     <motion.footer
       className="bg-transparent text-white py-2 absolute bottom-0 left-0 right-0 backdrop-blur-md"
@@ -40,6 +43,23 @@ export default function Footer() {
               className="text-white hover:text-blue-400 transition text-xs"
             >
               Guidelines
+            </Link>
+            {/* Mostrar el enlace PRO solo si el usuario no es PRO */}
+            {(!user || !user.isPro) && (
+              <Link
+                href="/pro"
+                className="text-white hover:text-blue-400 transition text-xs"
+              >
+                PRO
+              </Link>
+            )}
+            <Link
+              href="https://api.gameboxd.me"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-blue-400 transition text-xs"
+            >
+              API
             </Link>
           </div>
 
