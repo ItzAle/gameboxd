@@ -104,12 +104,16 @@ export default function UserProfile() {
 
   const fetchGameDetails = useCallback(async (slug) => {
     try {
-      const response = await fetch(`https://gbxd-api.vercel.app/api/game/${slug}`);
+      const response = await fetch(
+        `https://gbxd-api.vercel.app/api/game/${slug}`
+      );
       if (response.ok) {
         const data = await response.json();
         return data;
       } else {
-        console.error(`Failed to fetch details for game ${slug}: ${response.status}`);
+        console.error(
+          `Failed to fetch details for game ${slug}: ${response.status}`
+        );
         return null;
       }
     } catch (error) {
@@ -199,7 +203,9 @@ export default function UserProfile() {
                 const data = await response.json();
                 details[game.slug] = data;
               } else {
-                console.error(`Failed to fetch details for game ${game.slug}: ${response.status}`);
+                console.error(
+                  `Failed to fetch details for game ${game.slug}: ${response.status}`
+                );
               }
             } catch (error) {
               console.error(
@@ -375,7 +381,7 @@ export default function UserProfile() {
             />
             <h1 className="text-4xl font-bold ml-4">{userProfile.username}</h1>
           </div>
-          <Link href="/profile/settings">
+          <Link href="/settings">
             <button className="bg-gray-700 p-2 rounded-full">
               <FaCog className="text-xl" />
             </button>
