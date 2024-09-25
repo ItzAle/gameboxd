@@ -8,7 +8,7 @@ export default function FollowingTab({ userProfile }) {
     // Aquí deberías cargar los usuarios que sigue el usuario actual
     // Por ahora, usaremos datos de ejemplo
     setFollowing([
-      { id: 1, username: "GamerPro99", avatarUrl: "/path/to/avatar1.jpg" },
+      { id: 1, username: "JuanDeDios", avatarUrl: "/path/to/avatar1.jpg" },
       { id: 2, username: "RPGLover", avatarUrl: "/path/to/avatar2.jpg" },
     ]);
   }, [userProfile]);
