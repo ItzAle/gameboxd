@@ -21,11 +21,15 @@ export default function ProPage() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="bg-gray-800 p-3 md:p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
-              <div className="text-2xl md:text-4xl mb-2 md:mb-4">{feature.emoji}</div>
+              <div className="text-2xl md:text-4xl mb-2 md:mb-4">
+                {feature.emoji}
+              </div>
               <h2 className="text-lg md:text-2xl font-semibold mb-1 md:mb-2 text-blue-300">
                 {feature.title}
               </h2>
-              <div className="text-xs md:text-base text-gray-300">{feature.description}</div>
+              <div className="text-xs md:text-base text-gray-300">
+                {feature.description}
+              </div>
             </motion.div>
           ))}
         </div>
@@ -70,7 +74,7 @@ const proFeatures = [
       <>
         Show off your PRO status with special profile badges.
         <span className="mt-2 flex items-center">
-          Example: <ProBadge className="ml-2" />
+          Example: <ProBadge />
         </span>
       </>
     ),
