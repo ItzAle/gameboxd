@@ -389,7 +389,9 @@ export default function UserProfile() {
           {activeTab === "overview" && (
             <OverviewTab userProfile={userProfile} />
           )}
-          {activeTab === "library" && <LibraryTab userProfile={userProfile} />}
+          {activeTab === "library" && (
+            <LibraryTab userProfile={userProfile} userId={user.uid} />
+          )}
           {activeTab === "reviews" && <ReviewsTab userProfile={userProfile} />}
           {activeTab === "collections" && (
             <CollectionsTab userProfile={userProfile} />

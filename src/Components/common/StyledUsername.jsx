@@ -1,13 +1,16 @@
-import React from "react";
-import Link from "next/link";
-import ProBadge from "./ProBadge";
+import Link from 'next/link';
+import { getUsernameStyle } from '../../utils/usernameStyles';
 
-const StyledUsername = ({ user, style, isPro }) => {
+const StyledUsername = ({ username, userId, nameColor, nameEffect }) => {
   return (
-    <Link href={`/profile/${user.id}`}>
-      <span className="flex items-center cursor-pointer">
-        <span style={style}>{user.username}</span>
-        {isPro && <ProBadge className="ml-2 text-xs" />}
+    <Link href={`/profile/${userId}`}>
+      <span
+        style={{
+          color: nameColor || 'inherit',
+          ...getUsernameStyle(nameEffect)
+        }}
+      >
+        {username}
       </span>
     </Link>
   );

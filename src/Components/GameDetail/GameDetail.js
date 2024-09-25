@@ -12,6 +12,7 @@ import {
   onSnapshot,
   updateDoc,
   arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -36,16 +37,17 @@ import {
   FaCheckCircle,
   FaListUl,
   FaComment,
+  FaTrash,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import StyledUsername from "../common/StyledUsername";
-import { getUsernameStyle } from "../../utils/usernameStyles";
 import Image from "next/image";
 import AddReviewModal from "../AddReviewModal/AddReviewModal";
 import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
@@ -60,10 +62,29 @@ export default function GameDetailsPage({ id }) {
   const [userPreferences, setUserPreferences] = useState(null);
   const [libraryStatus, setLibraryStatus] = useState(null);
   const [showComments, setShowComments] = useState({});
+  const [editingComment, setEditingComment] = useState(null);
+  const [showGameDetails, setShowGameDetails] = useState(true);
+
+  const detailsVariants = {
+    hidden: {
+      opacity: 0,
+      height: 0,
+      transition: {
+        duration: 0.3,
+      },
+    },
+    visible: {
+      opacity: 1,
+      height: "auto",
+      transition: {
+        duration: 0.3,
+      },
+    },
+  };
 
   const handleAddReviewClick = () => {
     if (!user) {
-      toast.error("Necesitas iniciar sesión para añadir una reseña.");
+      toast.error("You need to login to add a review.");
       return;
     }
 
@@ -76,6 +97,13 @@ export default function GameDetailsPage({ id }) {
     } else {
       setShowModal(true);
     }
+  };
+
+  const toggleComments = (reviewId) => {
+    setShowComments((prev) => ({
+      ...prev,
+      [reviewId]: !prev[reviewId],
+    }));
   };
 
   const handleSaveReview = async (newReview) => {
@@ -100,18 +128,16 @@ export default function GameDetailsPage({ id }) {
       ]);
 
       setShowModal(false);
-      toast.success("Reseña añadida con éxito");
+      toast.success("Review added successfully");
     } catch (error) {
       console.error("Error al guardar la reseña:", error);
-      toast.error("Ocurrió un error al guardar la reseña");
+      toast.error("An error occurred while saving the review");
     }
   };
 
   const handleLikeClick = async () => {
     if (!user) {
-      toast.error(
-        "Necesitas iniciar sesión para marcar un juego como favorito."
-      );
+      toast.error("You need to login to mark a game as a favorite.");
       return;
     }
 
@@ -196,15 +222,14 @@ export default function GameDetailsPage({ id }) {
           };
           await updateDoc(userRef, { library: [...library, gameToAdd] });
         }
-
         setLibraryStatus(status);
         toast.success(
-          `Juego ${
+          `Game ${
             status === "playing"
-              ? "marcado como jugando"
+              ? "marked as playing"
               : status === "completed"
-              ? "marcado como completado"
-              : "añadido a la lista de seguimiento"
+              ? "marked as completed"
+              : "added to tracking list"
           }.`
         );
       }
@@ -214,17 +239,20 @@ export default function GameDetailsPage({ id }) {
     }
   };
 
-  const handleAddComment = async (reviewId, comment) => {
+  const handleAddComment = async (reviewId, commentText) => {
     if (!user) {
-      toast.error("Necesitas iniciar sesión para añadir un comentario.");
+      toast.error("Debes iniciar sesión para comentar.");
       return;
     }
 
     try {
       const newComment = {
+        id: Date.now().toString(),
         userId: user.uid,
-        text: comment,
+        username: user.displayName || "Usuario anónimo",
+        text: commentText,
         createdAt: new Date().toISOString(),
+        editedAt: null,
       };
 
       const reviewRef = doc(db, "reviews", reviewId);
@@ -242,8 +270,65 @@ export default function GameDetailsPage({ id }) {
 
       toast.success("Comentario añadido con éxito");
     } catch (error) {
-      console.error("Error al añadir el comentario:", error);
+      console.error("Error al añadir comentario:", error);
       toast.error("Ocurrió un error al añadir el comentario");
+    }
+  };
+
+  const handleEditComment = async (reviewId, commentId, newText) => {
+    try {
+      const reviewRef = doc(db, "reviews", reviewId);
+      const reviewDoc = await getDoc(reviewRef);
+      const reviewData = reviewDoc.data();
+
+      const updatedComments = reviewData.comments.map((comment) =>
+        comment.id === commentId
+          ? { ...comment, text: newText, editedAt: new Date().toISOString() }
+          : comment
+      );
+
+      await updateDoc(reviewRef, { comments: updatedComments });
+
+      setReviews((prevReviews) =>
+        prevReviews.map((review) =>
+          review.id === reviewId
+            ? { ...review, comments: updatedComments }
+            : review
+        )
+      );
+
+      setEditingComment(null);
+      toast.success("Comentario actualizado con éxito");
+    } catch (error) {
+      console.error("Error al editar el comentario:", error);
+      toast.error("Ocurrió un error al editar el comentario");
+    }
+  };
+
+  const handleDeleteComment = async (reviewId, commentId) => {
+    try {
+      const reviewRef = doc(db, "reviews", reviewId);
+      const reviewDoc = await getDoc(reviewRef);
+      const reviewData = reviewDoc.data();
+
+      const updatedComments = reviewData.comments.filter(
+        (comment) => comment.id !== commentId
+      );
+
+      await updateDoc(reviewRef, { comments: updatedComments });
+
+      setReviews(
+        reviews.map((review) =>
+          review.id === reviewId
+            ? { ...review, comments: updatedComments }
+            : review
+        )
+      );
+
+      toast.success("Comentario eliminado con éxito");
+    } catch (error) {
+      console.error("Error al eliminar comentario:", error);
+      toast.error("Ocurrió un error al eliminar el comentario");
     }
   };
 
@@ -276,7 +361,12 @@ export default function GameDetailsPage({ id }) {
               return {
                 id: reviewDoc.id,
                 ...reviewData,
+                username: userData.username,
                 profilePicture: userData.profilePicture || null,
+                nameEffect: userData.nameEffect,
+                nameColor: userData.nameColor,
+                effectIntensity: userData.effectIntensity,
+                isPro: userData.isPro,
                 comments: reviewData.comments || [],
               };
             })
@@ -310,136 +400,78 @@ export default function GameDetailsPage({ id }) {
     };
 
     fetchGameDetails();
-
-    if (user) {
-      const userRef = doc(db, "users", user.uid);
-      const unsubscribe = onSnapshot(userRef, (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
-          setUserPreferences({
-            nameColor: userData.nameColor,
-            nameEffect: userData.nameEffect,
-            effectIntensity: userData.effectIntensity,
-            isPro: userData.isPro,
-          });
-        }
-      });
-
-      return () => unsubscribe();
-    }
   }, [id, user]);
 
-  useEffect(() => {
-    if (userPreferences && reviews.length > 0) {
-      const updatedReviews = reviews.map((review) =>
-        review.userId === user.uid ? { ...review, ...userPreferences } : review
-      );
-      if (JSON.stringify(updatedReviews) !== JSON.stringify(reviews)) {
-        setReviews(updatedReviews);
-      }
-    }
-  }, [userPreferences, user]);
-
-  const renderUsername = (review) => {
-    const style = getUsernameStyle(
-      review.nameEffect || userPreferences?.nameEffect,
-      review.nameColor || userPreferences?.nameColor,
-      review.effectIntensity || userPreferences?.effectIntensity || 1
-    );
-
-    return (
-      <Link href={`/profile/${review.userId}`}>
-        <div className="flex items-center">
-          {review.profilePicture && (
-            <Image
-              src={review.profilePicture}
-              alt={`${review.username}'s profile`}
-              width={32}
-              height={32}
-              className="rounded-full mr-2"
-            />
-          )}
-          <StyledUsername
-            user={{ id: review.userId, username: review.username }}
-            style={style}
-            isPro={
-              review.userId === user?.uid
-                ? userPreferences?.isPro
-                : review.isPro
-            }
-          />
-        </div>
-      </Link>
-    );
-  };
-
-  useEffect(() => {
-    const gameReviews = globalReviews.filter((review) => review.gameId === id);
-    if (JSON.stringify(gameReviews) !== JSON.stringify(reviews)) {
-      setReviews(gameReviews);
-    }
-  }, [id, globalReviews]);
-
-  const renderComments = (review) => {
-    return (
-      <div className="mt-4">
-        <h4 className="text-lg font-semibold mb-2 text-blue-300">
-          Comentarios
-        </h4>
-        {review.comments && review.comments.length > 0 ? (
-          <div className="space-y-2">
-            {review.comments.map((comment, index) => (
-              <div key={index} className="bg-gray-700 p-2 rounded">
-                <p className="text-sm text-gray-300">{comment.text}</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {new Date(comment.createdAt).toLocaleString()}
-                </p>
-              </div>
-            ))}
+  const renderComments = (review) => (
+    <div className="mt-4">
+      {review.comments &&
+        review.comments.map((comment) => (
+          <div key={comment.id} className="bg-gray-600 rounded p-3 mb-2">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold">{comment.username}</span>
+              <span className="text-xs text-gray-400">
+                {new Date(comment.createdAt).toLocaleString()}
+                {comment.editedAt && " (editado)"}
+              </span>
+            </div>
+            {editingComment === comment.id ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleEditComment(
+                    review.id,
+                    comment.id,
+                    e.target.elements.editedComment.value
+                  );
+                }}
+              >
+                <textarea
+                  name="editedComment"
+                  defaultValue={comment.text}
+                  className="w-full p-2 bg-gray-700 text-white rounded"
+                />
+                <div className="flex justify-end mt-2">
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-3 py-1 rounded mr-2"
+                  >
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingComment(null)}
+                    className="bg-gray-500 text-white px-3 py-1 rounded"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p>{comment.text}</p>
+                {user && user.uid === comment.userId && (
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={() => setEditingComment(comment.id)}
+                      className="text-blue-400 mr-2"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      onClick={() => handleDeleteComment(review.id, comment.id)}
+                      className="text-red-400"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-        ) : (
-          <p className="text-gray-400">No hay comentarios aún.</p>
-        )}
-        <AddCommentForm
-          reviewId={review.id}
-          onCommentAdded={handleAddComment}
-        />
-      </div>
-    );
-  };
-
-  if (isLoading) {
-    return (
-      <div className="text-center h-screen flex justify-center items-center bg-gradient-to-b from-gray-900 to-blue-900">
-        <Loader className="h-12 w-12 text-blue-500 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500">Error: {error.message}</div>;
-  }
-
-  if (!game) {
-    return (
-      <div className="text-center">
-        No game found, please, try again later or reload the page.
-      </div>
-    );
-  }
-
-  const formattedReleaseDate = game.releaseDate
-    ? new Date(game.releaseDate).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      })
-    : "N/A";
-
-  const averageRating =
-    reviews.length > 0
-      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
-      : 0;
+        ))}
+      <AddCommentForm reviewId={review.id} onCommentAdded={handleAddComment} />
+    </div>
+  );
 
   return (
     <>
@@ -447,292 +479,302 @@ export default function GameDetailsPage({ id }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white pt-20"
+        className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4 md:p-8"
       >
         <TransparentNavbar />
-        {user && !user.isPro && <UpgradeBanner />}
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-8">
-            <motion.div
-              initial={{ x: -50, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="w-full lg:w-1/3"
-            >
-              {game.coverImageUrl && (
-                <img
-                  src={game.coverImageUrl}
-                  alt={`${game.name} cover`}
-                  className="w-full h-auto object-cover rounded-lg shadow-lg"
-                />
-              )}
-            </motion.div>
-
-            <div className="w-full lg:w-2/3">
-              <motion.h1
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-                className="text-4xl font-bold mb-4 text-blue-300"
-              >
-                {game.name}
-              </motion.h1>
-
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="mb-6 bg-gray-800 bg-opacity-50 p-6 rounded-lg shadow-md backdrop-blur-sm"
-              >
-                <h2 className="text-2xl font-semibold mb-4 text-blue-300">
-                  Game Details
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center">
-                    <FaCalendarAlt className="text-blue-400 mr-2" />
-                    <p>
-                      <strong className="text-blue-300">Release Date:</strong>{" "}
-                      {formattedReleaseDate}
-                    </p>
-                  </div>
-                  <div className="flex items-center">
-                    <FaDesktop className="text-blue-400 mr-2" />
-                    <p>
-                      <strong className="text-blue-300">Platforms:</strong>{" "}
-                      {game.platforms?.join(", ") || "N/A"}
-                    </p>
-                  </div>
-                  <div className="flex items-center">
-                    <FaTags className="text-blue-400 mr-2" />
-                    <p>
-                      <strong className="text-blue-300">Genres:</strong>{" "}
-                      {game.genres?.join(", ") || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="mb-6 bg-gray-800 bg-opacity-50 p-6 rounded-lg shadow-md backdrop-blur-sm"
-              >
-                <h2 className="text-2xl font-semibold mb-2 text-blue-300">
-                  Description
-                </h2>
-                <p className="text-gray-300">
-                  {game.description || "No description available."}
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="mb-6 bg-gray-800 bg-opacity-50 p-6 rounded-lg shadow-md backdrop-blur-sm"
-              >
-                <h2 className="text-2xl font-semibold mb-2 text-blue-300">
-                  Average Rating
-                </h2>
-                <p className="text-lg flex items-center">
-                  {reviews.length > 0 ? (
-                    <>
-                      <FaStar className="text-yellow-400 mr-2" />
-                      <span className="font-bold text-yellow-400">
-                        {averageRating.toFixed(1)}
-                      </span>
-                      <span className="text-gray-300 ml-2">
-                        / 5 ({reviews.length} reviews)
-                      </span>
-                    </>
-                  ) : (
-                    "No reviews yet."
-                  )}
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="flex flex-wrap items-center gap-4 mb-6"
-              >
-                {user ? (
-                  <>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="bg-blue-600 text-white px-6 py-3 rounded-md text-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-md"
-                      onClick={handleAddReviewClick}
-                    >
-                      Add Review
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`text-lg rounded-md text-white px-6 py-3 transition duration-300 ease-in-out shadow-md ${
-                        isFavorite
-                          ? "bg-blue-600"
-                          : "bg-gray-600 hover:bg-gray-700"
-                      }`}
+        {isLoading ? (
+          <div className="flex justify-center items-center h-screen">
+            <Loader className="animate-spin h-12 w-12 text-blue-500" />
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500">
+            <p>Error: {error.message}</p>
+          </div>
+        ) : game ? (
+          <div className="max-w-7xl mx-auto mt-24">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Columna izquierda: Imagen y acciones */}
+              <div className="lg:w-1/3">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <h1 className="text-4xl font-bold mb-4 text-blue-300">
+                    {game.name}
+                  </h1>
+                  <img
+                    src={game.coverImageUrl}
+                    alt={`${game.name} cover`}
+                    className="w-full rounded-lg shadow-lg mb-4"
+                  />
+                  <p className="text-gray-300 mb-4">
+                    Release date:{" "}
+                    {game.releaseDate
+                      ? new Date(game.releaseDate).toLocaleDateString()
+                      : "No release date available"}
+                  </p>
+                  <div className="flex justify-between mb-4">
+                    <button
                       onClick={handleLikeClick}
-                      disabled={!isFavorite && favoriteGamesCount >= 6}
+                      className={`flex items-center justify-center px-4 py-2 rounded-full ${
+                        isFavorite
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      } transition duration-300`}
                     >
-                      <motion.div
-                        initial={{ scale: 1 }}
-                        animate={{ scale: isFavorite ? [1, 1.2, 1] : 1 }}
-                        transition={{ duration: 0.3 }}
-                      >
-                        {isFavorite ? (
-                          <FaHeart className="inline-block text-blue-300" />
-                        ) : (
-                          <FaRegHeart className="inline-block" />
+                      {isFavorite ? <FaHeart /> : <FaRegHeart />}
+                      <span className="ml-2">
+                        {isFavorite ? "Favorite" : "Add to favorites"}
+                      </span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    <button
+                      onClick={() => handleAddToLibrary("playing")}
+                      className={`flex flex-col items-center justify-center p-2 rounded ${
+                        libraryStatus === "playing"
+                          ? "bg-blue-500 hover:bg-blue-600"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      } transition duration-300`}
+                    >
+                      <FaPlayCircle className="text-2xl mb-1" />
+                      <span className="text-xs">Playing</span>
+                    </button>
+                    <button
+                      onClick={() => handleAddToLibrary("completed")}
+                      className={`flex flex-col items-center justify-center p-2 rounded ${
+                        libraryStatus === "completed"
+                          ? "bg-green-500 hover:bg-green-600"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      } transition duration-300`}
+                    >
+                      <FaCheckCircle className="text-2xl mb-1" />
+                      <span className="text-xs">Completed</span>
+                    </button>
+                    <button
+                      onClick={() => handleAddToLibrary("toPlay")}
+                      className={`flex flex-col items-center justify-center p-2 rounded ${
+                        libraryStatus === "toPlay"
+                          ? "bg-yellow-500 hover:bg-yellow-600"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      } transition duration-300`}
+                    >
+                      <FaListUl className="text-2xl mb-1" />
+                      <span className="text-xs">To play</span>
+                    </button>
+                  </div>
+                  {/* Botones de tienda */}
+                  {game.storeLinks &&
+                    Object.entries(game.storeLinks).length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mt-4">
+                        {Object.entries(game.storeLinks).map(
+                          ([store, link]) => {
+                            let Icon;
+                            let storeName = store;
+                            switch (store.toLowerCase()) {
+                              case "steam":
+                                Icon = FaSteam;
+                                storeName = "Steam";
+                                break;
+                              case "playstation":
+                                Icon = FaPlaystation;
+                                storeName = "PlayStation";
+                                break;
+                              case "xbox":
+                                Icon = FaXbox;
+                                storeName = "Xbox";
+                                break;
+                              case "nintendo":
+                                Icon = FaGamepad;
+                                storeName = "Nintendo";
+                                break;
+                              case "epicgames":
+                                Icon = FaDesktop;
+                                storeName = "Epic Games";
+                                break;
+                              default:
+                                Icon = FaGamepad;
+                            }
+                            return (
+                              <a
+                                key={store}
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center justify-center"
+                              >
+                                <Icon className="mr-2" /> {storeName}
+                              </a>
+                            );
+                          }
                         )}
-                      </motion.div>
-                    </motion.button>
-                    {!isFavorite && favoriteGamesCount >= 6 && (
-                      <p className="text-sm text-red-400 mt-2">
-                        You have reached the maximum of 6 favorite games. Remove
-                        one to add another.
-                      </p>
+                      </div>
                     )}
-                  </>
-                ) : (
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="text-red-400 bg-gray-800 bg-opacity-50 p-4 rounded-md shadow-md"
-                  >
-                    You need to log in to add a review, rate, or like a game.
-                  </motion.p>
-                )}
-              </motion.div>
-
-              <div className="flex space-x-2 mt-4">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-md ${
-                    libraryStatus === "playing" ? "bg-blue-600" : "bg-gray-600"
-                  }`}
-                  onClick={() => handleAddToLibrary("playing")}
-                >
-                  <FaPlayCircle className="inline-block mr-2" />
-                  Playing
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-md ${
-                    libraryStatus === "completed"
-                      ? "bg-green-600"
-                      : "bg-gray-600"
-                  }`}
-                  onClick={() => handleAddToLibrary("completed")}
-                >
-                  <FaCheckCircle className="inline-block mr-2" />
-                  Completed
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`px-4 py-2 rounded-md ${
-                    libraryStatus === "watchlist"
-                      ? "bg-yellow-600"
-                      : "bg-gray-600"
-                  }`}
-                  onClick={() => handleAddToLibrary("watchlist")}
-                >
-                  <FaListUl className="inline-block mr-2" />
-                  To Play
-                </motion.button>
+                </motion.div>
               </div>
 
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <h2 className="text-2xl font-semibold mb-4 text-blue-300">
-                  Reviews
-                </h2>
-                {reviews.length > 0 ? (
-                  <div className="space-y-4">
-                    <AnimatePresence>
-                      {reviews.map((review) => (
-                        <motion.div
-                          key={review.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          transition={{ duration: 0.3 }}
-                          className="p-6 border border-gray-700 rounded-lg bg-gray-800 bg-opacity-50 shadow-md backdrop-blur-sm"
-                        >
-                          <div className="flex justify-between items-center mb-2">
-                            {renderUsername(review)}
-                          </div>
-                          <div className="flex items-center mb-2">
-                            {[...Array(5)].map((_, index) => (
-                              <span key={index}>
-                                {index < review.rating ? (
-                                  <FaStar className="text-yellow-400" />
-                                ) : (
-                                  <FaRegStar className="text-gray-400" />
-                                )}
-                              </span>
-                            ))}
-                            <span className="ml-2 text-gray-300">
-                              {review.rating} / 5
-                            </span>
-                          </div>
-                          <div className="flex items-center mb-2">
-                            {review.liked ? (
-                              <>
-                                <FaThumbsUp className="text-green-500 mr-2" />{" "}
-                                Liked
-                              </>
-                            ) : (
-                              <>
-                                <FaThumbsDown className="text-red-500 mr-2" />{" "}
-                                Disliked
-                              </>
-                            )}
-                          </div>
-                          {review.containsSpoilers && (
-                            <p className="text-red-400 mb-2">
-                              Contains Spoilers
-                            </p>
-                          )}
-                          <p className="text-gray-300 mb-4">{review.comment}</p>
-                          <div className="flex items-center space-x-4">
-                            <button
-                              onClick={() =>
-                                setShowComments({
-                                  ...showComments,
-                                  [review.id]: !showComments[review.id],
-                                })
-                              }
-                              className="flex items-center text-sm text-blue-400 hover:text-blue-300"
-                            >
-                              <FaComment className="mr-1" />{" "}
-                              {review.comments?.length || 0} Comentarios
-                            </button>
-                          </div>
-                          {showComments[review.id] && renderComments(review)}
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+              {/* Columna derecha: Detalles del juego y reseñas */}
+              <div className="lg:w-2/3">
+                {/* Detalles del juego */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="bg-gray-800 rounded-lg p-6 mb-8"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-semibold">Game Details</h2>
+                    <button
+                      onClick={() => setShowGameDetails(!showGameDetails)}
+                      className="flex items-center justify-center w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition duration-300"
+                    >
+                      {showGameDetails ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
                   </div>
-                ) : (
-                  <p className="text-gray-400 bg-gray-800 bg-opacity-50 p-4 rounded-md shadow-md">
-                    No reviews yet. Be the first!
-                  </p>
-                )}
-              </motion.div>
+
+                  <AnimatePresence>
+                    {showGameDetails && (
+                      <motion.div
+                        variants={detailsVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                      >
+                        {/* Descripción */}
+                        <div className="mb-6">
+                          <h3 className="text-xl font-semibold mb-2">
+                            Descripción
+                          </h3>
+                          <p className="text-gray-300">{game.description}</p>
+                        </div>
+
+                        {/* Plataformas y Géneros */}
+                        <div className="mb-6 flex flex-wrap">
+                          <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
+                            <h3 className="text-xl font-semibold mb-2">
+                              Plataformas
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {game.platforms &&
+                                game.platforms.map((platform, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                  >
+                                    {platform}
+                                  </span>
+                                ))}
+                            </div>
+                          </div>
+                          <div className="w-full sm:w-1/2 pl-2">
+                            <h3 className="text-xl font-semibold mb-2">
+                              Géneros
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {game.genres &&
+                                game.genres.map((genre, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                  >
+                                    {genre}
+                                  </span>
+                                ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Desarrollador y Editor */}
+                        <div className="flex flex-wrap">
+                          <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
+                            <h3 className="text-xl font-semibold mb-2">
+                              Desarrollador
+                            </h3>
+                            <p className="text-gray-300">{game.developer}</p>
+                          </div>
+                          <div className="w-full sm:w-1/2 pl-2">
+                            <h3 className="text-xl font-semibold mb-2">
+                              Editor
+                            </h3>
+                            <p className="text-gray-300">{game.publisher}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+                {/* Sección de reseñas */}
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="bg-gray-800 rounded-lg p-6"
+                >
+                  <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+                  <button
+                    onClick={handleAddReviewClick}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 transition duration-300"
+                  >
+                    Add a review
+                  </button>
+                  {/* Lista de reseñas */}
+                  {reviews.map((review) => (
+                    <div
+                      key={review.id}
+                      className="bg-gray-700 rounded-lg p-4 mb-4"
+                    >
+                      <div className="flex items-center mb-2">
+                        <img
+                          src={review.profilePicture || "/default-avatar.png"}
+                          alt={`${review.username}'s avatar`}
+                          className="w-10 h-10 rounded-full mr-2"
+                        />
+                        <div>
+                          <StyledUsername
+                            username={review.username}
+                            userId={review.userId}
+                            nameColor={review.userNameColor}
+                            nameEffect={review.userNameEffect}
+                          />
+                          {review.isPro && <ProBadge />}
+                        </div>
+                      </div>
+                      <div className="flex items-center mb-2">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar
+                            key={i}
+                            className={
+                              i < review.rating
+                                ? "text-yellow-400"
+                                : "text-gray-400"
+                            }
+                          />
+                        ))}
+                      </div>
+                      <p className="text-gray-300 mb-2">{review.comment}</p>
+                      <div className="flex items-center text-sm text-gray-400">
+                        <FaCalendarAlt className="mr-1" />
+                        <span>
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => toggleComments(review.id)}
+                        className="mt-2 text-blue-400 hover:text-blue-500"
+                      >
+                        {showComments[review.id]
+                          ? "Hide comments"
+                          : "Show comments"}
+                      </button>
+                      {showComments[review.id] && renderComments(review)}
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
             </div>
           </div>
-        </div>
+        ) : null}
       </motion.div>
 
       {showModal && (
@@ -742,10 +784,7 @@ export default function GameDetailsPage({ id }) {
             name: game.name,
             coverImageUrl: game.coverImageUrl,
           }}
-          onClose={() => {
-            console.log("Closing modal");
-            setShowModal(false);
-          }}
+          onClose={() => setShowModal(false)}
           onSave={handleSaveReview}
         />
       )}
@@ -772,13 +811,13 @@ const AddCommentForm = ({ reviewId, onCommentAdded }) => {
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         className="w-full p-2 bg-gray-700 text-white rounded"
-        placeholder="Añade un comentario..."
+        placeholder="Add a comment..."
       />
       <button
         type="submit"
         className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
       >
-        Añadir Comentario
+        Add comment
       </button>
     </form>
   );

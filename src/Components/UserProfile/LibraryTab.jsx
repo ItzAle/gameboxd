@@ -5,11 +5,16 @@ import {
   FaListUl,
   FaChevronDown,
   FaChevronUp,
+  FaTimes,
+  FaEllipsisV,
 } from "react-icons/fa";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+import { toast } from "react-toastify";
 
-export default function LibraryTab({ userProfile }) {
+export default function LibraryTab({ userProfile, userId }) {
   const [library, setLibrary] = useState({
     playing: [],
     completed: [],
@@ -20,12 +25,16 @@ export default function LibraryTab({ userProfile }) {
     completed: true,
     toPlay: true,
   });
+  const [openMenu, setOpenMenu] = useState(null);
 
   useEffect(() => {
     if (userProfile && userProfile.library) {
       const categorizedLibrary = userProfile.library.reduce(
         (acc, game) => {
-          // Asegurarse de que el estado del juego es válido
+          if (!game || !game.status) {
+            console.warn("Invalid game object in library:", game);
+            return acc;
+          }
           const validStatus = ["playing", "completed", "toPlay"].includes(
             game.status
           )
@@ -49,6 +58,70 @@ export default function LibraryTab({ userProfile }) {
     setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const moveGame = async (game, newStatus) => {
+    if (!userId) {
+      console.error("User ID is undefined");
+      toast.error("Unable to move game: User ID is missing");
+      return;
+    }
+
+    try {
+      if (!userProfile || !userProfile.library) {
+        throw new Error("User profile or library is missing");
+      }
+
+      const updatedLibrary = userProfile.library.map(g => 
+        g.slug === game.slug ? { ...g, status: newStatus } : g
+      );
+
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, { library: updatedLibrary });
+
+      setLibrary(prev => ({
+        ...prev,
+        [game.status]: prev[game.status].filter(g => g.slug !== game.slug),
+        [newStatus]: [...prev[newStatus], { ...game, status: newStatus }]
+      }));
+
+      toast.success(`Game moved to ${newStatus}`);
+      setOpenMenu(null); // Cerrar el menú después de mover el juego
+    } catch (error) {
+      console.error("Error moving game:", error);
+      toast.error("Failed to move game: " + error.message);
+    }
+  };
+
+  const removeGame = async (game) => {
+    if (!userId) {
+      console.error("User ID is undefined");
+      toast.error("Unable to remove game: User ID is missing");
+      return;
+    }
+
+    try {
+      // Asegúrate de que userProfile y userProfile.library existen
+      if (!userProfile || !userProfile.library) {
+        throw new Error("User profile or library is missing");
+      }
+
+      const updatedLibrary = userProfile.library.filter(g => g.slug !== game.slug);
+
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, { library: updatedLibrary });
+
+      setLibrary(prev => ({
+        ...prev,
+        [game.status]: prev[game.status].filter(g => g.slug !== game.slug)
+      }));
+
+      toast.success("Game removed from library");
+      setOpenMenu(null); // Cerrar el menú después de eliminar el juego
+    } catch (error) {
+      console.error("Error removing game:", error);
+      toast.error("Failed to remove game: " + error.message);
+    }
+  };
+
   const renderGames = (games, status) => (
     <AnimatePresence>
       {expanded[status] && (
@@ -63,8 +136,53 @@ export default function LibraryTab({ userProfile }) {
             <motion.div
               key={game.slug}
               whileHover={{ scale: 1.05 }}
-              className="bg-gray-800 rounded-lg overflow-hidden shadow-lg"
+              className="bg-gray-800 rounded-lg overflow-hidden shadow-lg relative"
             >
+              <div className="absolute top-2 right-2 z-10">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenMenu(openMenu === game.slug ? null : game.slug);
+                  }}
+                  className="text-white bg-gray-700 rounded-full p-1"
+                >
+                  <FaEllipsisV />
+                </button>
+                {openMenu === game.slug && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-20">
+                    {status !== "playing" && (
+                      <button
+                        onClick={() => moveGame(game, "playing")}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                      >
+                        Move to Playing
+                      </button>
+                    )}
+                    {status !== "completed" && (
+                      <button
+                        onClick={() => moveGame(game, "completed")}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                      >
+                        Move to Completed
+                      </button>
+                    )}
+                    {status !== "toPlay" && (
+                      <button
+                        onClick={() => moveGame(game, "toPlay")}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                      >
+                        Move to To Play
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeGame(game)}
+                      className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
+                    >
+                      Remove from Library
+                    </button>
+                  </div>
+                )}
+              </div>
               <Link href={`/games/${game.slug}`}>
                 <img
                   src={game.coverImageUrl}
@@ -73,7 +191,7 @@ export default function LibraryTab({ userProfile }) {
                 />
                 <div className="p-4">
                   <h3 className="font-semibold text-lg mb-2">{game.name}</h3>
-                  <div className="flex items-center">
+                  <div className="flex items-center mb-2">
                     {status === "playing" && (
                       <FaPlayCircle className="text-blue-500 mr-2" />
                     )}
