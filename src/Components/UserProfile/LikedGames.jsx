@@ -18,8 +18,12 @@ const LikedGames = ({
       </h2>
       {games.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {games.slice(0, 6).map((game) =>
-            game.slug ? (
+          {games.slice(0, 6).map((game) => {
+            if (!game || !game.slug) {
+              console.warn('Game without slug detected:', game);
+              return null;
+            }
+            return (
               <motion.div
                 key={game.slug}
                 whileHover={{ scale: 1.05 }}
@@ -28,23 +32,24 @@ const LikedGames = ({
                 <Link href={`/games/${game.slug}`}>
                   <img
                     src={
-                      gameDetails[game.slug]?.coverImageUrl ||
+                      (gameDetails[game.slug] &&
+                        gameDetails[game.slug].coverImageUrl) ||
                       game.coverImageUrl ||
                       "/placeholder-image.jpg"
                     }
-                    alt={game.name}
+                    alt={game.name || 'Game cover'}
                     width={300}
                     height={400}
                     className="w-full h-40 object-cover rounded-lg"
                     loading="lazy"
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-70 p-2 rounded-b-lg">
-                    <p className="text-sm text-white truncate">{game.name}</p>
+                    <p className="text-sm text-white truncate">{game.name || 'Unknown game'}</p>
                   </div>
                 </Link>
               </motion.div>
-            ) : null
-          )}
+            );
+          })}
         </div>
       ) : (
         <p className="text-lg">No favorite games yet.</p>

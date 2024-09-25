@@ -102,6 +102,22 @@ export default function UserProfile() {
   const [effectIntensity, setEffectIntensity] = useState(1);
   const [showProOptions, setShowProOptions] = useState(false);
 
+  const fetchGameDetails = useCallback(async (slug) => {
+    try {
+      const response = await fetch(`https://gbxd-api.vercel.app/api/game/${slug}`);
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        console.error(`Failed to fetch details for game ${slug}: ${response.status}`);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error fetching details for game ${slug}:`, error);
+      return null;
+    }
+  }, []);
+
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
@@ -122,7 +138,7 @@ export default function UserProfile() {
 
         const newCovers = {};
         for (const game of userData.likedGames) {
-          if (game.slug) {
+          if (game && game.slug) {
             try {
               const gameData = await fetchGameDetails(game.slug);
               if (gameData) {
@@ -143,7 +159,7 @@ export default function UserProfile() {
     } catch (error) {
       console.error("Error al obtener el perfil del usuario:", error);
     }
-  }, [user]);
+  }, [user, fetchGameDetails]);
 
   const fetchUserReviews = useCallback(async () => {
     if (!user) return;
@@ -169,31 +185,36 @@ export default function UserProfile() {
     fetchUserReviews();
   }, [fetchUserProfile, fetchUserReviews]);
 
-  const fetchGameDetails = async (games) => {
-    const details = { ...gameDetails };
-    for (const game of games) {
-      if (!details[game.slug]) {
-        try {
-          const response = await fetch(
-            `https://gbxd-api.vercel.app/api/game/${game.slug}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            details[game.slug] = data;
-          }
-        } catch (error) {
-          console.error(`Error fetching details for game ${game.slug}:`, error);
-        }
-      }
-    }
-    setGameDetails(details);
-  };
-
   useEffect(() => {
-    if (likedGames.length > 0) {
-      fetchGameDetails(likedGames);
-    }
-  }, [likedGames]);
+    const fetchGameDetails = async () => {
+      if (userProfile && userProfile.likedGames) {
+        const details = { ...gameDetails };
+        for (const game of userProfile.likedGames) {
+          if (game && game.slug && !details[game.slug]) {
+            try {
+              const response = await fetch(
+                `https://gbxd-api.vercel.app/api/game/${game.slug}`
+              );
+              if (response.ok) {
+                const data = await response.json();
+                details[game.slug] = data;
+              } else {
+                console.error(`Failed to fetch details for game ${game.slug}: ${response.status}`);
+              }
+            } catch (error) {
+              console.error(
+                `Error fetching details for game ${game.slug}:`,
+                error
+              );
+            }
+          }
+        }
+        setGameDetails(details);
+      }
+    };
+
+    fetchGameDetails();
+  }, [userProfile]);
 
   const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
 
@@ -393,9 +414,7 @@ export default function UserProfile() {
             <LibraryTab userProfile={userProfile} userId={user.uid} />
           )}
           {activeTab === "reviews" && <ReviewsTab userProfile={userProfile} />}
-          {activeTab === "collections" && (
-            <CollectionsTab userProfile={userProfile} />
-          )}
+          {activeTab === "collections" && <CollectionsTab userProfile={user} />}
           {activeTab === "following" && (
             <FollowingTab userProfile={userProfile} />
           )}
