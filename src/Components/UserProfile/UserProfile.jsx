@@ -32,6 +32,7 @@ import {
   FaUserFriends,
   FaGamepad,
   FaPen,
+  FaCog,
 } from "react-icons/fa";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
@@ -39,6 +40,12 @@ import ProOptionsModal from "../ProOptionsModal/ProOptionsModal";
 import StyledUsername from "../common/StyledUsername";
 import { getUsernameStyle } from "../../utils/usernameStyles";
 import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
+import OverviewTab from "./OverviewTab";
+import LibraryTab from "./LibraryTab";
+import ReviewsTab from "./ReviewsTab";
+import CollectionsTab from "./CollectionsTab";
+import FollowingTab from "./FollowingTab";
+import FollowersTab from "./FollowersTab";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -75,6 +82,7 @@ const StarField = ({ count = 100 }) => {
 export default function UserProfile() {
   const { user } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("overview");
   const [userProfile, setUserProfile] = useState(null);
   const [userReviews, setUserReviews] = useState([]);
   const [covers, setCovers] = useState({});
@@ -331,215 +339,69 @@ export default function UserProfile() {
   }
 
   if (!userProfile) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white bg-gradient-to-b from-gray-900 to-blue-900">
-        <p className="text-blue-500 text-2xl">
-          {" "}
-          <Loader className="h-12 w-12 text-blue-500 animate-spin" />
-        </p>
-      </div>
-    );
+    return <Loader />;
   }
 
-  const ProfileSection = ({ children }) => (
-    <div className="mb-8 p-6 border border-gray-700 rounded-lg bg-gray-800 shadow-lg backdrop-filter backdrop-blur-lg bg-opacity-30">
-      {children}
-    </div>
-  );
-
-  const MobileProfile = () => (
-    <div className="space-y-6">
-      <ProfileSection>
-        <div className="flex items-center space-x-4">
-          <div className="w-24 h-24 rounded-full overflow-hidden">
-            <ProfilePicture profilePicture={profilePicture} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold flex items-center">
-              {renderUsername()}
-            </h1>
-            {!editing && (
-              <button
-                onClick={handleEditProfile}
-                className="bg-blue-500 text-white px-3 py-1 rounded-full mt-2 text-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center"
-              >
-                <FaEdit className="mr-1" /> Edit Profile
-              </button>
-            )}
-          </div>
-        </div>
-        <Bio bio={bio} setBio={setBio} editing={editing} />
-        {!userProfile?.isPro && (
-          <div className="mt-4 p-4 bg-blue-900 bg-opacity-50 rounded-lg">
-            <p className="text-sm text-blue-200 mb-2">
-              Do you want to customize your profile and name more?
-            </p>
-            <Link href="/upgrade">
-              <p className="text-yellow-400 hover:text-yellow-300 transition duration-300 text-sm font-semibold">
-                Upgrade to PRO for more options →
-              </p>
-            </Link>
-          </div>
-        )}
-      </ProfileSection>
-
-      <ProfileSection>
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <FaGamepad className="mr-2 text-green-400" /> Favorite Games
-        </h2>
-        {memoizedLikedGames}
-      </ProfileSection>
-
-      <ProfileSection>
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <FaStar className="mr-2 text-yellow-400" /> Your Reviews
-        </h2>
-        {userReviews.length > 0 ? (
-          <Reviews
-            reviews={userReviews}
-            onEditReview={onEditReview}
-            onDeleteReview={onDeleteReview}
-            isOwnProfile={true}
-          />
-        ) : (
-          <p className="text-lg text-gray-400">You have no reviews yet.</p>
-        )}
-      </ProfileSection>
-    </div>
-  );
-
-  const DesktopProfile = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div className="md:col-span-1">
-        <ProfileSection>
-          <ProfilePicture profilePicture={profilePicture} />
-          <Bio bio={bio} setBio={setBio} editing={editing} />
-          {!editing && (
-            <>
-              <button
-                onClick={handleEditProfile}
-                className="bg-blue-500 text-white px-4 py-2 rounded-full mt-4 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
-              >
-                <FaEdit className="mr-2" /> Edit Profile
-              </button>
-              {userProfile?.isPro ? (
-                <button
-                  onClick={() => setShowProOptions(true)}
-                  className="bg-purple-500 text-white px-4 py-2 rounded-full mt-2 hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition duration-300 flex items-center justify-center w-full"
-                >
-                  <FaStar className="mr-2" /> PRO Options
-                </button>
-              ) : (
-                <div className="mt-4 p-4 bg-blue-900 bg-opacity-50 rounded-lg">
-                  <p className="text-sm text-blue-200 mb-2">
-                    Do you want to customize your profile and name more?
-                  </p>
-                  <Link href="/upgrade">
-                    <p className="text-yellow-400 hover:text-yellow-300 transition duration-300 text-sm font-semibold">
-                      Upgrade to PRO for more options →
-                    </p>
-                  </Link>
-                </div>
-              )}
-            </>
-          )}
-        </ProfileSection>
-
-        <ProfileSection>
-          <h2 className="text-xl font-semibold mb-4 flex items-center">
-            <FaGamepad className="mr-2 text-green-400" /> Favorite Games
-          </h2>
-          {memoizedLikedGames}
-        </ProfileSection>
-      </div>
-
-      <div className="md:col-span-2">
-        <ProfileSection>
-          <h2 className="text-2xl font-semibold mb-4 flex items-center">
-            <FaStar className="mr-2 text-yellow-400" /> Your Reviews
-          </h2>
-          {userReviews.length > 0 ? (
-            <Reviews
-              reviews={userReviews}
-              onEditReview={onEditReview}
-              onDeleteReview={onDeleteReview}
-              isOwnProfile={true}
-            />
-          ) : (
-            <p className="text-lg text-gray-400">You have no reviews yet.</p>
-          )}
-        </ProfileSection>
-      </div>
-    </div>
-  );
-
-
-
   return (
-    <>
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
-        <StarField count={200} />
-        <div className="container mx-auto p-4 space-y-8 relative z-10">
-          <TransparentNavbar />
-          {user && !user.isPro && <UpgradeBanner />}
-          <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold mb-4 md:mb-0 flex items-center">
-              {renderUsername()}
-            </h1>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => handleShowFollowList("followers")}
-                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-300"
-              >
-                <FaUserFriends className="mr-2 inline" />
-                Followers ({userProfile?.followers?.length || 0})
-              </button>
-              <button
-                onClick={() => handleShowFollowList("following")}
-                className="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition duration-300"
-              >
-                <FaUserFriends className="mr-2 inline" />
-                Following ({userProfile?.following?.length || 0})
-              </button>
-            </div>
+    <div className="min-h-screen bg-gray-900 text-white">
+      <div className="container mx-auto px-4 py-8">
+        <TransparentNavbar />
+        <header className="flex items-center justify-between mb-8">
+          <div className="flex items-center">
+            <ProfilePicture
+              profilePicture={userProfile.profilePicture}
+              size="large"
+            />
+            <h1 className="text-4xl font-bold ml-4">{userProfile.username}</h1>
           </div>
-
-          {isMobile ? <MobileProfile /> : <DesktopProfile />}
-
-          {editing && (
-            <Modal
-              isOpen={editing}
-              onClose={() => setEditing(false)}
-              onSave={handleSaveProfile}
-              setBio={setEditingBio}
-              setProfilePicture={setProfilePicture}
-              bio={editingBio}
-              profilePicture={profilePicture}
-            />
+          <Link href="/profile/settings">
+            <button className="bg-gray-700 p-2 rounded-full">
+              <FaCog className="text-xl" />
+            </button>
+          </Link>
+        </header>
+        <nav className="mb-8">
+          <ul className="flex border-b border-gray-700">
+            {[
+              "Overview",
+              "Library",
+              "Reviews",
+              "Collections",
+              "Following",
+              "Followers",
+            ].map((tab) => (
+              <li key={tab} className="mr-2">
+                <button
+                  className={`py-2 px-4 ${
+                    activeTab === tab.toLowerCase()
+                      ? "border-b-2 border-blue-500"
+                      : ""
+                  }`}
+                  onClick={() => setActiveTab(tab.toLowerCase())}
+                >
+                  {tab}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <main>
+          {activeTab === "overview" && (
+            <OverviewTab userProfile={userProfile} />
           )}
-
-          {showProOptions && (
-            <ProOptionsModal
-              isOpen={showProOptions}
-              onClose={() => setShowProOptions(false)}
-              userProfile={userProfile}
-              onUpdate={handleProOptionsUpdate}
-            />
+          {activeTab === "library" && <LibraryTab userProfile={userProfile} />}
+          {activeTab === "reviews" && <ReviewsTab userProfile={userProfile} />}
+          {activeTab === "collections" && (
+            <CollectionsTab userProfile={userProfile} />
           )}
-        </div>
+          {activeTab === "following" && (
+            <FollowingTab userProfile={userProfile} />
+          )}
+          {activeTab === "followers" && (
+            <FollowersTab userProfile={userProfile} />
+          )}
+        </main>
       </div>
-      {showFollowList && (
-        <FollowList
-          type={followListType}
-          users={
-            followListType === "followers"
-              ? userProfile.followers
-              : userProfile.following
-          }
-          onClose={() => setShowFollowList(false)}
-        />
-      )}
-      <ToastContainer position="bottom-right" theme="dark" />
-    </>
+    </div>
   );
 }

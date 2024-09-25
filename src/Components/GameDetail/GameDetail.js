@@ -11,6 +11,7 @@ import {
   getDocs,
   onSnapshot,
   updateDoc,
+  arrayUnion,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,6 +32,10 @@ import {
   FaGamepad,
   FaThumbsUp,
   FaThumbsDown,
+  FaPlayCircle,
+  FaCheckCircle,
+  FaListUl,
+  FaComment,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
@@ -53,6 +58,8 @@ export default function GameDetailsPage({ id }) {
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
   const [userPreferences, setUserPreferences] = useState(null);
+  const [libraryStatus, setLibraryStatus] = useState(null);
+  const [showComments, setShowComments] = useState({});
 
   const handleAddReviewClick = () => {
     if (!user) {
@@ -154,6 +161,92 @@ export default function GameDetailsPage({ id }) {
     }
   };
 
+  const handleAddToLibrary = async (status) => {
+    if (!user) {
+      toast.error(
+        "Necesitas iniciar sesión para añadir juegos a tu biblioteca."
+      );
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const library = userData.library || [];
+
+        const gameInLibrary = library.find((g) => g.slug === game.slug);
+
+        if (gameInLibrary) {
+          // Actualizar el estado si el juego ya está en la biblioteca
+          const updatedLibrary = library.map((g) =>
+            g.slug === game.slug ? { ...g, status } : g
+          );
+          await updateDoc(userRef, { library: updatedLibrary });
+        } else {
+          // Añadir el juego a la biblioteca si no está
+          const gameToAdd = {
+            slug: game.slug,
+            name: game.name,
+            coverImageUrl: game.coverImageUrl,
+            status,
+            addedAt: new Date().toISOString(),
+          };
+          await updateDoc(userRef, { library: [...library, gameToAdd] });
+        }
+
+        setLibraryStatus(status);
+        toast.success(
+          `Juego ${
+            status === "playing"
+              ? "marcado como jugando"
+              : status === "completed"
+              ? "marcado como completado"
+              : "añadido a la lista de seguimiento"
+          }.`
+        );
+      }
+    } catch (error) {
+      console.error("Error al actualizar la biblioteca:", error);
+      toast.error("Ocurrió un error al actualizar la biblioteca.");
+    }
+  };
+
+  const handleAddComment = async (reviewId, comment) => {
+    if (!user) {
+      toast.error("Necesitas iniciar sesión para añadir un comentario.");
+      return;
+    }
+
+    try {
+      const newComment = {
+        userId: user.uid,
+        text: comment,
+        createdAt: new Date().toISOString(),
+      };
+
+      const reviewRef = doc(db, "reviews", reviewId);
+      await updateDoc(reviewRef, {
+        comments: arrayUnion(newComment),
+      });
+
+      setReviews(
+        reviews.map((review) =>
+          review.id === reviewId
+            ? { ...review, comments: [...(review.comments || []), newComment] }
+            : review
+        )
+      );
+
+      toast.success("Comentario añadido con éxito");
+    } catch (error) {
+      console.error("Error al añadir el comentario:", error);
+      toast.error("Ocurrió un error al añadir el comentario");
+    }
+  };
+
   useEffect(() => {
     const fetchGameDetails = async () => {
       setIsLoading(true);
@@ -184,6 +277,7 @@ export default function GameDetailsPage({ id }) {
                 id: reviewDoc.id,
                 ...reviewData,
                 profilePicture: userData.profilePicture || null,
+                comments: reviewData.comments || [],
               };
             })
           );
@@ -201,6 +295,10 @@ export default function GameDetailsPage({ id }) {
             const likedGames = userData.likedGames || [];
             setIsFavorite(likedGames.some((g) => g.slug === id));
             setFavoriteGamesCount(likedGames.length);
+
+            const library = userData.library || [];
+            const gameInLibrary = library.find((g) => g.slug === id);
+            setLibraryStatus(gameInLibrary ? gameInLibrary.status : null);
           }
         }
       } catch (error) {
@@ -281,6 +379,34 @@ export default function GameDetailsPage({ id }) {
       setReviews(gameReviews);
     }
   }, [id, globalReviews]);
+
+  const renderComments = (review) => {
+    return (
+      <div className="mt-4">
+        <h4 className="text-lg font-semibold mb-2 text-blue-300">
+          Comentarios
+        </h4>
+        {review.comments && review.comments.length > 0 ? (
+          <div className="space-y-2">
+            {review.comments.map((comment, index) => (
+              <div key={index} className="bg-gray-700 p-2 rounded">
+                <p className="text-sm text-gray-300">{comment.text}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {new Date(comment.createdAt).toLocaleString()}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-400">No hay comentarios aún.</p>
+        )}
+        <AddCommentForm
+          reviewId={review.id}
+          onCommentAdded={handleAddComment}
+        />
+      </div>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -483,6 +609,46 @@ export default function GameDetailsPage({ id }) {
                 )}
               </motion.div>
 
+              <div className="flex space-x-2 mt-4">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-4 py-2 rounded-md ${
+                    libraryStatus === "playing" ? "bg-blue-600" : "bg-gray-600"
+                  }`}
+                  onClick={() => handleAddToLibrary("playing")}
+                >
+                  <FaPlayCircle className="inline-block mr-2" />
+                  Playing
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-4 py-2 rounded-md ${
+                    libraryStatus === "completed"
+                      ? "bg-green-600"
+                      : "bg-gray-600"
+                  }`}
+                  onClick={() => handleAddToLibrary("completed")}
+                >
+                  <FaCheckCircle className="inline-block mr-2" />
+                  Completed
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className={`px-4 py-2 rounded-md ${
+                    libraryStatus === "watchlist"
+                      ? "bg-yellow-600"
+                      : "bg-gray-600"
+                  }`}
+                  onClick={() => handleAddToLibrary("watchlist")}
+                >
+                  <FaListUl className="inline-block mr-2" />
+                  To Play
+                </motion.button>
+              </div>
+
               <motion.div
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -538,7 +704,22 @@ export default function GameDetailsPage({ id }) {
                               Contains Spoilers
                             </p>
                           )}
-                          <p className="text-gray-300">{review.comment}</p>
+                          <p className="text-gray-300 mb-4">{review.comment}</p>
+                          <div className="flex items-center space-x-4">
+                            <button
+                              onClick={() =>
+                                setShowComments({
+                                  ...showComments,
+                                  [review.id]: !showComments[review.id],
+                                })
+                              }
+                              className="flex items-center text-sm text-blue-400 hover:text-blue-300"
+                            >
+                              <FaComment className="mr-1" />{" "}
+                              {review.comments?.length || 0} Comentarios
+                            </button>
+                          </div>
+                          {showComments[review.id] && renderComments(review)}
                         </motion.div>
                       ))}
                     </AnimatePresence>
@@ -573,3 +754,32 @@ export default function GameDetailsPage({ id }) {
     </>
   );
 }
+
+const AddCommentForm = ({ reviewId, onCommentAdded }) => {
+  const [comment, setComment] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (comment.trim()) {
+      onCommentAdded(reviewId, comment.trim());
+      setComment("");
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4">
+      <textarea
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        className="w-full p-2 bg-gray-700 text-white rounded"
+        placeholder="Añade un comentario..."
+      />
+      <button
+        type="submit"
+        className="mt-2 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+      >
+        Añadir Comentario
+      </button>
+    </form>
+  );
+};

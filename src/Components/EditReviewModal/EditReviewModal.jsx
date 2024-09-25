@@ -1,22 +1,8 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
-import {
-  query,
-  collection,
-  where,
-  getDocs,
-  addDoc,
-  doc,
-  updateDoc,
-  arrayUnion,
-  getDoc,
-  setDoc,
-  arrayRemove,
-} from "firebase/firestore";
-import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
-import { FaStar } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { FaStar } from "react-icons/fa";
+import { AiOutlineHeart, AiFillHeart } from "react-icons/ai";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
@@ -31,7 +17,6 @@ const StarRating = ({ rating, setRating }) => {
     const value = Math.min(Math.max(parseInt(e.target.value) || 0, 0), 5);
     setRating(value);
   };
-
 
   return (
     <div className="flex items-center">
@@ -62,18 +47,16 @@ const StarRating = ({ rating, setRating }) => {
   );
 };
 
-
-export default function AddReviewModal({ game, onClose, onSave }) {
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
-  const [containsSpoilers, setContainsSpoilers] = useState(false);
-  const [liked, setLiked] = useState(null);
+export default function EditReviewModal({ review, onClose, onSave }) {
+  const [rating, setRating] = useState(review.rating);
+  const [comment, setComment] = useState(review.comment);
+  const [containsSpoilers, setContainsSpoilers] = useState(review.containsSpoilers);
+  const [liked, setLiked] = useState(review.liked);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
   const { user } = useAuth();
-  const [isBrowser, setIsBrowser] = useState(false);
   const [containsProfanity, setContainsProfanity] = useState(false);
-  const [characterCount, setCharacterCount] = useState(0);
+  const [characterCount, setCharacterCount] = useState(review.comment.length);
   const [maxCharacters, setMaxCharacters] = useState(500);
 
   const profanityList = ["nigger", "nigga"];
@@ -82,7 +65,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
     const words = text.toLowerCase().split(/\s+/);
     return words.some((word) => profanityList.includes(word));
   };
-
 
   const handleCommentChange = (e) => {
     const newComment = e.target.value;
@@ -94,123 +76,41 @@ export default function AddReviewModal({ game, onClose, onSave }) {
   };
 
   useEffect(() => {
-    const checkIfReviewExists = async () => {
-      if (!user || !game.slug) {
-        return;
-      }
+    const checkFavoriteStatus = async () => {
+      if (!user) return;
 
       try {
-        const reviewsQuery = query(
-          collection(db, "reviews"),
-          where("gameId", "==", game.slug),
-          where("userId", "==", user.uid)
-        );
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
 
-
-        const reviewsSnapshot = await getDocs(reviewsQuery);
-
-        if (!reviewsSnapshot.empty) {
-          onClose();
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const likedGames = userData.likedGames || [];
+          setFavoriteGamesCount(likedGames.length);
+          setIsFavorite(likedGames.some((g) => g.slug === review.gameId));
         }
       } catch (error) {
-        console.error("Error checking existing reviews:", error);
-        toast.error("An error occurred while checking for existing reviews.");
+        console.error("Error checking favorite status:", error);
       }
     };
 
-    checkIfReviewExists();
+    const checkUserStatus = async () => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userData = userDoc.data();
+        if (userData?.isPro) {
+          setMaxCharacters(1000);
+        }
+      }
+    };
+
     checkFavoriteStatus();
     checkUserStatus();
-  }, [user, game.slug, onClose]);
-
-  const checkUserStatus = async () => {
-    if (user) {
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const userData = userDoc.data();
-      if (userData?.isPro) {
-        setMaxCharacters(1000);
-      }
-    }
-  };
-
-  const checkFavoriteStatus = async () => {
-    if (!user) return;
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const likedGames = userData.likedGames || [];
-        setFavoriteGamesCount(likedGames.length);
-        setIsFavorite(likedGames.some((g) => g.slug === game.slug));
-      }
-    } catch (error) {
-      console.error("Error checking favorite status:", error);
-    }
-  };
+  }, [user, review.gameId]);
 
   const handleToggleFavorite = async () => {
-    if (!user) {
-      toast.error("You need to be logged in to mark a game as favorite.");
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "users", user.uid);
-      const userDoc = await getDoc(userRef);
-
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        const likedGames = userData.likedGames || [];
-
-        const gameToSave = {
-          slug: game.slug,
-          name: game.name,
-          coverImageUrl: game.coverImageUrl,
-        };
-
-
-        if (!gameToSave.slug || !gameToSave.name || !gameToSave.coverImageUrl) {
-          console.error("Incomplete game data:", gameToSave);
-          toast.error(
-            "Unable to update favorite status due to incomplete game data."
-          );
-          return;
-        }
-
-        if (isFavorite) {
-          // Remove game from favorites
-          const updatedLikedGames = likedGames.filter(
-            (g) => g.slug !== game.slug
-          );
-          await updateDoc(userRef, {
-            likedGames: updatedLikedGames,
-          });
-          setIsFavorite(false);
-          setFavoriteGamesCount((prev) => prev - 1);
-          toast.success("Game removed from favorites.");
-        } else {
-          // Add game to favorites
-          if (likedGames.length >= 6) {
-            toast.error(
-              "You can't add more than 6 favorite games. Please remove one to add another."
-            );
-            return;
-          }
-          await updateDoc(userRef, {
-            likedGames: [...likedGames, gameToSave],
-          });
-          setIsFavorite(true);
-          setFavoriteGamesCount((prev) => prev + 1);
-          toast.success("Game added to favorites.");
-        }
-      }
-    } catch (error) {
-      console.error("Error updating favorite status:", error);
-      toast.error("An error occurred while updating favorite status.");
-    }
+    // Implementar la lógica para agregar/quitar de favoritos
+    // Similar a la función en AddReviewModal
   };
 
   const handleSubmit = async () => {
@@ -229,38 +129,26 @@ export default function AddReviewModal({ game, onClose, onSave }) {
       return;
     }
 
+    const updatedReview = {
+      ...review,
+      rating,
+      comment,
+      containsSpoilers,
+      liked,
+    };
+
     try {
-      // Obtener los datos del usuario
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      const userData = userDoc.data();
+      const reviewRef = doc(db, "reviews", review.id);
+      await updateDoc(reviewRef, updatedReview);
 
-      const newReview = {
-        rating,
-        comment,
-        containsSpoilers,
-        liked,
-        gameId: game.slug,
-        gameName: game.name,
-        userId: user.uid,
-        username: userData.username, // Añadir el nombre de usuario
-        createdAt: new Date().toISOString(),
-      };
-
-      const reviewRef = await addDoc(collection(db, "reviews"), newReview);
-      const reviewWithId = { ...newReview, id: reviewRef.id };
-
-      onSave(reviewWithId);
-      toast.success("Review submitted successfully");
+      onSave(updatedReview);
+      toast.success("Review updated successfully");
       onClose();
     } catch (error) {
-      console.error("Error submitting review:", error);
-      toast.error("An error occurred while submitting the review");
+      console.error("Error updating review:", error);
+      toast.error("An error occurred while updating the review");
     }
   };
-
-  useEffect(() => {
-    setIsBrowser(true);
-  }, []);
 
   return (
     <AnimatePresence>
@@ -269,18 +157,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black bg-opacity-50 z-[9999]"
-        style={{
-          position: "fixed",
-          left: "0",
-          top: "0",
-          right: "0",
-          bottom: "0",
-          width: "100vw",
-          height: "100vh",
-          margin: "0",
-          padding: "0",
-          overflow: "hidden",
-        }}
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
@@ -289,7 +165,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           className="bg-gray-900 p-6 rounded-lg shadow-lg w-96 max-w-[90%] text-white"
         >
           <h2 className="text-2xl font-bold mb-4 text-blue-400">
-            Add Review for {game.name}
+            Edit Review for {review.gameName}
           </h2>
 
           <p className="text-sm text-gray-400 mb-4">
@@ -442,7 +318,7 @@ export default function AddReviewModal({ game, onClose, onSave }) {
               whileTap={{ scale: containsProfanity ? 1 : 0.95 }}
               disabled={containsProfanity}
             >
-              Submit Review
+              Update Review
             </motion.button>
           </motion.div>
         </motion.div>
