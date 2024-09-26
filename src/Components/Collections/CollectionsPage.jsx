@@ -252,8 +252,8 @@ export default function CollectionsPage() {
       <div className="max-w-7xl mx-auto mt-24">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Game Collections</h1>
-          {user && (
-            canCreateCollection() ? (
+          {user &&
+            (canCreateCollection() ? (
               <Link
                 href="/collections/create"
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center"
@@ -262,10 +262,10 @@ export default function CollectionsPage() {
               </Link>
             ) : (
               <p className="text-yellow-400">
-                You've reached the limit of 30 collections. Upgrade to Pro to create more.
+                You&apos;ve reached the limit of 30 collections. Upgrade to Pro
+                to create more.
               </p>
-            )
-          )}
+            ))}
         </div>
 
         <form
@@ -334,7 +334,9 @@ export default function CollectionsPage() {
         <main>
           {activeTab === "recent-collections" && (
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-4">Recent Collections</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Recent Collections
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recentCollections.map((collection) => (
                   <CollectionCard key={collection.id} collection={collection} />
@@ -344,7 +346,9 @@ export default function CollectionsPage() {
           )}
           {activeTab === "popular-collections" && (
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-4">Popular Collections</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Popular Collections
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {popularCollections.map((collection) => (
                   <CollectionCard key={collection.id} collection={collection} />
@@ -368,7 +372,9 @@ export default function CollectionsPage() {
           )}
           {user && activeTab === "followed-collections" && (
             <section className="mb-12">
-              <h2 className="text-2xl font-semibold mb-4">Followed Collections</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Followed Collections
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {followedCollections.map((collection) => (
                   <CollectionCard key={collection.id} collection={collection} />
