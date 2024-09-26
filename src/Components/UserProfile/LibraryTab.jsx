@@ -101,14 +101,14 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
   const removeGame = async (game) => {
     if (!userId) {
       console.error("User ID is undefined");
-      toast.error("Unable to remove game: User ID is missing");
+      toast.error("No se puede eliminar el juego: falta el ID de usuario");
       return;
     }
 
     try {
       // Asegúrate de que userProfile y userProfile.library existen
       if (!userProfile || !userProfile.library) {
-        throw new Error("User profile or library is missing");
+        throw new Error("El perfil de usuario o la biblioteca faltan");
       }
 
       const updatedLibrary = userProfile.library.filter(
@@ -118,15 +118,24 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, { library: updatedLibrary });
 
-      setLibrary((prev) => ({
-        ...prev,
-        [game.status]: prev[game.status].filter((g) => g.slug !== game.slug),
-      }));
+      // Actualizar el estado local
+      setLibrary((prev) => {
+        const newLibrary = { ...prev };
+        Object.keys(newLibrary).forEach((status) => {
+          newLibrary[status] = newLibrary[status].filter(
+            (g) => g.slug !== game.slug
+          );
+        });
+        return newLibrary;
+      });
+
+      // Actualizar el userProfile en el componente padre
+      await updateUserProfile();
 
       toast.success("Game removed from library");
       setOpenMenu(null); // Cerrar el menú después de eliminar el juego
     } catch (error) {
-      console.error("Error removing game:", error);
+      console.error("Error al eliminar el juego:", error);
       toast.error("Failed to remove game: " + error.message);
     }
   };
