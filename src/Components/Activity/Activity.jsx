@@ -133,7 +133,7 @@ export default function Activity() {
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-blue-900">
-        <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+        <Loader2 className="animate-spin text-white" />
       </div>
     );
 

@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { motion } from "framer-motion";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
+import { Tab } from "@headlessui/react";
 
 export default function CollectionsPage() {
   const { user } = useAuth();
@@ -34,6 +35,7 @@ export default function CollectionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [allCollections, setAllCollections] = useState([]);
+  const [activeTab, setActiveTab] = useState("recent-collections");
 
   useEffect(() => {
     const fetchAllCollections = async () => {
@@ -166,61 +168,61 @@ export default function CollectionsPage() {
     const firstGame = collection.games?.[0] || {};
 
     return (
-      <div className="relative h-80 rounded-lg overflow-hidden group">
-        {/* Imagen de fondo */}
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-          style={{ backgroundImage: `url(${firstGame.coverImageUrl})` }}
-        />
+      <Link href={`/collections/${collection.id}`}>
+        <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer">
+          {/* Imagen de fondo */}
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
+            style={{ backgroundImage: `url(${firstGame.coverImageUrl})` }}
+          />
 
-        {/* Gradiente de difuminado */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+          {/* Gradiente de difuminado */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
 
-        {/* Contenido de la tarjeta */}
-        <div className="absolute inset-0 p-4 flex flex-col justify-end">
-          <h3 className="font-semibold text-xl text-white mb-2">
-            {collection.name}
-          </h3>
-          <p className="text-sm text-gray-300 mb-2 line-clamp-2">
-            {collection.description}
-          </p>
+          {/* Contenido de la tarjeta */}
+          <div className="absolute inset-0 p-4 flex flex-col justify-end">
+            <h3 className="font-semibold text-xl text-white mb-2">
+              {collection.name}
+            </h3>
+            <p className="text-sm text-gray-300 mb-2 line-clamp-2">
+              {collection.description}
+            </p>
 
-          <div className="flex items-center text-sm text-gray-400 mb-2">
-            <FaUser className="mr-1" />
-            <span>{collection.creatorName}</span>
-          </div>
+            <div className="flex items-center text-sm text-gray-400 mb-2">
+              <FaUser className="mr-1" />
+              <span>{collection.creatorName}</span>
+            </div>
 
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-400">
-              {collection.gameCount} games
-            </span>
-            <div className="flex space-x-2">
-              {showActions && (
-                <>
-                  <Link
-                    href={`/collections/${collection.id}/edit`}
-                    className="text-yellow-400 hover:text-yellow-300"
-                  >
-                    <FaEdit />
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(collection.id)}
-                    className="text-red-400 hover:text-red-300"
-                  >
-                    <FaTrash />
-                  </button>
-                </>
-              )}
-              <Link
-                href={`/collections/${collection.id}`}
-                className="text-white bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-sm"
-              >
-                View
-              </Link>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-blue-400">
+                {collection.gameCount} games
+              </span>
+              <div className="flex space-x-2">
+                {showActions && (
+                  <>
+                    <Link
+                      href={`/collections/${collection.id}/edit`}
+                      className="text-yellow-400 hover:text-yellow-300"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <FaEdit />
+                    </Link>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(collection.id);
+                      }}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <FaTrash />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Link>
     );
   };
 
@@ -280,26 +282,56 @@ export default function CollectionsPage() {
           </section>
         )}
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">Recent Collections</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentCollections.map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} />
-            ))}
-          </div>
-        </section>
+        <nav className="mb-8 overflow-x-auto">
+          <ul className="flex border-b border-gray-700 whitespace-nowrap">
+            {[
+              "Recent Collections",
+              "Popular Collections",
+              user && "Your Creations",
+              user && "Followed Collections",
+            ]
+              .filter(Boolean)
+              .map((tab) => (
+                <li key={tab} className="mr-2 flex-shrink-0">
+                  <button
+                    className={`py-2 px-4 ${
+                      activeTab === tab.toLowerCase().replace(" ", "-")
+                        ? "border-b-2 border-blue-500"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      setActiveTab(tab.toLowerCase().replace(" ", "-"))
+                    }
+                  >
+                    {tab}
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </nav>
 
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4">Popular Collections</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {popularCollections.map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} />
-            ))}
-          </div>
-        </section>
-
-        {user && (
-          <>
+        <main>
+          {activeTab === "recent-collections" && (
+            <section className="mb-12">
+              <h2 className="text-2xl font-semibold mb-4">Recent Collections</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recentCollections.map((collection) => (
+                  <CollectionCard key={collection.id} collection={collection} />
+                ))}
+              </div>
+            </section>
+          )}
+          {activeTab === "popular-collections" && (
+            <section className="mb-12">
+              <h2 className="text-2xl font-semibold mb-4">Popular Collections</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {popularCollections.map((collection) => (
+                  <CollectionCard key={collection.id} collection={collection} />
+                ))}
+              </div>
+            </section>
+          )}
+          {user && activeTab === "your-creations" && (
             <section className="mb-12">
               <h2 className="text-2xl font-semibold mb-4">Your Creations</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -312,19 +344,18 @@ export default function CollectionsPage() {
                 ))}
               </div>
             </section>
-
-            <section>
-              <h2 className="text-2xl font-semibold mb-4">
-                Followed Collections
-              </h2>
+          )}
+          {user && activeTab === "followed-collections" && (
+            <section className="mb-12">
+              <h2 className="text-2xl font-semibold mb-4">Followed Collections</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {followedCollections.map((collection) => (
                   <CollectionCard key={collection.id} collection={collection} />
                 ))}
               </div>
             </section>
-          </>
-        )}
+          )}
+        </main>
       </div>
     </motion.div>
   );

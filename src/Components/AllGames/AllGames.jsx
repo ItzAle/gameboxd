@@ -2,13 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import {
-  Search,
-  Loader2,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Search, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import "../../utils/global.css";
@@ -22,11 +16,12 @@ export default function Component() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("");
   const [years, setYears] = useState([]);
   const [genres, setGenres] = useState([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [platforms, setPlatforms] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [gamesPerPage] = useState(24); // Ajusta este número según prefieras
+  const [gamesPerPage] = useState(12);
   const apiUrl = "https://gbxd-api.vercel.app/api/games";
 
   const fetchGames = useCallback(async () => {
@@ -39,9 +34,13 @@ export default function Component() {
       const data = await response.json();
       console.log("Fetched games:", data);
 
-      const sortedGames = data.sort(
-        (a, b) => new Date(b.releaseDate) - new Date(a.releaseDate)
-      );
+      const sortedGames = data.sort((a, b) => {
+        const dateA = new Date(a.releaseDate);
+        const dateB = new Date(b.releaseDate);
+        if (isNaN(dateA)) return 1;
+        if (isNaN(dateB)) return -1;
+        return dateB - dateA;
+      });
 
       setAllGames(sortedGames);
       applyFilters(sortedGames);
@@ -56,9 +55,13 @@ export default function Component() {
       const uniqueGenres = [
         ...new Set(data.flatMap((game) => game.genres || [])),
       ];
+      const uniquePlatforms = [
+        ...new Set(data.flatMap((game) => game.platforms || [])),
+      ];
 
       setYears(uniqueYears.sort((a, b) => b - a));
       setGenres(uniqueGenres.sort());
+      setPlatforms(uniquePlatforms.sort());
     } catch (err) {
       console.error("Error fetching data:", err);
       setError(err);
@@ -100,10 +103,16 @@ export default function Component() {
         );
       }
 
+      if (selectedPlatform) {
+        filteredGames = filteredGames.filter(
+          (game) => game.platforms && game.platforms.includes(selectedPlatform)
+        );
+      }
+
       setDisplayedGames(filteredGames);
       setCurrentPage(1);
     },
-    [allGames, searchTerm, selectedYear, selectedGenre]
+    [allGames, searchTerm, selectedYear, selectedGenre, selectedPlatform]
   );
 
   useEffect(() => {
@@ -112,15 +121,17 @@ export default function Component() {
 
   useEffect(() => {
     applyFilters();
-  }, [applyFilters, searchTerm, selectedYear, selectedGenre]);
+  }, [applyFilters, searchTerm, selectedYear, selectedGenre, selectedPlatform]);
 
-  // Calcular páginas
   const indexOfLastGame = currentPage * gamesPerPage;
   const indexOfFirstGame = indexOfLastGame - gamesPerPage;
   const currentGames = displayedGames.slice(indexOfFirstGame, indexOfLastGame);
   const totalPages = Math.ceil(displayedGames.length / gamesPerPage);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleInputChange = (event) => {
     setSearchTerm(event.target.value);
@@ -134,8 +145,15 @@ export default function Component() {
     setSelectedGenre(event.target.value);
   };
 
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
+  const handlePlatformChange = (event) => {
+    setSelectedPlatform(event.target.value);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setSelectedYear("");
+    setSelectedGenre("");
+    setSelectedPlatform("");
   };
 
   if (error) {
@@ -149,7 +167,7 @@ export default function Component() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4 md:p-8">
       <TransparentNavbar />
       <div className="container mx-auto px-4 py-8">
         <motion.h1
@@ -164,9 +182,9 @@ export default function Component() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex flex-col items-center space-y-4 max-w-2xl mx-auto mb-12"
+          className="flex flex-col items-center space-y-4 max-w-4xl mx-auto mb-12"
         >
-          <div className="flex w-full">
+          <div className="flex w-full space-x-4">
             <input
               type="text"
               placeholder="Search games"
@@ -175,58 +193,57 @@ export default function Component() {
               className="flex-grow px-6 py-3 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
-          <motion.button
-            onClick={toggleFilters}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="flex items-center space-x-2 px-6 py-3 bg-gray-700 text-white rounded-full hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-300"
-          >
-            <Filter className="h-5 w-5" />
-            <span>{showFilters ? "Hide Filters" : "Show Filters"}</span>
-          </motion.button>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="flex w-full space-x-4"
+          <div className="flex flex-wrap w-full space-x-4 space-y-4">
+            <select
+              value={selectedYear}
+              onChange={handleYearChange}
+              className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             >
-              <select
-                value={selectedYear}
-                onChange={handleYearChange}
-                className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-              >
-                <option value="">All Years</option>
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedGenre}
-                onChange={handleGenreChange}
-                className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
-              >
-                <option value="">All Genres</option>
-                {genres.map((genre) => (
-                  <option key={genre} value={genre}>
-                    {genre}
-                  </option>
-                ))}
-              </select>
-            </motion.div>
-          )}
+              <option value="">All Years</option>
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedGenre}
+              onChange={handleGenreChange}
+              className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            >
+              <option value="">All Genres</option>
+              {genres.map((genre) => (
+                <option key={genre} value={genre}>
+                  {genre}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedPlatform}
+              onChange={handlePlatformChange}
+              className="flex-1 px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
+            >
+              <option value="">All Platforms</option>
+              {platforms.map((platform) => (
+                <option key={platform} value={platform}>
+                  {platform}
+                </option>
+              ))}
+            </select>
+            <motion.button
+              onClick={clearFilters}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center space-x-2 px-6 py-2 bg-red-600 text-white rounded-full hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-300"
+            >
+              <X className="h-5 w-5" />
+              <span>Clear Filters</span>
+            </motion.button>
+          </div>
         </motion.div>
-        {/* <div className="mb-8">
-            <GoogleAdSense
-              client="ca-pub-3043119271393042"
-              slot="REEMPLAZAR_CON_TU_SLOT"
-            />
-          </div> */}
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+            <Loader2 className="animate-spin text-white" />
           </div>
         ) : (
           <>
@@ -236,7 +253,7 @@ export default function Component() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.5 }}
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {currentGames.map((game) => (
                   <motion.div
@@ -247,7 +264,7 @@ export default function Component() {
                     transition={{ duration: 0.3 }}
                   >
                     <Link href={`/games/${game.slug}`} className="group">
-                      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-gray-800 aspect-[3/4]">
+                      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-gray-800 aspect-[16/9]">
                         {game.coverImageUrl ? (
                           <img
                             src={game.coverImageUrl}
@@ -259,17 +276,23 @@ export default function Component() {
                             <Search className="h-12 w-12" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                          <h2 className="text-lg font-semibold line-clamp-2">
+                        <div className="absolute inset-x-0 bottom-0 bg-black bg-opacity-70 p-4">
+                          <h2 className="text-lg font-bold text-white line-clamp-1">
                             {game.name}
                           </h2>
-                          {game.releaseDate && (
-                            <p className="text-sm mt-1 text-gray-300">
-                              Released:{" "}
-                              {new Date(game.releaseDate).getFullYear()}
+                          <div className="mt-1 text-sm text-gray-300">
+                            {game.releaseDate && (
+                              <p>
+                                Released:{" "}
+                                {new Date(
+                                  game.releaseDate
+                                ).toLocaleDateString()}
+                              </p>
+                            )}
+                            <p className="line-clamp-1">
+                              Genres: {game.genres?.join(", ")}
                             </p>
-                          )}
+                          </div>
                         </div>
                       </div>
                     </Link>

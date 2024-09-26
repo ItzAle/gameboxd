@@ -96,7 +96,7 @@ export default function PlatformStats({ userProfile }) {
   if (isLoading)
     return (
       <p>
-        <Loader2 className="w-4 h-4 animate-spin" />
+        <Loader2 className="animate-spin text-white" />
       </p>
     );
   if (error) return <p>Error: {error}</p>;

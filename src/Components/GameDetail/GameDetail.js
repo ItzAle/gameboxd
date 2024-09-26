@@ -41,7 +41,7 @@ import {
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
-import { Loader } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import StyledUsername from "../common/StyledUsername";
 import Image from "next/image";
@@ -492,7 +492,7 @@ export default function GameDetailsPage({ id }) {
         <TransparentNavbar />
         {isLoading ? (
           <div className="flex justify-center items-center h-screen">
-            <Loader className="animate-spin h-12 w-12 text-blue-500" />
+            <Loader2 className="animate-spin text-white" />
           </div>
         ) : error ? (
           <div className="text-center text-red-500">
@@ -574,10 +574,13 @@ export default function GameDetailsPage({ id }) {
                   </div>
                   {/* Botones de tienda */}
                   {game.storeLinks &&
-                    Object.entries(game.storeLinks).length > 0 && (
+                    Object.entries(game.storeLinks).filter(
+                      ([store, link]) => link
+                    ).length > 0 && ( // Filtrar tiendas con enlaces válidos
                       <div className="grid grid-cols-2 gap-2 mt-4">
-                        {Object.entries(game.storeLinks).map(
-                          ([store, link]) => {
+                        {Object.entries(game.storeLinks)
+                          .filter(([store, link]) => link) // Filtrar tiendas con enlaces válidos
+                          .map(([store, link]) => {
                             let Icon;
                             let storeName = store;
                             switch (store.toLowerCase()) {
@@ -615,8 +618,7 @@ export default function GameDetailsPage({ id }) {
                                 <Icon className="mr-2" /> {storeName}
                               </a>
                             );
-                          }
-                        )}
+                          })}
                       </div>
                     )}
                 </motion.div>
@@ -652,7 +654,7 @@ export default function GameDetailsPage({ id }) {
                         {/* Descripción */}
                         <div className="mb-6">
                           <h3 className="text-xl font-semibold mb-2">
-                            Descripción
+                            Description
                           </h3>
                           <p className="text-gray-300">{game.description}</p>
                         </div>
@@ -661,7 +663,7 @@ export default function GameDetailsPage({ id }) {
                         <div className="mb-6 flex flex-wrap">
                           <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
                             <h3 className="text-xl font-semibold mb-2">
-                              Plataformas
+                              Platforms
                             </h3>
                             <div className="flex flex-wrap gap-2">
                               {game.platforms &&
@@ -677,7 +679,7 @@ export default function GameDetailsPage({ id }) {
                           </div>
                           <div className="w-full sm:w-1/2 pl-2">
                             <h3 className="text-xl font-semibold mb-2">
-                              Géneros
+                              Genres
                             </h3>
                             <div className="flex flex-wrap gap-2">
                               {game.genres &&
@@ -697,13 +699,13 @@ export default function GameDetailsPage({ id }) {
                         <div className="flex flex-wrap">
                           <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
                             <h3 className="text-xl font-semibold mb-2">
-                              Desarrollador
+                              Developer
                             </h3>
                             <p className="text-gray-300">{game.developer}</p>
                           </div>
                           <div className="w-full sm:w-1/2 pl-2">
                             <h3 className="text-xl font-semibold mb-2">
-                              Editor
+                              Publisher
                             </h3>
                             <p className="text-gray-300">{game.publisher}</p>
                           </div>

@@ -262,7 +262,7 @@ export default function ProfileSettings() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        <Loader className="animate-spin h-12 w-12 text-blue-500" />
+        <Loader2 className="animate-spin text-white" />
       </div>
     );
   }

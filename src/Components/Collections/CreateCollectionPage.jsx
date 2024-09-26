@@ -227,11 +227,10 @@ export default function CreateCollectionPage() {
               <h3 className="text-xl font-semibold mb-2">Search Results</h3>
               <ul className="bg-gray-800 rounded p-2 max-h-60 overflow-y-auto">
                 {searchResults.map(game => (
-                  <li key={game.id} className="flex items-center justify-between p-2 hover:bg-gray-700">
+                  <li key={game.id} className="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer" onClick={() => addGame(game)}>
                     <span>{game.name}</span>
                     <button
                       type="button"
-                      onClick={() => addGame(game)}
                       className="bg-green-500 text-white px-2 py-1 rounded"
                     >
                       <FaPlus />
@@ -246,7 +245,7 @@ export default function CreateCollectionPage() {
             <h3 className="text-xl font-semibold mb-2">Games in Collection</h3>
             <ul className="bg-gray-800 rounded p-2">
               {games.map(game => (
-                <li key={game.id} className="flex items-center justify-between p-2 hover:bg-gray-700">
+                <li key={game.id} className="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer">
                   <span>{game.name}</span>
                   <button
                     type="button"

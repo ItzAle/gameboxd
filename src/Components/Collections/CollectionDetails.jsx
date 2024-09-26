@@ -21,6 +21,7 @@ import {
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
+import { Loader2 } from "lucide-react";
 
 export default function CollectionDetails({ collectionId }) {
   const { user } = useAuth();
@@ -90,7 +91,7 @@ export default function CollectionDetails({ collectionId }) {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex justify-center items-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-blue-500"></div>
+        <Loader2 className="animate-spin text-white" />
       </div>
     );
   }
@@ -157,25 +158,31 @@ export default function CollectionDetails({ collectionId }) {
           {collection.games &&
             collection.games.map((game) => (
               <Link href={`/games/${game.slug}`} key={game.slug}>
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="bg-gray-800 rounded-lg p-4 hover:bg-gray-700 transition duration-300"
-                >
-                  <div className="flex items-center mb-2">
-                    <FaGamepad className="text-2xl mr-3 text-blue-500" />
-                    <h3 className="font-semibold">{game.name}</h3>
+                <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer">
+                  {/* Imagen de fondo */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
+                    style={{ backgroundImage: `url(${game.coverImageUrl})` }}
+                  />
+
+                  {/* Gradiente de difuminado */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent" />
+
+                  {/* Contenido de la tarjeta */}
+                  <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                    <h3 className="font-semibold text-xl text-white mb-2">
+                      {game.name}
+                    </h3>
+                    <p className="text-sm text-gray-300 mb-2 line-clamp-2">
+                      {game.description?.substring(0, 100)}...
+                    </p>
+
+                    <div className="flex items-center text-sm text-gray-400 mb-2">
+                      <FaGamepad className="mr-1" />
+                      <span>{game.platforms?.join(", ") || "N/A"}</span>
+                    </div>
                   </div>
-                  {game.coverImageUrl && (
-                    <img
-                      src={game.coverImageUrl}
-                      alt={`${game.name} cover`}
-                      className="w-full h-48 object-cover rounded-lg mb-2"
-                    />
-                  )}
-                  <p className="text-sm text-gray-400">
-                    {game.description?.substring(0, 100)}...
-                  </p>
-                </motion.div>
+                </div>
               </Link>
             ))}
         </div>

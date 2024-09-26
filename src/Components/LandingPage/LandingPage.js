@@ -203,7 +203,7 @@ export default function LandingPage() {
               )
             ) : (
               <div>
-                <Loader2 className="h-12 w-12 text-blue-500 animate-spin" />
+                <Loader2 className="animate-spin text-white" />
               </div>
             )
           ) : (

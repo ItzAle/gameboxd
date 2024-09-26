@@ -31,7 +31,7 @@ import {
   FaUserAlt,
 } from "react-icons/fa";
 import { toast } from "react-toastify";
-import { Loader } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import StyledUsername from "../common/StyledUsername";
 import { getUsernameStyle } from "../../utils/usernameStyles";
@@ -185,7 +185,7 @@ export default function OtherUserProfile({ userId }) {
   };
 
   if (!userProfile) {
-    return <Loader />;
+    return <Loader2 className="animate-spin text-white" />;
   }
 
   return (

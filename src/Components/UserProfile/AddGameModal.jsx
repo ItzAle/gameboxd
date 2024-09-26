@@ -75,7 +75,7 @@ export default function AddGameModal({ isOpen, onClose, onAddGame }) {
         <div className="max-h-60 overflow-y-auto">
           {isLoading ? (
             <p className="text-center">
-              <Loader2 />
+              <Loader2 className="animate-spin text-white" />
             </p>
           ) : (
             searchResults.map((game) => (

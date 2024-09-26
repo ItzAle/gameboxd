@@ -22,7 +22,7 @@ export default function OtherUserOverviewTab({ userProfile }) {
   if (!userProfile) {
     return (
       <div>
-        <Loader2 className="animate-spin" />
+        <Loader2 className="animate-spin text-white" />
       </div>
     );
   }

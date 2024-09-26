@@ -36,7 +36,7 @@ import {
   FaMapMarkerAlt,
   FaUserAlt,
 } from "react-icons/fa";
-import { Loader } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import ProOptionsModal from "../ProOptionsModal/ProOptionsModal";
 import StyledUsername from "../common/StyledUsername";
@@ -48,6 +48,8 @@ import ReviewsTab from "./ReviewsTab";
 import CollectionsTab from "./CollectionsTab";
 import FollowingTab from "./FollowingTab";
 import FollowersTab from "./FollowersTab";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 
 const StarField = ({ count = 100 }) => {
   const [stars, setStars] = useState([]);
@@ -81,6 +83,23 @@ const StarField = ({ count = 100 }) => {
   );
 };
 
+const detailsVariants = {
+  hidden: {
+    opacity: 0,
+    height: 0,
+    transition: {
+      duration: 0.3,
+    },
+  },
+  visible: {
+    opacity: 1,
+    height: "auto",
+    transition: {
+      duration: 0.3,
+    },
+  },
+};
+
 export default function UserProfile() {
   const { user } = useAuth();
   const router = useRouter();
@@ -106,6 +125,7 @@ export default function UserProfile() {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const tabsRef = useRef(null);
+  const [showProfileDetails, setShowProfileDetails] = useState(true);
 
   useEffect(() => {
     const tabsContainer = tabsRef.current;
@@ -432,11 +452,11 @@ export default function UserProfile() {
   }
 
   if (!userProfile) {
-    return <Loader />;
+    return <Loader2 className="animate-spin text-white" />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4 md:p-8 overflow-hidden">
       <TransparentNavbar />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 max-w-7xl">
         <header className="mb-8">
