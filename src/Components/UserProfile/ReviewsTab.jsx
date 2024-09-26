@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   FaStar,
   FaTrash,
@@ -19,34 +19,65 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import { useAuth } from "../../context/AuthContext";
 import EditReviewModal from "../EditReviewModal/EditReviewModal";
 
-export default function ReviewsTab({ userProfile }) {
+export default function ReviewsTab({ userProfile, isOwnProfile }) {
   const [reviews, setReviews] = useState([]);
   const [editingReview, setEditingReview] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { user } = useAuth();
 
   useEffect(() => {
     const fetchReviews = async () => {
-      if (user) {
-        const q = query(
+      let userId;
+      if (isOwnProfile) {
+        userId = user?.uid;
+      } else {
+        userId = userProfile?.id;
+      }
+
+      console.log("Fetching reviews for userId:", userId);
+      console.log("isOwnProfile:", isOwnProfile);
+      console.log("userProfile:", userProfile);
+
+      if (!userId) {
+        console.error("User ID is undefined");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const reviewsQuery = query(
           collection(db, "reviews"),
-          where("userId", "==", user.uid)
+          where("userId", "==", userId)
         );
-        const querySnapshot = await getDocs(q);
-        const reviewsData = querySnapshot.docs.map((doc) => ({
+        console.log("Query:", reviewsQuery);
+        const reviewsSnapshot = await getDocs(reviewsQuery);
+        console.log("Query snapshot:", reviewsSnapshot);
+        const reviewsData = reviewsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
+        console.log("Reviews data:", reviewsData);
         setReviews(reviewsData);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
     fetchReviews();
-  }, [user]);
+  }, [userProfile, isOwnProfile, user]);
+
+  if (isLoading) {
+    return <div>Cargando reseñas...</div>;
+  }
 
   const handleDelete = async (reviewId) => {
     if (confirm("¿Estás seguro de que quieres borrar esta review?")) {

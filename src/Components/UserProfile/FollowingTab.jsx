@@ -55,9 +55,7 @@ export default function FollowingTab({ userProfile }) {
     <div>
       <h2 className="text-2xl font-semibold mb-4">
         Following
-        <span className="ml-2 text-lg text-gray-400">
-          ({following.length})
-        </span>
+        <span className="ml-2 text-lg text-gray-400">({following.length})</span>
       </h2>
       {following.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -75,7 +73,7 @@ export default function FollowingTab({ userProfile }) {
           ))}
         </div>
       ) : (
-        <p>Aún no sigues a nadie.</p>
+        <p>Not following anyone yet.</p>
       )}
     </div>
   );

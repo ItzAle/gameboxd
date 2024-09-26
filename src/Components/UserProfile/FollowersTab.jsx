@@ -73,7 +73,7 @@ export default function FollowersTab({ userProfile }) {
           ))}
         </div>
       ) : (
-        <p>Aún no tienes seguidores.</p>
+        <p>There are no followers yet.</p>
       )}
     </div>
   );

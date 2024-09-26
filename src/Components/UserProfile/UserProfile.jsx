@@ -533,7 +533,9 @@ export default function UserProfile() {
               updateUserProfile={updateUserProfile}
             />
           )}
-          {activeTab === "reviews" && <ReviewsTab userProfile={userProfile} />}
+          {activeTab === "reviews" && (
+            <ReviewsTab userProfile={{ id: user.uid }} isOwnProfile={true} />
+          )}
           {activeTab === "collections" && <CollectionsTab userProfile={user} />}
           {activeTab === "following" && (
             <FollowingTab userProfile={userProfile} />

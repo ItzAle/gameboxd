@@ -243,9 +243,9 @@ export default function PlatformStats({ userProfile }) {
           chartType === "pie" ? "flex flex-wrap justify-center" : ""
         }`}
       >
-        {renderChart(genreStats, "Genres most played")}
-        {renderChart(developerStats, "Developers most frequent")}
-        {renderChart(publisherStats, "Publishers most frequent")}
+        {renderChart(genreStats, "Most played genres")}
+        {renderChart(developerStats, "Most played developers")}
+        {renderChart(publisherStats, "Most played publishers")}
       </div>
     </div>
   );

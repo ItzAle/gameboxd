@@ -74,7 +74,10 @@ export default function CollectionsTab({ userProfile }) {
         setError(null);
 
         // Fetch user's own collections
-        const ownQuery = query(collection(db, "collections"), where("userId", "==", userProfile.uid));
+        const ownQuery = query(
+          collection(db, "collections"),
+          where("userId", "==", userProfile.uid)
+        );
         const ownSnapshot = await getDocs(ownQuery);
         const ownData = ownSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -83,7 +86,10 @@ export default function CollectionsTab({ userProfile }) {
         setOwnCollections(ownData);
 
         // Fetch followed collections
-        const followedQuery = query(collection(db, "collections"), where("followers", "array-contains", userProfile.uid));
+        const followedQuery = query(
+          collection(db, "collections"),
+          where("followers", "array-contains", userProfile.uid)
+        );
         const followedSnapshot = await getDocs(followedQuery);
         const followedData = followedSnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -115,7 +121,7 @@ export default function CollectionsTab({ userProfile }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-semibold mb-4">Your Collections</h2>
+      <h2 className="text-2xl font-semibold mb-4">Created Collections</h2>
       {ownCollections.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {ownCollections.map((collection) => (
@@ -127,10 +133,10 @@ export default function CollectionsTab({ userProfile }) {
           ))}
         </div>
       ) : (
-        <p>You haven't created any collections yet.</p>
+        <p>There is no collections created yet.</p>
       )}
 
-      <h2 className="text-2xl font-semibold mb-4">Collections You Follow</h2>
+      <h2 className="text-2xl font-semibold mb-4">Followed Collections</h2>
       {followedCollections.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {followedCollections.map((collection) => (
@@ -142,7 +148,7 @@ export default function CollectionsTab({ userProfile }) {
           ))}
         </div>
       ) : (
-        <p>You're not following any collections yet.</p>
+        <p>There is no collections followed yet.</p>
       )}
     </div>
   );
