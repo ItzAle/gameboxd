@@ -18,7 +18,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaImage, FaCog, FaCrown } from "react-icons/fa";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
-import { Loader } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { format, addMonths, isBefore } from "date-fns";
 import { getUsernameStyle } from "../../utils/usernameStyles";
 
@@ -494,12 +494,12 @@ export default function ProfileSettings() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-xl font-semibold mb-4">Opciones PRO</h2>
+              <h2 className="text-xl font-semibold mb-4">PRO Options</h2>
               {userData.isPro ? (
                 <>
                   <div>
                     <label htmlFor="nameEffect" className="block mb-2">
-                      Efecto del nombre de usuario
+                      Username Effect
                     </label>
                     <select
                       id="nameEffect"
@@ -507,17 +507,17 @@ export default function ProfileSettings() {
                       onChange={(e) => setNameEffect(e.target.value)}
                       className="w-full bg-gray-700 rounded px-3 py-2"
                     >
-                      <option value="none">Ninguno</option>
-                      <option value="glow">Brillo</option>
-                      <option value="shadow">Sombra</option>
-                      <option value="neon">Neón</option>
-                      <option value="outline">Contorno</option>
+                      <option value="none">None</option>
+                      <option value="glow">Glow</option>
+                      <option value="shadow">Shadow</option>
+                      <option value="neon">Neon</option>
+                      <option value="outline">Outline</option>
                       <option value="retro">Retro</option>
                     </select>
                   </div>
                   <div>
                     <label htmlFor="nameColor" className="block mb-2">
-                      Color del nombre de usuario
+                      Username Color
                     </label>
                     <input
                       type="color"
@@ -529,7 +529,7 @@ export default function ProfileSettings() {
                   </div>
                   <div>
                     <label htmlFor="effectIntensity" className="block mb-2">
-                      Intensidad del efecto
+                      Effect Intensity
                     </label>
                     <input
                       type="range"
@@ -545,7 +545,7 @@ export default function ProfileSettings() {
                     />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Vista previa</h3>
+                    <h3 className="text-lg font-semibold mb-2">Preview</h3>
                     <div className="bg-gray-900 p-4 rounded">
                       <span
                         style={getUsernameStyle(
@@ -573,17 +573,17 @@ export default function ProfileSettings() {
                     }}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300"
                   >
-                    Guardar cambios
+                    Save Changes
                   </button>
                 </>
               ) : (
                 <p className="text-yellow-500">
-                  Actualiza a PRO para acceder a características exclusivas.
+                  Upgrade to PRO to access exclusive features.
                   <Link
                     href="/upgrade"
                     className="ml-2 text-blue-400 hover:underline"
                   >
-                    Actualizar a PRO
+                    Upgrade to PRO
                   </Link>
                 </p>
               )}
