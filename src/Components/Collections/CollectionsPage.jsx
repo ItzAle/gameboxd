@@ -21,6 +21,7 @@ import {
   doc,
   orderBy,
   limit,
+  getDoc,
 } from "firebase/firestore";
 import { motion } from "framer-motion";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
@@ -36,6 +37,7 @@ export default function CollectionsPage() {
   const [searchResults, setSearchResults] = useState([]);
   const [allCollections, setAllCollections] = useState([]);
   const [activeTab, setActiveTab] = useState("recent-collections");
+  const [isProUser, setIsProUser] = useState(false);
 
   useEffect(() => {
     const fetchAllCollections = async () => {
@@ -82,6 +84,14 @@ export default function CollectionsPage() {
     );
 
     if (user) {
+      // Verificar si el usuario es pro
+      const userRef = doc(db, "users", user.uid);
+      getDoc(userRef).then((docSnap) => {
+        if (docSnap.exists()) {
+          setIsProUser(docSnap.data().isPro || false);
+        }
+      });
+
       // Cargar colecciones propias
       const ownCollectionsQuery = query(
         collection(db, "collections"),
@@ -164,6 +174,11 @@ export default function CollectionsPage() {
     }
   };
 
+  const canCreateCollection = useCallback(() => {
+    if (isProUser) return true;
+    return ownCollections.length < 30;
+  }, [isProUser, ownCollections]);
+
   const CollectionCard = ({ collection, showActions = false }) => {
     const firstGame = collection.games?.[0] || {};
 
@@ -238,12 +253,18 @@ export default function CollectionsPage() {
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Game Collections</h1>
           {user && (
-            <Link
-              href="/collections/create"
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center"
-            >
-              <FaPlus className="mr-2" /> Create Collection
-            </Link>
+            canCreateCollection() ? (
+              <Link
+                href="/collections/create"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center"
+              >
+                <FaPlus className="mr-2" /> Create Collection
+              </Link>
+            ) : (
+              <p className="text-yellow-400">
+                You've reached the limit of 30 collections. Upgrade to Pro to create more.
+              </p>
+            )
           )}
         </div>
 

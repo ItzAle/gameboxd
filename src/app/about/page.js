@@ -1,6 +1,5 @@
 import React from "react";
 import TransparentNavbar from "../../Components/Navbar/TransparentNavbar";
-import Footer from "../../Components/Navbar/Footer";
 
 export default function About() {
   return (
@@ -56,7 +55,6 @@ export default function About() {
           </p>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

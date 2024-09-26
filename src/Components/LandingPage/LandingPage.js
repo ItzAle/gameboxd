@@ -6,7 +6,6 @@ import Link from "next/link";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaGamepad, FaSearch, FaStar } from "react-icons/fa";
-import Footer from "../Navbar/Footer";
 import { useMediaQuery } from "react-responsive";
 import { useAuth } from "../../context/AuthContext";
 import ActivityFeed from "../Activity/Activity";
@@ -18,6 +17,7 @@ import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
 import CustomizableHomePage from "../CustomizableHomePage/CustomizableHomePage";
 import { Switch } from "@headlessui/react";
 import { Loader2 } from "lucide-react";
+import FooterLanding from "../Navbar/FooterLanidng";
 
 const gameCoverUrls = [
   "https://imgs.callofduty.com/content/dam/atvi/callofduty/cod-touchui/blackops6/meta/BO6_LP-meta_image.jpg",
@@ -140,7 +140,7 @@ export default function LandingPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+    <div className="flex flex-col min-h-screen">
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.img
@@ -156,7 +156,7 @@ export default function LandingPage() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 flex-grow">
+      <div className="relative z-10 flex-grow bg-gray-900 bg-opacity-50">
         <TransparentNavbar />
         {!isLoading && user && !user.isPro && <UpgradeBanner />}
 
@@ -217,8 +217,8 @@ export default function LandingPage() {
             />
           )}
         </div>
-        <Footer />
       </div>
+      <FooterLanding />
     </div>
   );
 }

@@ -8,26 +8,23 @@ import { ReviewsProvider } from "../context/ReviewsProvider";
 import { ReactNode } from "react";
 import { AuthProvider } from "../context/AuthContext";
 import Script from "next/script";
+import Footer from "../Components/Navbar/Footer";
+import { usePathname } from 'next/navigation';
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+
   return (
     <html lang="en">
-      <head>
-        <meta
-          name="google-site-verification"
-          content="tQm5pduZAMOK3k12D8pd9XUnwyVfiU-erzVhd7TqAqo"
-        />
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3043119271393042"
-          crossOrigin="anonymous"
-        />
-      </head>
-      <body>
+      <body className="flex flex-col min-h-screen bg-gray-900 text-white">
         <AuthProvider>
           <SessionProvider>
             <ReviewsProvider>
-              <main>{children}</main>
+              <div className="flex-grow">
+                {children}
+              </div>
+              {!isHomePage && <Footer />}
               <ToastContainer position="bottom-right" theme="dark" />
             </ReviewsProvider>
           </SessionProvider>

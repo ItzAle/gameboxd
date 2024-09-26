@@ -4,13 +4,18 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { FaTwitter, FaInstagram, FaTiktok } from "react-icons/fa";
 import { RiThreadsLine } from "react-icons/ri";
-import { useAuth } from "../../context/AuthContext"; // Asegúrate de importar useAuth
+import { useAuth } from "../../context/AuthContext";
 
 export default function Footer() {
-  const { user } = useAuth(); // Obtén la información del usuario
+  const { user } = useAuth();
 
   return (
-    <footer className="bg-black  backdrop-blur-sm text-white py-4">
+    <motion.footer
+      className="bg-transparent text-white py-4 backdrop-blur-sm"
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center">
           {/* Footer links */}
@@ -99,6 +104,6 @@ export default function Footer() {
           <p>© {new Date().getFullYear()} Gameboxd. All rights reserved.</p>
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 }

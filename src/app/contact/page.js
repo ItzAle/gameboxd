@@ -1,17 +1,16 @@
 "use client";
-import React, { useState } from 'react';
-import TransparentNavbar from '../../Components/Navbar/TransparentNavbar';
-import Footer from '../../Components/Navbar/Footer';
-import { FaTwitter, FaGithub } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import { db } from '../../../lib/firebase'; // Asegúrate de que la ruta sea correcta
-import { collection, addDoc } from 'firebase/firestore';
+import React, { useState } from "react";
+import TransparentNavbar from "../../Components/Navbar/TransparentNavbar";
+import { FaTwitter, FaInstagram, FaTiktok } from "react-icons/fa";
+import { toast } from "react-toastify";
+import { db } from "../../../lib/firebase"; // Asegúrate de que la ruta sea correcta
+import { collection, addDoc } from "firebase/firestore";
 
 export default function Contact() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [type, setType] = useState('suggestion');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [type, setType] = useState("suggestion");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -25,23 +24,23 @@ export default function Contact() {
         email,
         message,
         type,
-        createdAt: new Date()
+        createdAt: new Date(),
       };
 
       // Añadir el documento a la colección 'feedback' en Firestore
-      await addDoc(collection(db, 'feedback'), feedbackData);
+      await addDoc(collection(db, "feedback"), feedbackData);
 
       // Mostrar mensaje de éxito
-      toast.success('Thank you for your feedback!');
+      toast.success("Thank you for your feedback!");
 
       // Limpiar el formulario
-      setName('');
-      setEmail('');
-      setMessage('');
-      setType('suggestion');
+      setName("");
+      setEmail("");
+      setMessage("");
+      setType("suggestion");
     } catch (error) {
-      console.error('Error submitting feedback:', error);
-      toast.error('An error occurred. Please try again.');
+      console.error("Error submitting feedback:", error);
+      toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -56,19 +55,46 @@ export default function Contact() {
           <div className="text-center space-y-4">
             <p className="text-lg">Connect with us on social media:</p>
             <div className="flex justify-center space-x-4">
-              <a href="https://x.com/alehhdev" target="_blank" rel="noopener noreferrer" className="text-2xl hover:text-blue-400 transition-colors">
+              <a
+                href="https://x.com/gameboxdapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl hover:text-blue-400 transition-colors"
+              >
                 <FaTwitter />
               </a>
-              <a href="https://github.com/itzale" target="_blank" rel="noopener noreferrer" className="text-2xl hover:text-blue-400 transition-colors">
-                <FaGithub />
+              <a
+                href="https://instagram.com/gameboxdapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl hover:text-blue-400 transition-colors"
+              >
+                <FaInstagram />
+              </a>
+              <a
+                href="https://www.tiktok.com/@gameboxdapp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-2xl hover:text-blue-400 transition-colors"
+              >
+                <FaTiktok />
               </a>
             </div>
+            <p>Or send us an email:</p>
+            <a href="mailto:support@gameboxd.me">support@gameboxd.me</a>
           </div>
           <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Send us your feedback</h2>
+            <h2 className="text-2xl font-semibold mb-4">
+              Send us your feedback
+            </h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-300">Name</label>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Name
+                </label>
                 <input
                   type="text"
                   id="name"
@@ -79,7 +105,12 @@ export default function Contact() {
                 />
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email</label>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Email
+                </label>
                 <input
                   type="email"
                   id="email"
@@ -90,7 +121,12 @@ export default function Contact() {
                 />
               </div>
               <div>
-                <label htmlFor="type" className="block text-sm font-medium text-gray-300">Type</label>
+                <label
+                  htmlFor="type"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Type
+                </label>
                 <select
                   id="type"
                   value={type}
@@ -109,7 +145,12 @@ export default function Contact() {
                 </select>
               </div>
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-300">Message</label>
+                <label
+                  htmlFor="message"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  Message
+                </label>
                 <textarea
                   id="message"
                   value={message}
@@ -124,13 +165,12 @@ export default function Contact() {
                 className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800 transition duration-200 disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Sending...' : 'Send Feedback'}
+                {isSubmitting ? "Sending..." : "Send Feedback"}
               </button>
             </form>
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import React from "react";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
-import Footer from "@/Components/Navbar/Footer";
 import { motion } from "framer-motion";
 
 export default function Guidelines() {
