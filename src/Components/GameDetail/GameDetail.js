@@ -189,9 +189,7 @@ export default function GameDetailsPage({ id }) {
 
   const handleAddToLibrary = async (status) => {
     if (!user) {
-      toast.error(
-        "Necesitas iniciar sesión para añadir juegos a tu biblioteca."
-      );
+      toast.error("You need to login to add games to your library.");
       return;
     }
 
@@ -208,7 +206,15 @@ export default function GameDetailsPage({ id }) {
         if (gameInLibrary) {
           // Actualizar el estado si el juego ya está en la biblioteca
           const updatedLibrary = library.map((g) =>
-            g.slug === game.slug ? { ...g, status } : g
+            g.slug === game.slug
+              ? {
+                  ...g,
+                  status,
+                  genres: game.genres,
+                  developer: game.developer,
+                  publisher: game.publisher,
+                }
+              : g
           );
           await updateDoc(userRef, { library: updatedLibrary });
         } else {
@@ -218,6 +224,9 @@ export default function GameDetailsPage({ id }) {
             name: game.name,
             coverImageUrl: game.coverImageUrl,
             status,
+            genres: game.genres,
+            developer: game.developer,
+            publisher: game.publisher,
             addedAt: new Date().toISOString(),
           };
           await updateDoc(userRef, { library: [...library, gameToAdd] });
@@ -234,14 +243,13 @@ export default function GameDetailsPage({ id }) {
         );
       }
     } catch (error) {
-      console.error("Error al actualizar la biblioteca:", error);
-      toast.error("Ocurrió un error al actualizar la biblioteca.");
+      console.error("Error updating the library:", error);
+      toast.error("An error occurred while updating the library.");
     }
   };
-
   const handleAddComment = async (reviewId, commentText) => {
     if (!user) {
-      toast.error("Debes iniciar sesión para comentar.");
+      toast.error("You need to login to comment.");
       return;
     }
 
@@ -270,8 +278,8 @@ export default function GameDetailsPage({ id }) {
 
       toast.success("Comentario añadido con éxito");
     } catch (error) {
-      console.error("Error al añadir comentario:", error);
-      toast.error("Ocurrió un error al añadir el comentario");
+      console.error("Error adding comment:", error);
+      toast.error("An error occurred while adding the comment");
     }
   };
 
@@ -300,8 +308,8 @@ export default function GameDetailsPage({ id }) {
       setEditingComment(null);
       toast.success("Comentario actualizado con éxito");
     } catch (error) {
-      console.error("Error al editar el comentario:", error);
-      toast.error("Ocurrió un error al editar el comentario");
+      console.error("Error editing comment:", error);
+      toast.error("An error occurred while editing the comment");
     }
   };
 
@@ -327,8 +335,8 @@ export default function GameDetailsPage({ id }) {
 
       toast.success("Comentario eliminado con éxito");
     } catch (error) {
-      console.error("Error al eliminar comentario:", error);
-      toast.error("Ocurrió un error al eliminar el comentario");
+      console.error("Error deleting comment:", error);
+      toast.error("An error occurred while deleting the comment");
     }
   };
 
@@ -411,7 +419,7 @@ export default function GameDetailsPage({ id }) {
               <span className="font-semibold">{comment.username}</span>
               <span className="text-xs text-gray-400">
                 {new Date(comment.createdAt).toLocaleString()}
-                {comment.editedAt && " (editado)"}
+                {comment.editedAt && " (edited)"}
               </span>
             </div>
             {editingComment === comment.id ? (

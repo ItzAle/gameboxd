@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useMediaQuery } from "react-responsive";
 import {
   doc,
@@ -33,6 +33,8 @@ import {
   FaGamepad,
   FaPen,
   FaCog,
+  FaMapMarkerAlt,
+  FaUserAlt,
 } from "react-icons/fa";
 import { Loader } from "lucide-react";
 import ProBadge from "../common/ProBadge";
@@ -101,6 +103,51 @@ export default function UserProfile() {
   const [nameColor, setNameColor] = useState("");
   const [effectIntensity, setEffectIntensity] = useState(1);
   const [showProOptions, setShowProOptions] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const tabsRef = useRef(null);
+
+  useEffect(() => {
+    const tabsContainer = tabsRef.current;
+    if (!tabsContainer) return;
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+
+    const handleMouseDown = (e) => {
+      isDown = true;
+      startX = e.pageX - tabsContainer.offsetLeft;
+      scrollLeft = tabsContainer.scrollLeft;
+    };
+
+    const handleMouseLeave = () => {
+      isDown = false;
+    };
+
+    const handleMouseUp = () => {
+      isDown = false;
+    };
+
+    const handleMouseMove = (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - tabsContainer.offsetLeft;
+      const walk = (x - startX) * 2;
+      tabsContainer.scrollLeft = scrollLeft - walk;
+    };
+
+    tabsContainer.addEventListener("mousedown", handleMouseDown);
+    tabsContainer.addEventListener("mouseleave", handleMouseLeave);
+    tabsContainer.addEventListener("mouseup", handleMouseUp);
+    tabsContainer.addEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      tabsContainer.removeEventListener("mousedown", handleMouseDown);
+      tabsContainer.removeEventListener("mouseleave", handleMouseLeave);
+      tabsContainer.removeEventListener("mouseup", handleMouseUp);
+      tabsContainer.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, []);
 
   const fetchGameDetails = useCallback(async (slug) => {
     try {
@@ -222,6 +269,23 @@ export default function UserProfile() {
     fetchGameDetails();
   }, [userProfile]);
 
+  useEffect(() => {
+    if (userProfile) {
+      setFollowersCount(userProfile.followers?.length || 0);
+      setFollowingCount(userProfile.following?.length || 0);
+    }
+  }, [userProfile]);
+
+  const updateUserProfile = async () => {
+    if (user) {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        setUserProfile(userDoc.data());
+      }
+    }
+  };
+
   const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
 
   const handleSaveProfile = async () => {
@@ -314,7 +378,6 @@ export default function UserProfile() {
         effectIntensity: newOptions.effectIntensity,
       });
 
-      // Actualizar el estado local
       setNameEffect(newOptions.nameEffect);
       setNameColor(newOptions.nameColor);
       setEffectIntensity(newOptions.effectIntensity);
@@ -370,43 +433,87 @@ export default function UserProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-8">
-        <TransparentNavbar />
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <ProfilePicture
-              profilePicture={userProfile.profilePicture}
-              size="large"
-            />
-            <h1 className="text-4xl font-bold ml-4">{userProfile.username}</h1>
+    <div className="min-h-screen bg-gray-900 text-white overflow-x-hidden">
+      <TransparentNavbar />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 max-w-7xl">
+        <header className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <ProfilePicture
+                profilePicture={userProfile.profilePicture}
+                size="large"
+              />
+              <div className="ml-4">
+                <h1 className="text-4xl font-bold">{userProfile.username}</h1>
+                <div className="mt-2 text-gray-400 flex items-center flex-wrap">
+                  {userProfile.pronouns && (
+                    <span className="mr-4 flex items-center">
+                      <FaUserAlt className="mr-1" />
+                      {userProfile.pronouns}
+                    </span>
+                  )}
+                  {userProfile.location && (
+                    <span className="mr-4 flex items-center">
+                      <FaMapMarkerAlt className="mr-1" />
+                      {userProfile.location}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <Link href="/settings">
+              <button className="bg-gray-700 p-2 rounded-full">
+                <FaCog className="text-xl" />
+              </button>
+            </Link>
           </div>
-          <Link href="/settings">
-            <button className="bg-gray-700 p-2 rounded-full">
-              <FaCog className="text-xl" />
-            </button>
-          </Link>
+          {userProfile.bio && (
+            <p className="mt-4 text-gray-300 max-w-2xl">{userProfile.bio}</p>
+          )}
         </header>
-        <nav className="mb-8">
-          <ul className="flex border-b border-gray-700">
+        <nav className="mb-8 overflow-x-auto" ref={tabsRef}>
+          <ul className="flex border-b border-gray-700 whitespace-nowrap">
             {[
               "Overview",
               "Library",
               "Reviews",
               "Collections",
-              "Following",
-              "Followers",
+              { name: "Following", count: followingCount },
+              { name: "Followers", count: followersCount },
             ].map((tab) => (
-              <li key={tab} className="mr-2">
+              <li
+                key={typeof tab === "string" ? tab : tab.name}
+                className="mr-2 flex-shrink-0"
+              >
                 <button
                   className={`py-2 px-4 ${
-                    activeTab === tab.toLowerCase()
+                    activeTab ===
+                    (typeof tab === "string"
+                      ? tab.toLowerCase()
+                      : tab.name.toLowerCase())
                       ? "border-b-2 border-blue-500"
                       : ""
                   }`}
-                  onClick={() => setActiveTab(tab.toLowerCase())}
+                  onClick={() =>
+                    setActiveTab(
+                      typeof tab === "string"
+                        ? tab.toLowerCase()
+                        : tab.name.toLowerCase()
+                    )
+                  }
                 >
-                  {tab}
+                  {typeof tab === "string" ? (
+                    tab
+                  ) : (
+                    <>
+                      {tab.name}
+                      {tab.count > 0 && (
+                        <span className="ml-1 text-xs align-super">
+                          ({tab.count})
+                        </span>
+                      )}
+                    </>
+                  )}
                 </button>
               </li>
             ))}
@@ -417,7 +524,11 @@ export default function UserProfile() {
             <OverviewTab userProfile={userProfile} />
           )}
           {activeTab === "library" && (
-            <LibraryTab userProfile={userProfile} userId={user.uid} />
+            <LibraryTab
+              userProfile={userProfile}
+              userId={user.uid}
+              updateUserProfile={updateUserProfile}
+            />
           )}
           {activeTab === "reviews" && <ReviewsTab userProfile={userProfile} />}
           {activeTab === "collections" && <CollectionsTab userProfile={user} />}

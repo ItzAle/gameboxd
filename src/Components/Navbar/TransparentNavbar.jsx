@@ -177,6 +177,12 @@ export default function TransparentNavbar() {
                     >
                       Games
                     </Link>
+                    <Link
+                      href="/collections"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Collections
+                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -249,6 +255,12 @@ export default function TransparentNavbar() {
                     className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
                   >
                     Home
+                  </Link>
+                  <Link
+                    href="/collections"
+                    className="block py-4 text-white text-2xl font-semibold hover:text-blue-400 transition"
+                  >
+                    Collections
                   </Link>
                   <Link
                     href="/profile"

@@ -14,7 +14,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { toast } from "react-toastify";
 
-export default function LibraryTab({ userProfile, userId }) {
+export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
   const [library, setLibrary] = useState({
     playing: [],
     completed: [],
@@ -39,7 +39,7 @@ export default function LibraryTab({ userProfile, userId }) {
             game.status
           )
             ? game.status
-            : "toPlay"; // Si el estado no es válido, lo ponemos en 'toPlay'
+            : "toPlay";
 
           if (!acc[validStatus]) {
             acc[validStatus] = [];
@@ -52,7 +52,7 @@ export default function LibraryTab({ userProfile, userId }) {
 
       setLibrary(categorizedLibrary);
     }
-  }, [userProfile]);
+  }, [userProfile.library]);
 
   const toggleSection = (section) => {
     setExpanded((prev) => ({ ...prev, [section]: !prev[section] }));
@@ -70,23 +70,30 @@ export default function LibraryTab({ userProfile, userId }) {
         throw new Error("User profile or library is missing");
       }
 
-      const updatedLibrary = userProfile.library.map(g => 
+      const updatedLibrary = userProfile.library.map((g) =>
         g.slug === game.slug ? { ...g, status: newStatus } : g
       );
 
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, { library: updatedLibrary });
 
-      setLibrary(prev => ({
-        ...prev,
-        [game.status]: prev[game.status].filter(g => g.slug !== game.slug),
-        [newStatus]: [...prev[newStatus], { ...game, status: newStatus }]
-      }));
+      // Actualizar el estado local inmediatamente
+      setLibrary((prev) => {
+        const oldStatus = game.status;
+        return {
+          ...prev,
+          [oldStatus]: prev[oldStatus].filter((g) => g.slug !== game.slug),
+          [newStatus]: [...prev[newStatus], { ...game, status: newStatus }],
+        };
+      });
+
+      // Actualizar el userProfile en el componente padre
+      await updateUserProfile();
 
       toast.success(`Game moved to ${newStatus}`);
-      setOpenMenu(null); // Cerrar el menú después de mover el juego
+      setOpenMenu(null);
     } catch (error) {
-      console.error("Error moving game:", error);
+      console.error("Unable to move game:", error);
       toast.error("Failed to move game: " + error.message);
     }
   };
@@ -104,14 +111,16 @@ export default function LibraryTab({ userProfile, userId }) {
         throw new Error("User profile or library is missing");
       }
 
-      const updatedLibrary = userProfile.library.filter(g => g.slug !== game.slug);
+      const updatedLibrary = userProfile.library.filter(
+        (g) => g.slug !== game.slug
+      );
 
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, { library: updatedLibrary });
 
-      setLibrary(prev => ({
+      setLibrary((prev) => ({
         ...prev,
-        [game.status]: prev[game.status].filter(g => g.slug !== game.slug)
+        [game.status]: prev[game.status].filter((g) => g.slug !== game.slug),
       }));
 
       toast.success("Game removed from library");
@@ -136,62 +145,22 @@ export default function LibraryTab({ userProfile, userId }) {
             <motion.div
               key={game.slug}
               whileHover={{ scale: 1.05 }}
-              className="bg-gray-800 rounded-lg overflow-hidden shadow-lg relative"
+              className="relative h-64 rounded-lg overflow-hidden shadow-lg"
             >
-              <div className="absolute top-2 right-2 z-10">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setOpenMenu(openMenu === game.slug ? null : game.slug);
-                  }}
-                  className="text-white bg-gray-700 rounded-full p-1"
-                >
-                  <FaEllipsisV />
-                </button>
-                {openMenu === game.slug && (
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg z-20">
-                    {status !== "playing" && (
-                      <button
-                        onClick={() => moveGame(game, "playing")}
-                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
-                      >
-                        Move to Playing
-                      </button>
-                    )}
-                    {status !== "completed" && (
-                      <button
-                        onClick={() => moveGame(game, "completed")}
-                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
-                      >
-                        Move to Completed
-                      </button>
-                    )}
-                    {status !== "toPlay" && (
-                      <button
-                        onClick={() => moveGame(game, "toPlay")}
-                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
-                      >
-                        Move to To Play
-                      </button>
-                    )}
-                    <button
-                      onClick={() => removeGame(game)}
-                      className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-600"
-                    >
-                      Remove from Library
-                    </button>
-                  </div>
-                )}
-              </div>
               <Link href={`/games/${game.slug}`}>
-                <img
-                  src={game.coverImageUrl}
-                  alt={game.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="font-semibold text-lg mb-2">{game.name}</h3>
-                  <div className="flex items-center mb-2">
+                <div className="absolute inset-0">
+                  <img
+                    src={game.coverImageUrl}
+                    alt={game.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent"></div>
+                </div>
+                <div className="absolute inset-0 p-4 flex flex-col justify-end">
+                  <h3 className="font-semibold text-lg mb-2 text-white">
+                    {game.name}
+                  </h3>
+                  <div className="flex items-center">
                     {status === "playing" && (
                       <FaPlayCircle className="text-blue-500 mr-2" />
                     )}
@@ -201,12 +170,57 @@ export default function LibraryTab({ userProfile, userId }) {
                     {status === "toPlay" && (
                       <FaListUl className="text-yellow-500 mr-2" />
                     )}
-                    <span className="capitalize">
+                    <span className="capitalize text-white">
                       {status === "toPlay" ? "To Play" : status}
                     </span>
                   </div>
                 </div>
               </Link>
+              <div className="absolute top-2 right-2 z-10">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setOpenMenu(openMenu === game.slug ? null : game.slug);
+                  }}
+                  className="text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 transition-colors duration-200"
+                >
+                  <FaEllipsisV />
+                </button>
+                {openMenu === game.slug && (
+                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg z-20">
+                    {status !== "playing" && (
+                      <button
+                        onClick={() => moveGame(game, "playing")}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700"
+                      >
+                        Move to Playing
+                      </button>
+                    )}
+                    {status !== "completed" && (
+                      <button
+                        onClick={() => moveGame(game, "completed")}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700"
+                      >
+                        Move to Completed
+                      </button>
+                    )}
+                    {status !== "toPlay" && (
+                      <button
+                        onClick={() => moveGame(game, "toPlay")}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700"
+                      >
+                        Move to To Play
+                      </button>
+                    )}
+                    <button
+                      onClick={() => removeGame(game)}
+                      className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700"
+                    >
+                      Remove from Library
+                    </button>
+                  </div>
+                )}
+              </div>
             </motion.div>
           ))}
         </motion.div>

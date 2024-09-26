@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../../lib/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, getDoc, doc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FaPlus, FaTimes, FaSearch } from "react-icons/fa";
 import { motion } from "framer-motion";
@@ -19,6 +19,7 @@ export default function CreateCollectionPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [allGames, setAllGames] = useState([]);
+  const [username, setUsername] = useState("");
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -37,6 +38,26 @@ export default function CreateCollectionPage() {
     fetchGames();
   }, []);
 
+  useEffect(() => {
+    const fetchUsername = async () => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists()) {
+            setUsername(userDoc.data().username || user.displayName || "Usuario");
+          } else {
+            setUsername(user.displayName || "Usuario");
+          }
+        } catch (error) {
+          console.error("Error fetching username:", error);
+          setUsername(user.displayName || "Usuario");
+        }
+      }
+    };
+
+    fetchUsername();
+  }, [user]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) return;
@@ -44,7 +65,7 @@ export default function CreateCollectionPage() {
     try {
       const docRef = await addDoc(collection(db, "collections"), {
         userId: user.uid,
-        creatorName: user.displayName || user.email,
+        creatorName: username,
         name,
         description,
         games,

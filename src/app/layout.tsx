@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <SessionProvider>
             <ReviewsProvider>
               <main>{children}</main>
-              <ToastContainer />
+              <ToastContainer position="bottom-right" theme="dark" />
             </ReviewsProvider>
           </SessionProvider>
         </AuthProvider>
