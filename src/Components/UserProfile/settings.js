@@ -16,12 +16,13 @@ import { toast } from "react-toastify";
 import AvatarCropper from "../AvatarCropper/AvatarCropper";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { FaUser, FaLock, FaImage, FaCog } from "react-icons/fa";
+import { FaUser, FaLock, FaImage, FaCog, FaCrown } from "react-icons/fa";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { Loader } from "lucide-react";
 import { format, addMonths, isBefore } from "date-fns";
+import { getUsernameStyle } from "../../utils/usernameStyles";
 
-const tabs = ["PROFILE", "SECURITY", "AVATAR"];
+const tabs = ["PROFILE", "SECURITY", "AVATAR", "PRO"];
 
 export default function ProfileSettings() {
   const { user } = useAuth();
@@ -46,6 +47,9 @@ export default function ProfileSettings() {
   const [lastUsernameChange, setLastUsernameChange] = useState(null);
   const [canChangeUsername, setCanChangeUsername] = useState(false);
   const [nextChangeDate, setNextChangeDate] = useState(null);
+  const [nameEffect, setNameEffect] = useState("none");
+  const [nameColor, setNameColor] = useState("#FFFFFF");
+  const [effectIntensity, setEffectIntensity] = useState(1);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -55,13 +59,12 @@ export default function ProfileSettings() {
           if (userDoc.exists()) {
             const data = userDoc.data();
             setUserData(data);
-            setProfilePicture(data.profilePicture || "");
-            setLastUsernameChange(
-              data.lastUsernameChange ? new Date(data.lastUsernameChange) : null
-            );
+            setNameEffect(data.nameEffect || "none");
+            setNameColor(data.nameColor || "#FFFFFF");
+            setEffectIntensity(data.effectIntensity || 1);
           }
         } catch (error) {
-          toast.error("Failed to load user data");
+          toast.error("Error al cargar los datos del usuario");
         } finally {
           setIsLoading(false);
         }
@@ -283,11 +286,12 @@ export default function ProfileSettings() {
                   activeTab === tab
                     ? "border-b-2 border-blue-500"
                     : "text-gray-400"
-                }`}
+                } ${userData.isPro && tab === "PRO" ? "text-gold" : ""}`}
               >
                 {tab === "PROFILE" && <FaUser className="inline mr-2" />}
                 {tab === "SECURITY" && <FaLock className="inline mr-2" />}
                 {tab === "AVATAR" && <FaImage className="inline mr-2" />}
+                {tab === "PRO" && <FaCrown className="inline mr-2" />}
                 {tab}
               </button>
             ))}
@@ -480,6 +484,109 @@ export default function ProfileSettings() {
                   </div>
                 )}
               </div>
+            </motion.div>
+          )}
+
+          {activeTab === "PRO" && (
+            <motion.div
+              className="space-y-6 bg-gray-800 rounded-lg p-6"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h2 className="text-xl font-semibold mb-4">Opciones PRO</h2>
+              {userData.isPro ? (
+                <>
+                  <div>
+                    <label htmlFor="nameEffect" className="block mb-2">
+                      Efecto del nombre de usuario
+                    </label>
+                    <select
+                      id="nameEffect"
+                      value={nameEffect}
+                      onChange={(e) => setNameEffect(e.target.value)}
+                      className="w-full bg-gray-700 rounded px-3 py-2"
+                    >
+                      <option value="none">Ninguno</option>
+                      <option value="glow">Brillo</option>
+                      <option value="shadow">Sombra</option>
+                      <option value="neon">Neón</option>
+                      <option value="outline">Contorno</option>
+                      <option value="retro">Retro</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="nameColor" className="block mb-2">
+                      Color del nombre de usuario
+                    </label>
+                    <input
+                      type="color"
+                      id="nameColor"
+                      value={nameColor}
+                      onChange={(e) => setNameColor(e.target.value)}
+                      className="w-full bg-gray-700 rounded px-3 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="effectIntensity" className="block mb-2">
+                      Intensidad del efecto
+                    </label>
+                    <input
+                      type="range"
+                      id="effectIntensity"
+                      min="0.1"
+                      max="2"
+                      step="0.1"
+                      value={effectIntensity}
+                      onChange={(e) =>
+                        setEffectIntensity(parseFloat(e.target.value))
+                      }
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Vista previa</h3>
+                    <div className="bg-gray-900 p-4 rounded">
+                      <span
+                        style={getUsernameStyle(
+                          nameEffect,
+                          nameColor,
+                          effectIntensity
+                        )}
+                      >
+                        {userData.username}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        await updateDoc(doc(db, "users", user.uid), {
+                          nameEffect,
+                          nameColor,
+                          effectIntensity,
+                        });
+                        toast.success("Opciones PRO actualizadas");
+                      } catch (error) {
+                        toast.error("Error al actualizar las opciones PRO");
+                      }
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition duration-300"
+                  >
+                    Guardar cambios
+                  </button>
+                </>
+              ) : (
+                <p className="text-yellow-500">
+                  Actualiza a PRO para acceder a características exclusivas.
+                  <Link
+                    href="/upgrade"
+                    className="ml-2 text-blue-400 hover:underline"
+                  >
+                    Actualizar a PRO
+                  </Link>
+                </p>
+              )}
             </motion.div>
           )}
         </motion.div>

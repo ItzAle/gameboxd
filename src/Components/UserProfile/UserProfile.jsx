@@ -177,7 +177,11 @@ export default function UserProfile() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        setUserProfile(userData);
+        console.log("Datos del usuario cargados:", userData);
+        setUserProfile({
+          ...userData,
+          username: userData.username || user.displayName || "Usuario",
+        });
         setNameEffect(userData.nameEffect || "");
         setNameColor(userData.nameColor || "");
         setEffectIntensity(userData.effectIntensity || 1);
@@ -204,7 +208,11 @@ export default function UserProfile() {
         }
         setCovers(newCovers);
       } else {
-        setUserProfile({ likedGames: [], reviews: [] });
+        setUserProfile({
+          username: user.displayName || "Usuario",
+          likedGames: [],
+          reviews: [],
+        });
       }
     } catch (error) {}
   }, [user, fetchGameDetails]);
@@ -388,16 +396,20 @@ export default function UserProfile() {
 
   const renderUsername = () => {
     const style = getUsernameStyle(nameEffect, nameColor, effectIntensity);
+    const displayName = userProfile?.username || user?.displayName || "Usuario";
 
     return (
-      <StyledUsername
-        user={{
-          id: user.uid,
-          username: userProfile?.username || user?.displayName || "User",
-        }}
-        style={style}
-        isPro={userProfile?.isPro}
-      />
+      <div className="flex items-center">
+        <StyledUsername
+          user={{
+            id: user?.uid,
+            username: displayName,
+          }}
+          style={style}
+          isPro={userProfile?.isPro}
+        />
+        {userProfile?.isPro && <ProBadge className="ml-2" />}
+      </div>
     );
   };
 
@@ -435,7 +447,7 @@ export default function UserProfile() {
                 size="large"
               />
               <div className="ml-4">
-                <h1 className="text-4xl font-bold">{userProfile.username}</h1>
+                <h1 className="text-4xl font-bold">{renderUsername()}</h1>
                 <div className="mt-2 text-gray-400 flex items-center flex-wrap">
                   {userProfile.pronouns && (
                     <span className="mr-4 flex items-center">

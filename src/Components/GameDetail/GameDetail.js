@@ -740,10 +740,9 @@ export default function GameDetailsPage({ id }) {
                         />
                         <div>
                           <StyledUsername
-                            username={review.username}
-                            userId={review.userId}
-                            nameColor={review.userNameColor}
-                            nameEffect={review.userNameEffect}
+                            user={{ username: review.username }}
+                            style={{ color: review.nameColor }}
+                            isPro={review.isPro}
                           />
                           {review.isPro && <ProBadge />}
                         </div>

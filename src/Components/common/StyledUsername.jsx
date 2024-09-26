@@ -1,18 +1,13 @@
-import Link from 'next/link';
-import { getUsernameStyle } from '../../utils/usernameStyles';
+import Link from "next/link";
+import { getUsernameStyle } from "../../utils/usernameStyles";
 
-const StyledUsername = ({ username, userId, nameColor, nameEffect }) => {
+const StyledUsername = ({ user, style, isPro }) => {
+  if (!user) return null; // o algún contenido por defecto
+
   return (
-    <Link href={`/profile/${userId}`}>
-      <span
-        style={{
-          color: nameColor || 'inherit',
-          ...getUsernameStyle(nameEffect)
-        }}
-      >
-        {username}
-      </span>
-    </Link>
+    <span style={style} className={`font-bold ${isPro ? "text-gold" : ""}`}>
+      {user.username}
+    </span>
   );
 };
 
