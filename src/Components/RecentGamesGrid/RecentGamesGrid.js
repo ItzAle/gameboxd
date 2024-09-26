@@ -18,7 +18,7 @@ export default function RecentGamesGrid({ isEditing }) {
       const currentYear = new Date().getFullYear();
       try {
         const response = await fetch(
-          `https://gbxd-api.vercel.app/api/games/year/${currentYear}`
+          `https://api.gameboxd.me/api/games/upcoming`
         );
         if (!response.ok) {
           throw new Error(

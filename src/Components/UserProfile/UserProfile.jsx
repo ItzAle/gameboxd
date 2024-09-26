@@ -164,7 +164,6 @@ export default function UserProfile() {
         return null;
       }
     } catch (error) {
-      console.error(`Error fetching details for game ${slug}:`, error);
       return null;
     }
   }, []);
@@ -207,9 +206,7 @@ export default function UserProfile() {
       } else {
         setUserProfile({ likedGames: [], reviews: [] });
       }
-    } catch (error) {
-      console.error("Error al obtener el perfil del usuario:", error);
-    }
+    } catch (error) {}
   }, [user, fetchGameDetails]);
 
   const fetchUserReviews = useCallback(async () => {
@@ -226,9 +223,7 @@ export default function UserProfile() {
         ...doc.data(),
       }));
       setUserReviews(reviewsData);
-    } catch (error) {
-      console.error("Error fetching user reviews:", error);
-    }
+    } catch (error) {}
   }, [user]);
 
   useEffect(() => {
@@ -308,7 +303,6 @@ export default function UserProfile() {
       setEditing(false);
       toast.success("Profile updated successfully");
     } catch (error) {
-      console.error("Error updating profile:", error);
       toast.error("Failed to update profile");
     }
   };
@@ -340,7 +334,6 @@ export default function UserProfile() {
       toast.success("Review updated successfully");
       return true;
     } catch (error) {
-      console.error("Error updating review:", error);
       toast.error("Failed to update review");
       return false;
     }
@@ -358,7 +351,6 @@ export default function UserProfile() {
       toast.success("Review deleted successfully");
       return true;
     } catch (error) {
-      console.error("Error deleting review:", error);
       toast.error("Failed to delete review");
       return false;
     }
@@ -390,7 +382,6 @@ export default function UserProfile() {
 
       toast.success("Opciones PRO actualizadas con éxito");
     } catch (error) {
-      console.error("Error al actualizar las opciones PRO:", error);
       toast.error("Error al actualizar las opciones PRO");
     }
   };

@@ -35,8 +35,6 @@ export default function PlatformStats({ userProfile }) {
 
   useEffect(() => {
     const fetchGamesData = async () => {
-      console.log("userProfile recibido en PlatformStats:", userProfile);
-
       if (!userProfile || !userProfile.library) {
         console.error("userProfile o userProfile.library no existe");
         setError("No se encontró información de la biblioteca de juegos.");
@@ -49,7 +47,6 @@ export default function PlatformStats({ userProfile }) {
           (game) => game.status === "playing" || game.status === "completed"
         );
 
-        console.log("Juegos relevantes:", relevantGames);
         setTotalGames(relevantGames.length);
 
         const genreCounts = {};
@@ -73,10 +70,6 @@ export default function PlatformStats({ userProfile }) {
               (publisherCounts[game.publisher] || 0) + 1;
           }
         });
-
-        console.log("Conteo de géneros:", genreCounts);
-        console.log("Conteo de desarrolladores:", developerCounts);
-        console.log("Conteo de editores:", publisherCounts);
 
         const sortAndSlice = (obj) =>
           Object.entries(obj)
