@@ -12,7 +12,11 @@ export default function AddGameModal({ isOpen, onClose, onAddGame }) {
     const fetchGames = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("https://gbxd-api.vercel.app/api/games");
+        const response = await fetch("https://api.gameboxd.me/api/games", {
+          headers: {
+            "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+          },
+        });
         if (!response.ok) throw new Error("Network response was not ok");
         const data = await response.json();
         setAllGames(data);

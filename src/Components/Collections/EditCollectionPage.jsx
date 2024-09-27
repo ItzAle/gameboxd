@@ -42,7 +42,11 @@ export default function EditCollectionPage({ collectionId }) {
 
   const fetchGames = useCallback(async () => {
     try {
-      const response = await fetch("https://gbxd-api.vercel.app/api/games");
+      const response = await fetch("https://api.gameboxd.me/api/games", {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+        },
+      });
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }

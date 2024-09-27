@@ -171,9 +171,11 @@ export default function UserProfile() {
 
   const fetchGameDetails = useCallback(async (slug) => {
     try {
-      const response = await fetch(
-        `https://gbxd-api.vercel.app/api/game/${slug}`
-      );
+      const response = await fetch(`https://api.gameboxd.me/api/game/${slug}`, {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         return data;
@@ -267,7 +269,12 @@ export default function UserProfile() {
           if (game && game.slug && !details[game.slug]) {
             try {
               const response = await fetch(
-                `https://gbxd-api.vercel.app/api/game/${game.slug}`
+                `https://api.gameboxd.me/api/game/${game.slug}`,
+                {
+                  headers: {
+                    "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+                  },
+                }
               );
               if (response.ok) {
                 const data = await response.json();

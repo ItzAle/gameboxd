@@ -22,12 +22,16 @@ export default function Component() {
   const [platforms, setPlatforms] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [gamesPerPage] = useState(12);
-  const apiUrl = "https://gbxd-api.vercel.app/api/games";
+  const apiUrl = "https://api.gameboxd.me/api/games";
 
   const fetchGames = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+        },
+      });
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }

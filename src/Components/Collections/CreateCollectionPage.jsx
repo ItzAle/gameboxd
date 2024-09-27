@@ -24,7 +24,11 @@ export default function CreateCollectionPage() {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const response = await fetch("https://gbxd-api.vercel.app/api/games");
+        const response = await fetch("https://api.gameboxd.me/api/games", {
+          headers: {
+            "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+          },
+        });
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
@@ -44,7 +48,9 @@ export default function CreateCollectionPage() {
         try {
           const userDoc = await getDoc(doc(db, "users", user.uid));
           if (userDoc.exists()) {
-            setUsername(userDoc.data().username || user.displayName || "Usuario");
+            setUsername(
+              userDoc.data().username || user.displayName || "Usuario"
+            );
           } else {
             setUsername(user.displayName || "Usuario");
           }
@@ -91,7 +97,7 @@ export default function CreateCollectionPage() {
   };
 
   const removeHashtag = (tagToRemove) => {
-    setHashtags(hashtags.filter(tag => tag !== tagToRemove));
+    setHashtags(hashtags.filter((tag) => tag !== tagToRemove));
   };
 
   const handleSearch = useCallback(() => {
@@ -122,7 +128,7 @@ export default function CreateCollectionPage() {
   }, [handleSearch]);
 
   const addGame = (game) => {
-    if (!games.some(g => g.id === game.id)) {
+    if (!games.some((g) => g.id === game.id)) {
       setGames([...games, game]);
     }
     setSearchResults([]);
@@ -130,7 +136,7 @@ export default function CreateCollectionPage() {
   };
 
   const removeGame = (gameId) => {
-    setGames(games.filter(game => game.id !== gameId));
+    setGames(games.filter((game) => game.id !== gameId));
   };
 
   return (
@@ -145,7 +151,9 @@ export default function CreateCollectionPage() {
         <h1 className="text-3xl font-bold mb-8">Create New Collection</h1>
         <form onSubmit={handleSubmit} className="max-w-2xl">
           <div className="mb-4">
-            <label htmlFor="name" className="block mb-2">Name</label>
+            <label htmlFor="name" className="block mb-2">
+              Name
+            </label>
             <input
               type="text"
               id="name"
@@ -156,7 +164,9 @@ export default function CreateCollectionPage() {
             />
           </div>
           <div className="mb-4">
-            <label htmlFor="description" className="block mb-2">Description</label>
+            <label htmlFor="description" className="block mb-2">
+              Description
+            </label>
             <textarea
               id="description"
               value={description}
@@ -165,9 +175,11 @@ export default function CreateCollectionPage() {
               rows="4"
             ></textarea>
           </div>
-          
+
           <div className="mb-4">
-            <label htmlFor="hashtags" className="block mb-2">Hashtags</label>
+            <label htmlFor="hashtags" className="block mb-2">
+              Hashtags
+            </label>
             <div className="flex">
               <input
                 type="text"
@@ -187,7 +199,10 @@ export default function CreateCollectionPage() {
             </div>
             <div className="mt-2">
               {hashtags.map((tag, index) => (
-                <span key={index} className="inline-block bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2">
+                <span
+                  key={index}
+                  className="inline-block bg-blue-500 text-white rounded-full px-3 py-1 text-sm font-semibold mr-2 mb-2"
+                >
                   #{tag}
                   <button
                     type="button"
@@ -200,9 +215,11 @@ export default function CreateCollectionPage() {
               ))}
             </div>
           </div>
-          
+
           <div className="mb-4">
-            <label htmlFor="gameSearch" className="block mb-2">Search Games</label>
+            <label htmlFor="gameSearch" className="block mb-2">
+              Search Games
+            </label>
             <div className="flex">
               <input
                 type="text"
@@ -221,13 +238,17 @@ export default function CreateCollectionPage() {
               </button>
             </div>
           </div>
-          
+
           {searchResults.length > 0 && (
             <div className="mb-4">
               <h3 className="text-xl font-semibold mb-2">Search Results</h3>
               <ul className="bg-gray-800 rounded p-2 max-h-60 overflow-y-auto">
-                {searchResults.map(game => (
-                  <li key={game.id} className="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer" onClick={() => addGame(game)}>
+                {searchResults.map((game) => (
+                  <li
+                    key={game.id}
+                    className="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer"
+                    onClick={() => addGame(game)}
+                  >
                     <span>{game.name}</span>
                     <button
                       type="button"
@@ -240,12 +261,15 @@ export default function CreateCollectionPage() {
               </ul>
             </div>
           )}
-          
+
           <div className="mb-4">
             <h3 className="text-xl font-semibold mb-2">Games in Collection</h3>
             <ul className="bg-gray-800 rounded p-2">
-              {games.map(game => (
-                <li key={game.id} className="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer">
+              {games.map((game) => (
+                <li
+                  key={game.id}
+                  className="flex items-center justify-between p-2 hover:bg-gray-700 cursor-pointer"
+                >
                   <span>{game.name}</span>
                   <button
                     type="button"
@@ -258,7 +282,7 @@ export default function CreateCollectionPage() {
               ))}
             </ul>
           </div>
-          
+
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"

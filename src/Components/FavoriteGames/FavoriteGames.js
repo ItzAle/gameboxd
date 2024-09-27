@@ -14,7 +14,7 @@ const FavoriteGames = ({ isEditing }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  const apiUrl = "https://gbxd-api.vercel.app/api/games";
+  const apiUrl = "https://api.gameboxd.me/api/games";
 
   useEffect(() => {
     const fetchFavorites = async () => {
@@ -36,7 +36,11 @@ const FavoriteGames = ({ isEditing }) => {
     }
     setIsLoading(true);
     try {
-      const response = await fetch(`${apiUrl}?search=${searchTerm}`);
+      const response = await fetch(`${apiUrl}?search=${searchTerm}`, {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+        },
+      });
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
@@ -47,7 +51,7 @@ const FavoriteGames = ({ isEditing }) => {
         .filter((game) =>
           game.name.toLowerCase().includes(searchTerm.toLowerCase())
         )
-        .slice(0, 5); 
+        .slice(0, 5);
 
       setSearchResults(filteredGames);
     } catch (error) {
@@ -85,9 +89,7 @@ const FavoriteGames = ({ isEditing }) => {
 
   return (
     <div className="relative p-4 bg-gray-900 rounded-lg shadow">
-      {isEditing && (
-        <div className="absolute inset-0 bg-transparent z-10" />
-      )}
+      {isEditing && <div className="absolute inset-0 bg-transparent z-10" />}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {favorites.map((game) => (
           <div key={game.id} className="relative group">

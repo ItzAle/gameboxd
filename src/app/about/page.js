@@ -27,10 +27,10 @@ export default function About() {
             What sets Gameboxd apart is our integration with a powerful API
             (available at{" "}
             <a
-              href="https://gbxd-api.vercel.app/"
+              href="https://api.gameboxd.me/"
               className="text-blue-400 hover:underline"
             >
-              https://gbxd-api.vercel.app/
+              https://api.gameboxd.me/
             </a>
             ). This API serves as the backbone of our platform, allowing us to
             maintain an extensive and up-to-date database of games. It&apos;s
