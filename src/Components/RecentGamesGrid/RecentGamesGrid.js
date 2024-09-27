@@ -18,7 +18,12 @@ export default function RecentGamesGrid({ isEditing }) {
       const currentYear = new Date().getFullYear();
       try {
         const response = await fetch(
-          `https://api.gameboxd.me/api/games/upcoming`
+          `https://api.gameboxd.me/api/games/upcoming`,
+          {
+            headers: {
+              "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+            },
+          }
         );
         if (!response.ok) {
           throw new Error(
