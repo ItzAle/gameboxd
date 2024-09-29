@@ -2,26 +2,15 @@
 
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
-import "../styles/halloween.css"; // Importa los estilos de Halloween
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { ReviewsProvider } from "../context/ReviewsProvider";
 import { ReactNode } from "react";
 import { AuthProvider } from "../context/AuthContext";
-import { HalloweenProvider, useHalloween } from "../context/HalloweenContext";
+import { HalloweenProvider } from "../context/HalloweenContext";
+import { ChristmasProvider } from "../context/ChristmasContext";
 import Footer from "../Components/Navbar/Footer";
 import { usePathname } from "next/navigation";
-import HalloweenParticles from "../Components/HalloweenParticles";
-
-function HalloweenWrapper({ children }: { children: ReactNode }) {
-  const { isHalloweenMode } = useHalloween();
-
-  return (
-    <div className={isHalloweenMode ? "halloween-mode" : ""}>
-      {children}
-    </div>
-  );
-}
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -34,11 +23,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <SessionProvider>
             <ReviewsProvider>
               <HalloweenProvider>
-                <HalloweenWrapper>
+                <ChristmasProvider>
                   <div className="flex-grow">{children}</div>
                   {!isHomePage && <Footer />}
                   <ToastContainer position="bottom-right" theme="dark" />
-                </HalloweenWrapper>
+                </ChristmasProvider>
               </HalloweenProvider>
             </ReviewsProvider>
           </SessionProvider>

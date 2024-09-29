@@ -1,28 +1,59 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import TransparentNavbar from "../Navbar/TransparentNavbar";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaGamepad, FaSearch, FaStar } from "react-icons/fa";
-import { useMediaQuery } from "react-responsive";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
+import { useHalloween } from "../../context/HalloweenContext";
+import { useChristmas } from "../../context/ChristmasContext";
+import { christmasCoverUrls } from "./ChristmasCoverUrls";
+import { halloweenCoverUrls } from "./HalloweenCoverUrls";
+import { usualCoverUrls } from "./UsualCoversUrl";
+import CustomizableHomePage from "../CustomizableHomePage/CustomizableHomePage";
+import TransparentNavbar from "../Navbar/TransparentNavbar";
+import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
+import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
+import ChristmasGamesGrid from "../RecentGamesGrid/ChristmasGamesGrid";
+import HalloweenGamesGrid from "../RecentGamesGrid/HalloweenGamesGrid";
+import FooterLanding from "../Navbar/FooterLanidng";
+import HalloweenParticles from "../HalloweenParticles";
+import ChristmasParticles from "../ChristmasParticles";
+import ReactConfetti from "react-confetti";
+import { Switch } from "@headlessui/react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+import { FaGamepad, FaSearch, FaStar, FaTimes } from "react-icons/fa";
+import { useMediaQuery } from "react-responsive";
 import ActivityFeed from "../Activity/Activity";
 import RecentGames from "../RecentGames/RecentGames";
 import HomeFeed from "../HomeFeed/HomeFeed";
-import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 import UpcomingGames from "../UpcomingGames/UpcomingGames";
-import RecentGamesGrid from "../RecentGamesGrid/RecentGamesGrid";
-import CustomizableHomePage from "../CustomizableHomePage/CustomizableHomePage";
-import { Switch } from "@headlessui/react";
-import { Loader2 } from "lucide-react";
-import FooterLanding from "../Navbar/FooterLanidng";
-import HalloweenGamesGrid from "../RecentGamesGrid/HalloweenGamesGrid";
-import { usualCoverUrls } from "./UsualCoversUrl";
-import { halloweenCoverUrls } from "./HalloweenCoverUrls";
-import HalloweenParticles from "../HalloweenParticles";
-import Image from "next/image";
+
+const NewYearCelebration = ({ onClose }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+    >
+      <div className="bg-gray-800 p-8 rounded-lg text-center text-white shadow-lg border border-gray-700">
+        <h2 className="text-3xl font-bold mb-4 text-yellow-400">
+          Happy new year!
+        </h2>
+        <p className="mb-6 text-gray-300">
+          From gameboxd we wish you happy new year!
+        </p>
+        <button
+          onClick={onClose}
+          className="bg-yellow-500 text-gray-900 px-6 py-2 rounded-full hover:bg-yellow-400 transition duration-300 font-semibold"
+        >
+          Cerrar
+        </button>
+      </div>
+    </motion.div>
+  );
+};
 
 export default function LandingPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -34,128 +65,113 @@ export default function LandingPage() {
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const { user, isLoading } = useAuth();
   const [isCustomizable, setIsCustomizable] = useState(false);
-  const [isHalloweenSeason, setIsHalloweenSeason] = useState(false);
+  const { isHalloweenMode } = useHalloween();
+  const { isChristmasMode } = useChristmas();
+  const [timeUntilNewYear, setTimeUntilNewYear] = useState("");
+  const [showNewYearCelebration, setShowNewYearCelebration] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [isSimulatingNewYear, setIsSimulatingNewYear] = useState(false);
+  const [useCustomLayout, setUseCustomLayout] = useState(true);
+  const simulationStartTime = useRef(null);
+
+  const coverUrls = isChristmasMode
+    ? christmasCoverUrls
+    : isHalloweenMode
+    ? halloweenCoverUrls
+    : usualCoverUrls;
+
+  useEffect(() => {
+    const fetchUserPreference = async () => {
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          setUseCustomLayout(userData.useCustomLayout !== false);
+        }
+      }
+    };
+    fetchUserPreference();
+  }, [user]);
+
+  const handleLayoutChange = async (newValue) => {
+    setUseCustomLayout(newValue);
+    if (user) {
+      const userRef = doc(db, "users", user.uid);
+      await updateDoc(userRef, { useCustomLayout: newValue });
+    }
+  };
 
   useEffect(() => {
     setIsMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const checkHalloweenSeason = () => {
-      const now = new Date();
-      const month = now.getMonth();
-      const day = now.getDate();
-      return (month === 9 && day >= 1) || (month === 10 && day <= 1);
-    };
-
-    setIsHalloweenSeason(checkHalloweenSeason());
-
-    const interval = setInterval(() => {
-      setIsHalloweenSeason(checkHalloweenSeason());
-    }, 24 * 60 * 60 * 1000); // Comprueba cada 24 horas
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const coverUrls = isHalloweenSeason ? halloweenCoverUrls : usualCoverUrls;
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => (prevIndex + 1) % coverUrls.length);
-    }, 8000);
-
+    }, 5000);
     return () => clearInterval(interval);
-  }, [isHalloweenSeason]);
+  }, [coverUrls.length]);
 
   useEffect(() => {
-    if (isMounted && isMobile) {
-      const featureInterval = setInterval(() => {
-        setCurrentFeatureIndex((prevIndex) => (prevIndex + 1) % 3);
-      }, 5000);
+    const updateNewYearCountdown = () => {
+      const now = new Date();
+      let newYear;
+      let difference;
 
-      return () => clearInterval(featureInterval);
-    }
-  }, [isMounted, isMobile]);
+      if (isSimulatingNewYear) {
+        if (!simulationStartTime.current) {
+          simulationStartTime.current = now.getTime();
+        }
+        const elapsedTime = now.getTime() - simulationStartTime.current;
+        difference = 5000 - elapsedTime; // 5 segundos de simulación
+      } else {
+        newYear = new Date(now.getFullYear() + 1, 0, 1);
+        difference = newYear - now;
+      }
 
-  const features = [
-    {
-      icon: <FaGamepad className="text-4xl mb-4 text-blue-400" />,
-      title: "Extensive Library",
-      description: "Access a vast collection of games across all platforms.",
-    },
-    {
-      icon: <FaStar className="text-4xl mb-4 text-yellow-400" />,
-      title: "Rate and Review",
-      description: "Share your thoughts and see what others are saying.",
-    },
-    {
-      icon: <FaSearch className="text-4xl mb-4 text-green-400" />,
-      title: "Discover New Games",
-      description: "Find your next favorite game.",
-    },
-  ];
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
 
-  const renderFeatures = () => {
-    if (!isMounted) return null;
+        if (isSimulatingNewYear) {
+          setTimeUntilNewYear(`${seconds}s`);
+        } else {
+          setTimeUntilNewYear(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+        }
+      } else {
+        setTimeUntilNewYear("¡Feliz Año Nuevo!");
+        setShowNewYearCelebration(true);
+        if (isSimulatingNewYear) {
+          setIsSimulatingNewYear(false);
+          simulationStartTime.current = null;
+        }
+      }
+    };
 
-    if (isMobile) {
-      return (
-        <div className="relative h-64 overflow-hidden">
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={currentFeatureIndex}
-              className="absolute inset-0 flex items-center justify-center"
-              initial={{ opacity: 0, x: 300 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -300 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="bg-gray-800 p-6 rounded-lg w-full mx-4 flex flex-col items-center justify-center text-center">
-                {features[currentFeatureIndex].icon}
-                <h2 className="text-xl font-semibold mb-2">
-                  {features[currentFeatureIndex].title}
-                </h2>
-                <p>{features[currentFeatureIndex].description}</p>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      );
-    } else {
-      return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-4">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-gray-800 p-6 rounded-lg flex flex-col items-center justify-center text-center h-full"
-            >
-              <div className="mb-4">{feature.icon}</div>
-              <h2 className="text-xl font-semibold mb-2">{feature.title}</h2>
-              <p>{feature.description}</p>
-            </div>
-          ))}
-        </div>
-      );
-    }
+    const countdownInterval = setInterval(updateNewYearCountdown, 1000);
+    return () => clearInterval(countdownInterval);
+  }, [isSimulatingNewYear]);
+
+  const startNewYearSimulation = () => {
+    setIsSimulatingNewYear(true);
+    simulationStartTime.current = null;
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
-    }
+    router.push(`/search?q=${searchTerm}`);
   };
 
-  if (!isMounted) {
-    return null;
-  }
-
-  const coverUrls = isHalloweenSeason ? halloweenCoverUrls : usualCoverUrls;
+  const handleCloseNewYearCelebration = () => {
+    setShowNewYearCelebration(false);
+    setShowConfetti(false);
+  };
 
   return (
-    <div className="flex flex-col min-h-screen relative">
+    <div className="relative min-h-screen bg-gray-900">
       {/* Fondo con animación */}
-      <div className="absolute inset-0 z-0">
-        <AnimatePresence mode="wait">
+      <div className="fixed inset-0 z-0">
+        <AnimatePresence initial={false}>
           <motion.img
             key={currentImageIndex}
             src={coverUrls[currentImageIndex]}
@@ -169,194 +185,119 @@ export default function LandingPage() {
         </AnimatePresence>
       </div>
 
-      {/* Partículas de Halloween */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        {isHalloweenSeason && <HalloweenParticles />}
+      {/* Partículas */}
+      <div className="fixed inset-0 z-10 pointer-events-none">
+        {isHalloweenMode && <HalloweenParticles />}
+        {isChristmasMode && <ChristmasParticles />}
       </div>
+
+      {/* Confetti para Año Nuevo */}
+      {showConfetti && (
+        <div className="fixed inset-0 z-20 pointer-events-none">
+          <ReactConfetti recycle={false} numberOfPieces={200} />
+        </div>
+      )}
 
       {/* Contenido principal */}
-      <div className="relative z-20 flex-grow bg-gray-900 bg-opacity-50">
+      <div
+        className={`relative z-30 flex flex-col min-h-screen ${
+          isChristmasMode
+            ? "christmas-mode"
+            : isHalloweenMode
+            ? "halloween-mode"
+            : ""
+        }`}
+      >
         <TransparentNavbar />
-        {!isLoading && user && !user.isPro && <UpgradeBanner />}
 
-        <div className="container mx-auto px-4">
-          {!isLoading && user ? (
-            typeof user.isPro !== "undefined" ? (
-              user.isPro ? (
-                <>
-                  <div className="flex justify-end items-center mb-4 mt-16">
-                    <span className="mr-2 text-sm">Classic</span>
-                    <Switch
-                      checked={isCustomizable}
-                      onChange={setIsCustomizable}
-                      className={`${
-                        isCustomizable ? "bg-blue-600" : "bg-gray-200"
-                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-                    >
-                      <span
-                        className={`${
-                          isCustomizable ? "translate-x-6" : "translate-x-1"
-                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                      />
-                    </Switch>
-                    <span className="ml-2 text-sm">PRO</span>
-                  </div>
-                  {isCustomizable ? (
-                    <CustomizableHomePage />
-                  ) : (
-                    <AuthenticatedContent
-                      username={
-                        user.displayName ||
-                        user.email?.split("@")[0] ||
-                        "Usuario"
-                      }
-                    />
-                  )}
-                </>
-              ) : (
-                <AuthenticatedContent
-                  username={
-                    user.displayName || user.email?.split("@")[0] || "Usuario"
-                  }
+        <div className="flex justify-end items-center px-4 pt-20">
+          {user && user.isPro && (
+            <div className="flex items-center">
+              <span className="mr-2 text-white">Classic</span>
+              <Switch
+                checked={useCustomLayout}
+                onChange={handleLayoutChange}
+                className={`${
+                  useCustomLayout ? "bg-blue-600" : "bg-gray-200"
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+              >
+                <span
+                  className={`${
+                    useCustomLayout ? "translate-x-6" : "translate-x-1"
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
                 />
-              )
-            ) : (
-              <div>
-                <Loader2 className="animate-spin text-white" />
-              </div>
-            )
-          ) : (
-            <UnauthenticatedContent
-              handleSearch={handleSearch}
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              showSearchBar={showSearchBar}
-              setShowSearchBar={setShowSearchBar}
-              renderFeatures={renderFeatures}
-            />
+              </Switch>
+              <span className="ml-2 text-white">PRO</span>
+            </div>
           )}
         </div>
+
+        <div className="flex justify-end items-center px-4 py-2">
+          <button
+            onClick={startNewYearSimulation}
+            className="bg-green-500 text-white p-2 rounded mr-4 hover:bg-green-600 transition duration-300"
+          >
+            Simular Año Nuevo (5s)
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showNewYearCelebration && (
+            <NewYearCelebration onClose={handleCloseNewYearCelebration} />
+          )}
+        </AnimatePresence>
+
+        {!isLoading && user && !user.isPro && <UpgradeBanner />}
+
+        <div className="flex-grow flex flex-col items-center justify-start text-center pt-16 pb-4">
+          {(isChristmasMode || isSimulatingNewYear) && (
+            <div className="mb-4 text-white text-2xl font-bold">
+              <p>Countdown to New Year: {timeUntilNewYear}</p>
+            </div>
+          )}
+
+          {user && user.isPro && useCustomLayout ? (
+            <CustomizableHomePage />
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="w-full max-w-4xl"
+            >
+              <h2 className="text-2xl font-semibold mb-3 text-white">
+                {isChristmasMode
+                  ? ""
+                  : isHalloweenMode
+                  ? "Halloween Games"
+                  : "Recent Games"}
+              </h2>
+              {isChristmasMode ? (
+                <ChristmasGamesGrid />
+              ) : isHalloweenMode ? (
+                <HalloweenGamesGrid />
+              ) : (
+                <RecentGamesGrid />
+              )}
+            </motion.div>
+          )}
+        </div>
+
+        <FooterLanding />
       </div>
-      <FooterLanding />
+
+      {/* Confetti para Año Nuevo */}
+      {showNewYearCelebration && (
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          <ReactConfetti
+            width={window.innerWidth}
+            height={window.innerHeight}
+            recycle={false}
+            numberOfPieces={2000}
+            gravity={0.1}
+          />
+        </div>
+      )}
     </div>
   );
 }
-
-const UnauthenticatedContent = ({
-  handleSearch,
-  searchTerm,
-  setSearchTerm,
-  showSearchBar,
-  setShowSearchBar,
-  renderFeatures,
-}) => {
-  return (
-    <>
-      <div className="flex flex-col items-center justify-center min-h-screen text-center px-4">
-        <motion.h1
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-6xl font-bold mb-6 text-blue-400"
-        >
-          Welcome to Gameboxd
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-2xl mb-10 max-w-2xl"
-        >
-          Discover, track, and review your favorite games in one place.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="flex flex-wrap justify-center gap-4"
-        >
-          <Link href="/signup">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-blue-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-600 transition flex items-center"
-            >
-              <FaGamepad className="mr-2" /> Get Started
-            </motion.button>
-          </Link>
-          <motion.div className="relative">
-            <AnimatePresence>
-              {showSearchBar && (
-                <motion.form
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "300px" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="absolute top-full left-0 mt-2"
-                  onSubmit={handleSearch}
-                >
-                  <input
-                    type="text"
-                    placeholder="Search games..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </motion.form>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.7 }}
-          className="mt-16 w-full max-w-4xl"
-        >
-          {renderFeatures()}
-        </motion.div>
-      </div>
-    </>
-  );
-};
-
-const AuthenticatedContent = ({ username }) => {
-  const [isHalloweenSeason, setIsHalloweenSeason] = useState(false);
-
-  useEffect(() => {
-    const checkHalloweenSeason = () => {
-      const now = new Date();
-      const month = now.getMonth(); // 0-indexed, so 9 is October
-      const day = now.getDate();
-
-      // Halloween season is from October 1st to November 1st
-      return (month === 9 && day >= 1) || (month === 10 && day <= 1);
-    };
-
-    setIsHalloweenSeason(checkHalloweenSeason());
-
-    // Check every day if it's Halloween season
-    const interval = setInterval(() => {
-      setIsHalloweenSeason(checkHalloweenSeason());
-    }, 24 * 60 * 60 * 1000); // 24 hours
-
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex flex-col items-center justify-start text-center pt-16 pb-4">
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-        className="w-full max-w-4xl"
-      >
-        <h2 className="text-2xl font-semibold mb-3">
-          {isHalloweenSeason ? "" : "Recent Games"}
-        </h2>
-        {isHalloweenSeason ? <HalloweenGamesGrid /> : <RecentGamesGrid />}
-      </motion.div>
-    </div>
-  );
-};

@@ -5,14 +5,19 @@ import { loadFull } from "tsparticles";
 import type { Engine } from "tsparticles-engine";
 import Image from "next/image";
 
-import witchImg from "../public/images/halloween/witch.png";
-import bat2Img from "../public/images/halloween/bat2.png";
-import pumImg from "../public/images/halloween/pum.png";
-import ghostImg from "../public/images/halloween/cartoonghost.png";
+import santaImg from "../public/images/christmas/santa2.png";
+import snowflakeImg from "../public/images/christmas/snowflake.png";
+import giftImg from "../public/images/christmas/gift.png";
+import christmasTreeImg from "../public/images/christmas/christmastree.png";
 
-const ClientHalloweenParticles = () => {
+const ClientChristmasParticles = () => {
   const particlesInit = useCallback(async (engine: Engine) => {
+    console.log("Initializing tsParticles");
     await loadFull(engine);
+  }, []);
+
+  const particlesLoaded = useCallback(async (container: any) => {
+    console.log("Particles loaded", container);
   }, []);
 
   return (
@@ -20,6 +25,7 @@ const ClientHalloweenParticles = () => {
       <Particles
         id="tsparticles"
         init={particlesInit}
+        loaded={particlesLoaded}
         options={{
           background: {
             color: {
@@ -54,12 +60,12 @@ const ClientHalloweenParticles = () => {
               value: "#ffffff",
             },
             move: {
-              direction: "none",
+              direction: "bottom",
               enable: true,
               outModes: {
-                default: "bounce",
+                default: "out",
               },
-              random: true,
+              random: false,
               speed: 2,
               straight: false,
             },
@@ -68,22 +74,22 @@ const ClientHalloweenParticles = () => {
                 enable: true,
                 area: 800,
               },
-              value: 20,
+              value: 80,
             },
             opacity: {
-              value: 0.8,
+              value: 0.7,
             },
             shape: {
               type: "image",
               image: [
-                { src: witchImg.src, width: 32, height: 32 },
-                { src: bat2Img.src, width: 32, height: 32 },
-                { src: pumImg.src, width: 24, height: 24 },
-                { src: ghostImg.src, width: 32, height: 32 },
+                { src: santaImg.src, width: 32, height: 32 },
+                { src: snowflakeImg.src, width: 32, height: 32 },
+                { src: giftImg.src, width: 32, height: 32 },
+                { src: christmasTreeImg.src, width: 32, height: 32 },
               ],
             },
             size: {
-              value: { min: 20, max: 40 },
+              value: { min: 10, max: 30 },
             },
           },
           detectRetina: true,
@@ -92,7 +98,7 @@ const ClientHalloweenParticles = () => {
           },
           fullScreen: {
             enable: false,
-            zIndex: -1,
+            zIndex: 0,
           },
           style: {
             position: "absolute",
@@ -103,13 +109,13 @@ const ClientHalloweenParticles = () => {
       />
       {/* Estas imágenes son necesarias para que Next.js las optimice */}
       <div style={{ display: "none" }}>
-        <Image src={witchImg} alt="witch" />
-        <Image src={bat2Img} alt="bat2" />
-        <Image src={pumImg} alt="pum" />
-        <Image src={ghostImg} alt="ghost" />
+        <Image src={santaImg} alt="santa" />
+        <Image src={snowflakeImg} alt="snowflake" />
+        <Image src={giftImg} alt="gift" />
+        <Image src={christmasTreeImg} alt="christmas-tree" />
       </div>
     </>
   );
 };
 
-export default ClientHalloweenParticles;
+export default ClientChristmasParticles;
