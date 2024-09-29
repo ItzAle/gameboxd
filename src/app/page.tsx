@@ -1,15 +1,23 @@
+"use client";
+
+import { useHalloween } from "../context/HalloweenContext";
+import dynamic from "next/dynamic";
 import LandingPage from "../Components/LandingPage/LandingPage";
 
-export const metadata = {
-  title: "Gameboxd | Track, Rate, and Discover Your Favorite Video Games",
-  description:
-    "Join Gameboxd to log, rate, and review your gaming experiences. Discover new titles, connect with fellow gamers, and build your ultimate game collection.",
-};
+const ClientHalloweenParticles = dynamic(
+  () => import("../Components/ClientHalloweenParticles"),
+  { ssr: false }
+);
 
-export default function Profile() {
+export default function Home() {
+  const { isHalloweenMode } = useHalloween();
+
   return (
-    <div>
-      <LandingPage />
+    <div className="relative">
+      {isHalloweenMode && <ClientHalloweenParticles />}
+      <main>
+        <LandingPage />
+      </main>
     </div>
   );
 }

@@ -1,0 +1,53 @@
+.halloween-mode {
+  background-color: #1a0f0f;
+  color: #ff6600;
+  position: relative;
+  overflow: hidden;
+}
+
+.halloween-mode::after {
+  content: "🎃";
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-size: 40px;
+  animation: float 3s ease-in-out infinite;
+  z-index: 1000;
+}
+
+.halloween-mode::before {
+  content: url("../public/images/halloween/cat.png");
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  font-size: 40px;
+  animation: float 3s ease-in-out infinite;
+  z-index: 1000;
+}
+
+.halloween-mode .navbar {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.halloween-mode .navbar {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.halloween-mode .button {
+  background-color: #ff6600;
+  color: #000000;
+}
+
+/* Añade más estilos específicos de Halloween aquí */

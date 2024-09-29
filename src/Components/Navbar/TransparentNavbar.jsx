@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaGamepad, FaBars, FaTimes, FaChevronDown } from "react-icons/fa";
+import { FaGamepad, FaBars, FaTimes, FaChevronDown, FaSkull } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
 import Image from "next/image";
@@ -13,6 +13,7 @@ import { doc, getDoc } from "firebase/firestore";
 import ProBadge from "../common/ProBadge";
 import { FiActivity } from "react-icons/fi";
 import defaultAvatar from "../../utils/default-image.png";
+import { useHalloween } from '../../context/HalloweenContext';
 
 export default function TransparentNavbar() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function TransparentNavbar() {
   const [userProfile, setUserProfile] = useState(null);
   const router = useRouter();
   const userMenuRef = useRef(null);
+  const { isHalloweenMode, toggleHalloweenMode } = useHalloween();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -115,127 +117,124 @@ export default function TransparentNavbar() {
   );
 
   return (
-    <>
-      <motion.nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
-          isScrolled ? "bg-gray-900/80 backdrop-blur-sm" : "bg-transparent"
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="container mx-auto flex justify-between items-center p-4">
-          <Link
-            href="/"
-            className="text-xl font-bold text-white hover:text-blue-400 transition"
-          >
-            <span className="hidden md:inline">GBXD</span>
-            <span className="md:hidden">GBXD</span>
-          </Link>
+    <motion.nav
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-black/30 backdrop-blur-md"
+          : "bg-transparent backdrop-blur-sm"
+      }`}
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent pointer-events-none"></div>
+      <div className="container mx-auto flex justify-between items-center p-4">
+        <Link
+          href="/"
+          className="text-xl font-bold text-white hover:text-blue-400 transition"
+        >
+          <span className="hidden md:inline">GBXD</span>
+          <span className="md:hidden">GBXD</span>
+        </Link>
 
-          {/* Desktop menu */}
-          <div className="hidden md:flex items-center space-x-4">
-            {userProfile?.isPro && <ProBadge />}
-            {user && (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
+        {/* Desktop menu */}
+        <div className="hidden md:flex items-center space-x-4">
+          {userProfile?.isPro && <ProBadge />}
+          {user && (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
+              >
+                <Image
+                  src={userProfile?.photoURL || defaultAvatar}
+                  alt={userProfile?.displayName || "User"}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+                <span>{userProfile?.displayName || "User"}</span>
+                <FaChevronDown
+                  className={`transition-transform ${
+                    isUserMenuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                  <Link
+                    href="/"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/all"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Games
+                  </Link>
+                  <Link
+                    href="/collections"
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Collections
+                  </Link>
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {navItems.map((item, index) => (
+            <div key={index} className="relative group">
+              {item.icon ? (
+                <Link
+                  href={item.href}
+                  className="flex items-center text-white hover:text-blue-400 transition"
                 >
-                  <Image
-                    src={userProfile?.photoURL || defaultAvatar}
-                    alt={userProfile?.displayName || "User"}
-                    width={32}
-                    height={32}
-                    className="rounded-full"
-                  />
-                  <span>{userProfile?.displayName || "User"}</span>
-
-                  <FaChevronDown
-                    className={`transition-transform ${
-                      isUserMenuOpen ? "rotate-180" : ""
-                    }`}
-                  />
-                </button>
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-                    <Link
-                      href="/"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Home
-                    </Link>
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Profile
-                    </Link>
-                    <Link
-                      href="/all"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Games
-                    </Link>
-                    <Link
-                      href="/collections"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Collections
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-            {navItems.map((item, index) => (
-              <div key={index} className="relative group">
-                {item.icon ? (
-                  <Link
-                    href={item.href}
-                    className="flex items-center text-white hover:text-blue-400 transition"
-                  >
-                    {item.icon}
-                    {item.tooltip && (
-                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                        {item.tooltip}
-                      </span>
-                    )}
-                  </Link>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={`text-white hover:text-blue-400 transition flex items-center ${
-                      item.className || ""
-                    }`}
-                    onClick={item.onClick}
-                  >
-                    {item.text}
-                  </Link>
-                )}
-              </div>
-            ))}
-            {authButton}
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            className="md:hidden text-white focus:outline-none"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {isMobileMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-          </button>
+                  {item.icon}
+                  {item.tooltip && (
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                      {item.tooltip}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  href={item.href}
+                  className={`text-white hover:text-blue-400 transition flex items-center ${
+                    item.className || ""
+                  }`}
+                  onClick={item.onClick}
+                >
+                  {item.text}
+                </Link>
+              )}
+            </div>
+          ))}
+          {authButton}
         </div>
-      </motion.nav>
 
-      {/* Spacer for mobile */}
-      <div className="h-4 md:h-1"></div>
+        {/* Mobile menu button */}
+        <button
+          className="md:hidden text-white focus:outline-none"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+        >
+          {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
+        </button>
+      </div>
 
       {/* Mobile menu */}
       <AnimatePresence>
@@ -268,7 +267,6 @@ export default function TransparentNavbar() {
                   >
                     Profile
                   </Link>
-
                   {navItems.map((item, index) => (
                     <Link
                       key={index}
@@ -308,6 +306,6 @@ export default function TransparentNavbar() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </motion.nav>
   );
 }

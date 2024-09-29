@@ -18,23 +18,14 @@ import CustomizableHomePage from "../CustomizableHomePage/CustomizableHomePage";
 import { Switch } from "@headlessui/react";
 import { Loader2 } from "lucide-react";
 import FooterLanding from "../Navbar/FooterLanidng";
-
-const gameCoverUrls = [
-  "https://imgs.callofduty.com/content/dam/atvi/callofduty/cod-touchui/blackops6/meta/BO6_LP-meta_image.jpg",
-  "https://motionbgs.com/media/184/fenrir-ragnorak-from-god-of-war.jpg",
-  "https://cdn.hobbyconsolas.com/sites/navi.axelspringer.es/public/media/image/2024/03/gta-6-3282307.jpg?tf=3840x",
-  "https://cdn1.epicgames.com/offer/0c40923dd1174a768f732a3b013dcff2/EGS_TheLastofUsPartI_NaughtyDogLLC_S1_2560x1440-3659b5fe340f8fc073257975b20b7f84",
-  "https://i.pinimg.com/originals/95/26/f0/9526f08c1e26dcb4f6b9afd9d76af8ab.png",
-  "https://4kwallpapers.com/images/wallpapers/marvels-spider-man--13276.jpeg",
-  "https://images8.alphacoders.com/131/1316637.jpeg",
-  "https://preview.redd.it/42tt9tc5jsh31.jpg?auto=webp&s=d466a206101d476a6f57568f6bdde95907196a00",
-  "https://wallpapercat.com/w/full/a/f/5/71411-3840x2160-desktop-4k-red-dead-redemption-background-photo.jpg",
-];
+import HalloweenGamesGrid from "../RecentGamesGrid/HalloweenGamesGrid";
+import { usualCoverUrls } from "./UsualCoversUrl";
+import { halloweenCoverUrls } from "./HalloweenCoverUrls";
+import HalloweenParticles from "../HalloweenParticles";
+import Image from "next/image";
 
 export default function LandingPage() {
-  const [currentImageIndex, setCurrentImageIndex] = useState(() =>
-    Math.floor(Math.random() * gameCoverUrls.length)
-  );
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
@@ -43,18 +34,37 @@ export default function LandingPage() {
   const isMobile = useMediaQuery({ maxWidth: 767 });
   const { user, isLoading } = useAuth();
   const [isCustomizable, setIsCustomizable] = useState(false);
+  const [isHalloweenSeason, setIsHalloweenSeason] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
   useEffect(() => {
+    const checkHalloweenSeason = () => {
+      const now = new Date();
+      const month = now.getMonth();
+      const day = now.getDate();
+      return (month === 9 && day >= 1) || (month === 10 && day <= 1);
+    };
+
+    setIsHalloweenSeason(checkHalloweenSeason());
+
     const interval = setInterval(() => {
-      setCurrentImageIndex(Math.floor(Math.random() * gameCoverUrls.length));
-    }, 8000);
+      setIsHalloweenSeason(checkHalloweenSeason());
+    }, 24 * 60 * 60 * 1000); // Comprueba cada 24 horas
 
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    const coverUrls = isHalloweenSeason ? halloweenCoverUrls : usualCoverUrls;
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % coverUrls.length);
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [isHalloweenSeason]);
 
   useEffect(() => {
     if (isMounted && isMobile) {
@@ -139,13 +149,16 @@ export default function LandingPage() {
     return null;
   }
 
+  const coverUrls = isHalloweenSeason ? halloweenCoverUrls : usualCoverUrls;
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen relative">
+      {/* Fondo con animación */}
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.img
             key={currentImageIndex}
-            src={gameCoverUrls[currentImageIndex]}
+            src={coverUrls[currentImageIndex]}
             alt="Game cover"
             className="absolute inset-0 w-full h-full object-cover opacity-20"
             initial={{ opacity: 0 }}
@@ -156,7 +169,13 @@ export default function LandingPage() {
         </AnimatePresence>
       </div>
 
-      <div className="relative z-10 flex-grow bg-gray-900 bg-opacity-50">
+      {/* Partículas de Halloween */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        {isHalloweenSeason && <HalloweenParticles />}
+      </div>
+
+      {/* Contenido principal */}
+      <div className="relative z-20 flex-grow bg-gray-900 bg-opacity-50">
         <TransparentNavbar />
         {!isLoading && user && !user.isPro && <UpgradeBanner />}
 
@@ -303,16 +322,40 @@ const UnauthenticatedContent = ({
 };
 
 const AuthenticatedContent = ({ username }) => {
+  const [isHalloweenSeason, setIsHalloweenSeason] = useState(false);
+
+  useEffect(() => {
+    const checkHalloweenSeason = () => {
+      const now = new Date();
+      const month = now.getMonth(); // 0-indexed, so 9 is October
+      const day = now.getDate();
+
+      // Halloween season is from October 1st to November 1st
+      return (month === 9 && day >= 1) || (month === 10 && day <= 1);
+    };
+
+    setIsHalloweenSeason(checkHalloweenSeason());
+
+    // Check every day if it's Halloween season
+    const interval = setInterval(() => {
+      setIsHalloweenSeason(checkHalloweenSeason());
+    }, 24 * 60 * 60 * 1000); // 24 hours
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-start text-center pt-32 pb-16">
+    <div className="flex flex-col items-center justify-start text-center pt-16 pb-4">
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
         className="w-full max-w-4xl"
       >
-        <h2 className="text-2xl font-semibold mb-3">Upcoming Games</h2>
-        <RecentGamesGrid />
+        <h2 className="text-2xl font-semibold mb-3">
+          {isHalloweenSeason ? "" : "Recent Games"}
+        </h2>
+        {isHalloweenSeason ? <HalloweenGamesGrid /> : <RecentGamesGrid />}
       </motion.div>
     </div>
   );
