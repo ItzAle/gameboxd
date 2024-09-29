@@ -9,7 +9,7 @@ export const ChristmasProvider = ({ children }) => {
   useEffect(() => {
     const checkChristmasSeason = () => {
       const now = new Date();
-      const startDate = new Date(now.getFullYear(), 11, 1); // 1 de noviembre
+      const startDate = new Date(now.getFullYear(), 11, 1); // 1 de diciembre
       const endDate = new Date(now.getFullYear() + 1, 0, 6); // 6 de enero del próximo año
 
       return now >= startDate && now <= endDate;

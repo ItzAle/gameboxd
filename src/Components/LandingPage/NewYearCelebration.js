@@ -15,8 +15,6 @@ const NewYearCelebration = () => {
     if (!hasShownCelebration) {
       setIsVisible(true);
       localStorage.setItem("newYearCelebrationShown", "true");
-
-      // Cerrar la celebración después de 10 segundos
       setTimeout(() => {
         setIsVisible(false);
       }, 10000);

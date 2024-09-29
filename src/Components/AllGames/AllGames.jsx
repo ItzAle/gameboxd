@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Search, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,48 @@ import TransparentNavbar from "../Navbar/TransparentNavbar";
 import "../../utils/global.css";
 import GoogleAdSense from "../Ads/GoogleAdSense";
 
-export default function Component() {
+// Componentes memoizados
+const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
+const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
+
+// Componente de juego memoizado
+const GameCard = React.memo(({ game }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.3 }}
+  >
+    <Link href={`/games/${game.slug}`} className="group">
+      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-gray-800 aspect-[16/9]">
+        {game.coverImageUrl ? (
+          <img
+            src={game.coverImageUrl}
+            alt={`${game.name} cover`}
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full text-gray-500">
+            <Search className="h-12 w-12" />
+          </div>
+        )}
+        <div className="absolute inset-x-0 bottom-0 bg-black bg-opacity-70 p-4">
+          <h2 className="text-lg font-bold text-white line-clamp-1">
+            {game.name}
+          </h2>
+          <div className="mt-1 text-sm text-gray-300">
+            {game.releaseDate && (
+              <p>Released: {new Date(game.releaseDate).toLocaleDateString()}</p>
+            )}
+            <p className="line-clamp-1">Genres: {game.genres?.join(", ")}</p>
+          </div>
+        </div>
+      </div>
+    </Link>
+  </motion.div>
+));
+
+export default function AllGames() {
   const [allGames, setAllGames] = useState([]);
   const [displayedGames, setDisplayedGames] = useState([]);
   const [error, setError] = useState(null);
@@ -36,7 +77,6 @@ export default function Component() {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log("Fetched games:", data);
 
       const sortedGames = data.sort((a, b) => {
         const dateA = new Date(a.releaseDate);
@@ -47,7 +87,6 @@ export default function Component() {
       });
 
       setAllGames(sortedGames);
-      applyFilters(sortedGames);
 
       const uniqueYears = [
         ...new Set(
@@ -74,50 +113,47 @@ export default function Component() {
     }
   }, []);
 
-  const applyFilters = useCallback(
-    (games = allGames) => {
-      let filteredGames = games;
+  const applyFilters = useCallback(() => {
+    let filteredGames = allGames;
 
-      if (searchTerm) {
-        const lowercasedTerm = searchTerm.toLowerCase();
-        filteredGames = filteredGames.filter(
-          (game) =>
-            game.name.toLowerCase().includes(lowercasedTerm) ||
-            (game.genres &&
-              game.genres.some((genre) =>
-                genre.toLowerCase().includes(lowercasedTerm)
-              )) ||
-            (game.platforms &&
-              game.platforms.some((platform) =>
-                platform.toLowerCase().includes(lowercasedTerm)
-              ))
-        );
-      }
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      filteredGames = filteredGames.filter(
+        (game) =>
+          game.name.toLowerCase().includes(lowercasedTerm) ||
+          (game.genres &&
+            game.genres.some((genre) =>
+              genre.toLowerCase().includes(lowercasedTerm)
+            )) ||
+          (game.platforms &&
+            game.platforms.some((platform) =>
+              platform.toLowerCase().includes(lowercasedTerm)
+            ))
+      );
+    }
 
-      if (selectedYear) {
-        filteredGames = filteredGames.filter(
-          (game) =>
-            new Date(game.releaseDate).getFullYear() === parseInt(selectedYear)
-        );
-      }
+    if (selectedYear) {
+      filteredGames = filteredGames.filter(
+        (game) =>
+          new Date(game.releaseDate).getFullYear() === parseInt(selectedYear)
+      );
+    }
 
-      if (selectedGenre) {
-        filteredGames = filteredGames.filter(
-          (game) => game.genres && game.genres.includes(selectedGenre)
-        );
-      }
+    if (selectedGenre) {
+      filteredGames = filteredGames.filter(
+        (game) => game.genres && game.genres.includes(selectedGenre)
+      );
+    }
 
-      if (selectedPlatform) {
-        filteredGames = filteredGames.filter(
-          (game) => game.platforms && game.platforms.includes(selectedPlatform)
-        );
-      }
+    if (selectedPlatform) {
+      filteredGames = filteredGames.filter(
+        (game) => game.platforms && game.platforms.includes(selectedPlatform)
+      );
+    }
 
-      setDisplayedGames(filteredGames);
-      setCurrentPage(1);
-    },
-    [allGames, searchTerm, selectedYear, selectedGenre, selectedPlatform]
-  );
+    setDisplayedGames(filteredGames);
+    setCurrentPage(1);
+  }, [allGames, searchTerm, selectedYear, selectedGenre, selectedPlatform]);
 
   useEffect(() => {
     fetchGames();
@@ -125,40 +161,46 @@ export default function Component() {
 
   useEffect(() => {
     applyFilters();
-  }, [applyFilters, searchTerm, selectedYear, selectedGenre, selectedPlatform]);
+  }, [applyFilters]);
 
-  const indexOfLastGame = currentPage * gamesPerPage;
-  const indexOfFirstGame = indexOfLastGame - gamesPerPage;
-  const currentGames = displayedGames.slice(indexOfFirstGame, indexOfLastGame);
-  const totalPages = Math.ceil(displayedGames.length / gamesPerPage);
+  const currentGames = useMemo(() => {
+    const indexOfLastGame = currentPage * gamesPerPage;
+    const indexOfFirstGame = indexOfLastGame - gamesPerPage;
+    return displayedGames.slice(indexOfFirstGame, indexOfLastGame);
+  }, [currentPage, displayedGames, gamesPerPage]);
 
-  const paginate = (pageNumber) => {
+  const totalPages = useMemo(
+    () => Math.ceil(displayedGames.length / gamesPerPage),
+    [displayedGames, gamesPerPage]
+  );
+
+  const paginate = useCallback((pageNumber) => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, []);
 
-  const handleInputChange = (event) => {
+  const handleInputChange = useCallback((event) => {
     setSearchTerm(event.target.value);
-  };
+  }, []);
 
-  const handleYearChange = (event) => {
+  const handleYearChange = useCallback((event) => {
     setSelectedYear(event.target.value);
-  };
+  }, []);
 
-  const handleGenreChange = (event) => {
+  const handleGenreChange = useCallback((event) => {
     setSelectedGenre(event.target.value);
-  };
+  }, []);
 
-  const handlePlatformChange = (event) => {
+  const handlePlatformChange = useCallback((event) => {
     setSelectedPlatform(event.target.value);
-  };
+  }, []);
 
-  const clearFilters = () => {
+  const clearFilters = useCallback(() => {
     setSearchTerm("");
     setSelectedYear("");
     setSelectedGenre("");
     setSelectedPlatform("");
-  };
+  }, []);
 
   if (error) {
     return (
@@ -172,7 +214,7 @@ export default function Component() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4 md:p-8">
-      <TransparentNavbar />
+      <MemoizedTransparentNavbar />
       <div className="container mx-auto px-4 py-8">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
@@ -260,47 +302,7 @@ export default function Component() {
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
               >
                 {currentGames.map((game) => (
-                  <motion.div
-                    key={game.slug}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Link href={`/games/${game.slug}`} className="group">
-                      <div className="relative overflow-hidden rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-gray-800 aspect-[16/9]">
-                        {game.coverImageUrl ? (
-                          <img
-                            src={game.coverImageUrl}
-                            alt={`${game.name} cover`}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <div className="flex items-center justify-center w-full h-full text-gray-500">
-                            <Search className="h-12 w-12" />
-                          </div>
-                        )}
-                        <div className="absolute inset-x-0 bottom-0 bg-black bg-opacity-70 p-4">
-                          <h2 className="text-lg font-bold text-white line-clamp-1">
-                            {game.name}
-                          </h2>
-                          <div className="mt-1 text-sm text-gray-300">
-                            {game.releaseDate && (
-                              <p>
-                                Released:{" "}
-                                {new Date(
-                                  game.releaseDate
-                                ).toLocaleDateString()}
-                              </p>
-                            )}
-                            <p className="line-clamp-1">
-                              Genres: {game.genres?.join(", ")}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                  </motion.div>
+                  <GameCard key={game.slug} game={game} />
                 ))}
               </motion.div>
             </AnimatePresence>
