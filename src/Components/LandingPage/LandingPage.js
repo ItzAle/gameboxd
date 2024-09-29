@@ -154,7 +154,6 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen bg-gray-900">
-      <NewYearCelebration />
       {/* Fondo con animación */}
       <div className="fixed inset-0 z-0">
         <AnimatePresence initial={false}>

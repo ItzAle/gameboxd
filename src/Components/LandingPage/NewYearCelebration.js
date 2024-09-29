@@ -48,9 +48,9 @@ const NewYearCelebration = () => {
             >
               <FaTimes />
             </button>
-            <h2 className="text-2xl font-bold mb-2">¡Feliz Año Nuevo!</h2>
+            <h2 className="text-2xl font-bold mb-2">Happy new year</h2>
             <p className="text-sm mb-3">
-              Que este año esté lleno de grandes juegos y aventuras
+              We hope that this new year will be full of gaming.
             </p>
           </motion.div>
           <div className="fixed inset-0 z-40 pointer-events-none">
