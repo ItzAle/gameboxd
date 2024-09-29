@@ -249,7 +249,7 @@ export default function LandingPage() {
 
         {!isLoading && user && !user.isPro && <UpgradeBanner />}
 
-        <div className="flex-grow flex flex-col items-center justify-start text-center pt-16 pb-4">
+        <div className="flex-grow flex flex-col items-center justify-start text-center  pb-4">
           {(isChristmasMode || isSimulatingNewYear) && (
             <div className="mb-4 text-white text-2xl font-bold">
               <p>Countdown to New Year: {timeUntilNewYear}</p>
@@ -270,7 +270,7 @@ export default function LandingPage() {
                   ? ""
                   : isHalloweenMode
                   ? "Halloween Games"
-                  : "Recent Games"}
+                  : "Upcoming Games"}
               </h2>
               {isChristmasMode ? (
                 <ChristmasGamesGrid />
