@@ -7,62 +7,63 @@ import {
   doc,
   getDoc,
   updateDoc,
-  deleteDoc,
   collection,
   query,
   where,
   getDocs,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import Modal from "../Modal/Modal";
+import dynamic from "next/dynamic";
 import Bio from "./Bio";
-import LikedGames from "./LikedGames";
 import ProfilePicture from "./ProfilePicture";
-import Reviews from "./Reviews";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useReviews } from "../../context/ReviewsProvider";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
 import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
-import FollowList from "./FollowList";
 import {
   FaEdit,
-  FaStar,
   FaUserFriends,
-  FaGamepad,
-  FaPen,
   FaCog,
   FaMapMarkerAlt,
   FaUserAlt,
+  FaChevronDown,
+  FaChevronUp,
 } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 import ProBadge from "../common/ProBadge";
-import ProOptionsModal from "../ProOptionsModal/ProOptionsModal";
 import StyledUsername from "../common/StyledUsername";
 import { getUsernameStyle } from "../../utils/usernameStyles";
-import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
-import OverviewTab from "./OverviewTab";
-import LibraryTab from "./LibraryTab";
-import ReviewsTab from "./ReviewsTab";
-import CollectionsTab from "./CollectionsTab";
-import FollowingTab from "./FollowingTab";
-import FollowersTab from "./FollowersTab";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+
+// Carga dinámica de componentes
+const Modal = dynamic(() => import("../Modal/Modal"));
+const LikedGames = dynamic(() => import("./LikedGames"));
+const Reviews = dynamic(() => import("./Reviews"));
+const FollowList = dynamic(() => import("./FollowList"));
+const ProOptionsModal = dynamic(() =>
+  import("../ProOptionsModal/ProOptionsModal")
+);
+const UpgradeBanner = dynamic(() => import("../UpgradeBaner/UpgradeBanner"));
+const OverviewTab = dynamic(() => import("./OverviewTab"));
+const LibraryTab = dynamic(() => import("./LibraryTab"));
+const ReviewsTab = dynamic(() => import("./ReviewsTab"));
+const CollectionsTab = dynamic(() => import("./CollectionsTab"));
+const FollowingTab = dynamic(() => import("./FollowingTab"));
+const FollowersTab = dynamic(() => import("./FollowersTab"));
 
 const StarField = ({ count = 100 }) => {
-  const [stars, setStars] = useState([]);
-
-  useEffect(() => {
-    const newStars = Array.from({ length: count }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      size: Math.random() * 2 + 1,
-      opacity: Math.random() * 0.7 + 0.3,
-    }));
-    setStars(newStars);
-  }, [count]);
+  const stars = useMemo(
+    () =>
+      Array.from({ length: count }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.7 + 0.3,
+      })),
+    [count]
+  );
 
   return (
     <div className="fixed inset-0 z-0">
@@ -87,16 +88,12 @@ const detailsVariants = {
   hidden: {
     opacity: 0,
     height: 0,
-    transition: {
-      duration: 0.3,
-    },
+    transition: { duration: 0.3 },
   },
   visible: {
     opacity: 1,
     height: "auto",
-    transition: {
-      duration: 0.3,
-    },
+    transition: { duration: 0.3 },
   },
 };
 
@@ -126,69 +123,33 @@ export default function UserProfile() {
   const [followingCount, setFollowingCount] = useState(0);
   const tabsRef = useRef(null);
   const [showProfileDetails, setShowProfileDetails] = useState(true);
+  const [gameCache, setGameCache] = useState({});
 
-  useEffect(() => {
-    const tabsContainer = tabsRef.current;
-    if (!tabsContainer) return;
-    let isDown = false;
-    let startX;
-    let scrollLeft;
+  const fetchGameDetails = useCallback(
+    async (slug) => {
+      if (gameCache[slug]) return gameCache[slug];
 
-    const handleMouseDown = (e) => {
-      isDown = true;
-      startX = e.pageX - tabsContainer.offsetLeft;
-      scrollLeft = tabsContainer.scrollLeft;
-    };
-
-    const handleMouseLeave = () => {
-      isDown = false;
-    };
-
-    const handleMouseUp = () => {
-      isDown = false;
-    };
-
-    const handleMouseMove = (e) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - tabsContainer.offsetLeft;
-      const walk = (x - startX) * 2;
-      tabsContainer.scrollLeft = scrollLeft - walk;
-    };
-
-    tabsContainer.addEventListener("mousedown", handleMouseDown);
-    tabsContainer.addEventListener("mouseleave", handleMouseLeave);
-    tabsContainer.addEventListener("mouseup", handleMouseUp);
-    tabsContainer.addEventListener("mousemove", handleMouseMove);
-
-    return () => {
-      tabsContainer.removeEventListener("mousedown", handleMouseDown);
-      tabsContainer.removeEventListener("mouseleave", handleMouseLeave);
-      tabsContainer.removeEventListener("mouseup", handleMouseUp);
-      tabsContainer.removeEventListener("mousemove", handleMouseMove);
-    };
-  }, []);
-
-  const fetchGameDetails = useCallback(async (slug) => {
-    try {
-      const response = await fetch(`https://api.gameboxd.me/api/game/${slug}`, {
-        headers: {
-          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        return data;
-      } else {
-        console.error(
-          `Failed to fetch details for game ${slug}: ${response.status}`
+      try {
+        const response = await fetch(
+          `https://api.gameboxd.me/api/game/${slug}`,
+          {
+            headers: {
+              "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+            },
+          }
         );
-        return null;
+        if (response.ok) {
+          const data = await response.json();
+          setGameCache((prev) => ({ ...prev, [slug]: data }));
+          return data;
+        }
+      } catch (error) {
+        console.error(`Error al obtener detalles del juego ${slug}:`, error);
       }
-    } catch (error) {
       return null;
-    }
-  }, []);
+    },
+    [gameCache]
+  );
 
   const fetchUserProfile = useCallback(async () => {
     if (!user) return;
@@ -199,7 +160,6 @@ export default function UserProfile() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
-        console.log("Datos del usuario cargados:", userData);
         setUserProfile({
           ...userData,
           username: userData.username || user.displayName || "Usuario",
@@ -215,16 +175,9 @@ export default function UserProfile() {
         const newCovers = {};
         for (const game of userData.likedGames) {
           if (game && game.slug) {
-            try {
-              const gameData = await fetchGameDetails(game.slug);
-              if (gameData) {
-                newCovers[game.slug] = gameData.coverImageUrl;
-              }
-            } catch (error) {
-              console.error(
-                `Error al obtener la carátula del juego ${game.slug}:`,
-                error
-              );
+            const gameData = await fetchGameDetails(game.slug);
+            if (gameData) {
+              newCovers[game.slug] = gameData.coverImageUrl;
             }
           }
         }
@@ -236,7 +189,9 @@ export default function UserProfile() {
           reviews: [],
         });
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error al cargar el perfil del usuario:", error);
+    }
   }, [user, fetchGameDetails]);
 
   const fetchUserReviews = useCallback(async () => {
@@ -253,7 +208,9 @@ export default function UserProfile() {
         ...doc.data(),
       }));
       setUserReviews(reviewsData);
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error al cargar las reseñas del usuario:", error);
+    }
   }, [user]);
 
   useEffect(() => {
@@ -262,51 +219,13 @@ export default function UserProfile() {
   }, [fetchUserProfile, fetchUserReviews]);
 
   useEffect(() => {
-    const fetchGameDetails = async () => {
-      if (userProfile && userProfile.likedGames) {
-        const details = { ...gameDetails };
-        for (const game of userProfile.likedGames) {
-          if (game && game.slug && !details[game.slug]) {
-            try {
-              const response = await fetch(
-                `https://api.gameboxd.me/api/game/${game.slug}`,
-                {
-                  headers: {
-                    "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-                  },
-                }
-              );
-              if (response.ok) {
-                const data = await response.json();
-                details[game.slug] = data;
-              } else {
-                console.error(
-                  `Failed to fetch details for game ${game.slug}: ${response.status}`
-                );
-              }
-            } catch (error) {
-              console.error(
-                `Error fetching details for game ${game.slug}:`,
-                error
-              );
-            }
-          }
-        }
-        setGameDetails(details);
-      }
-    };
-
-    fetchGameDetails();
-  }, [userProfile]);
-
-  useEffect(() => {
     if (userProfile) {
       setFollowersCount(userProfile.followers?.length || 0);
       setFollowingCount(userProfile.following?.length || 0);
     }
   }, [userProfile]);
 
-  const updateUserProfile = async () => {
+  const updateUserProfile = useCallback(async () => {
     if (user) {
       const userRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userRef);
@@ -314,11 +233,11 @@ export default function UserProfile() {
         setUserProfile(userDoc.data());
       }
     }
-  };
+  }, [user]);
 
   const memoizedGameDetails = useMemo(() => gameDetails, [gameDetails]);
 
-  const handleSaveProfile = async () => {
+  const handleSaveProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -336,21 +255,21 @@ export default function UserProfile() {
       setBio(editingBio);
 
       setEditing(false);
-      toast.success("Profile updated successfully");
+      toast.success("Perfil actualizado con éxito");
     } catch (error) {
-      toast.error("Failed to update profile");
+      toast.error("Error al actualizar el perfil");
     }
-  };
+  }, [user, editingBio, profilePicture]);
 
-  const handleEditProfile = () => {
+  const handleEditProfile = useCallback(() => {
     if (userProfile) {
       setEditingBio(userProfile.bio || "");
       setProfilePicture(userProfile.profilePicture || "");
     }
     setEditing(true);
-  };
+  }, [userProfile]);
 
-  const onEditReview = async (reviewId, newComment, newRating) => {
+  const onEditReview = useCallback(async (reviewId, newComment, newRating) => {
     try {
       const reviewRef = doc(db, "reviews", reviewId);
       await updateDoc(reviewRef, {
@@ -366,15 +285,15 @@ export default function UserProfile() {
         )
       );
 
-      toast.success("Review updated successfully");
+      toast.success("Reseña actualizada con éxito");
       return true;
     } catch (error) {
-      toast.error("Failed to update review");
+      toast.error("Error al actualizar la reseña");
       return false;
     }
-  };
+  }, []);
 
-  const onDeleteReview = async (reviewId) => {
+  const onDeleteReview = useCallback(async (reviewId) => {
     try {
       const reviewRef = doc(db, "reviews", reviewId);
       await deleteDoc(reviewRef);
@@ -383,45 +302,48 @@ export default function UserProfile() {
         prevReviews.filter((review) => review.id !== reviewId)
       );
 
-      toast.success("Review deleted successfully");
+      toast.success("Reseña eliminada con éxito");
       return true;
     } catch (error) {
-      toast.error("Failed to delete review");
+      toast.error("Error al eliminar la reseña");
       return false;
     }
-  };
+  }, []);
 
   const handleShowFollowList = useCallback((type) => {
     setFollowListType(type);
     setShowFollowList(true);
   }, []);
 
-  const handleProOptionsUpdate = async (newOptions) => {
-    try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, {
-        nameEffect: newOptions.nameEffect,
-        nameColor: newOptions.nameColor,
-        effectIntensity: newOptions.effectIntensity,
-      });
+  const handleProOptionsUpdate = useCallback(
+    async (newOptions) => {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, {
+          nameEffect: newOptions.nameEffect,
+          nameColor: newOptions.nameColor,
+          effectIntensity: newOptions.effectIntensity,
+        });
 
-      setNameEffect(newOptions.nameEffect);
-      setNameColor(newOptions.nameColor);
-      setEffectIntensity(newOptions.effectIntensity);
-      setUserProfile((prevProfile) => ({
-        ...prevProfile,
-        nameEffect: newOptions.nameEffect,
-        nameColor: newOptions.nameColor,
-        effectIntensity: newOptions.effectIntensity,
-      }));
+        setNameEffect(newOptions.nameEffect);
+        setNameColor(newOptions.nameColor);
+        setEffectIntensity(newOptions.effectIntensity);
+        setUserProfile((prevProfile) => ({
+          ...prevProfile,
+          nameEffect: newOptions.nameEffect,
+          nameColor: newOptions.nameColor,
+          effectIntensity: newOptions.effectIntensity,
+        }));
 
-      toast.success("Opciones PRO actualizadas con éxito");
-    } catch (error) {
-      toast.error("Error al actualizar las opciones PRO");
-    }
-  };
+        toast.success("Opciones PRO actualizadas con éxito");
+      } catch (error) {
+        toast.error("Error al actualizar las opciones PRO");
+      }
+    },
+    [user]
+  );
 
-  const renderUsername = () => {
+  const renderUsername = useCallback(() => {
     const style = getUsernameStyle(nameEffect, nameColor, effectIntensity);
     const displayName = userProfile?.username || user?.displayName || "Usuario";
 
@@ -438,7 +360,7 @@ export default function UserProfile() {
         {userProfile?.isPro && <ProBadge className="ml-2" />}
       </div>
     );
-  };
+  }, [userProfile, user, nameEffect, nameColor, effectIntensity]);
 
   const memoizedLikedGames = useMemo(
     () => (
@@ -572,6 +494,7 @@ export default function UserProfile() {
           )}
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 }

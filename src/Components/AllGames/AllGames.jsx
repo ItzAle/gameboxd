@@ -49,6 +49,8 @@ const GameCard = React.memo(({ game }) => (
   </motion.div>
 ));
 
+GameCard.displayName = "GameCard";
+
 export default function AllGames() {
   const [allGames, setAllGames] = useState([]);
   const [displayedGames, setDisplayedGames] = useState([]);
