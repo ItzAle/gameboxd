@@ -22,13 +22,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <AuthProvider>
           <SessionProvider>
             <ReviewsProvider>
-              <HalloweenProvider>
-                <ChristmasProvider>
+              <ChristmasProvider>
+                <HalloweenProvider>
                   <div className="flex-grow">{children}</div>
                   {!isHomePage && <Footer />}
                   <ToastContainer position="bottom-right" theme="dark" />
-                </ChristmasProvider>
-              </HalloweenProvider>
+                </HalloweenProvider>
+              </ChristmasProvider>
             </ReviewsProvider>
           </SessionProvider>
         </AuthProvider>

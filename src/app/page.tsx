@@ -10,11 +10,8 @@ const ClientHalloweenParticles = dynamic(
 );
 
 export default function Home() {
-  const { isHalloweenMode } = useHalloween();
-
   return (
     <div className="relative">
-      {isHalloweenMode && <ClientHalloweenParticles />}
       <main>
         <LandingPage />
       </main>

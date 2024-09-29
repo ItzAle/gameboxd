@@ -46,7 +46,7 @@ export default function HalloweenGamesGrid({ isEditing }) {
     };
 
     fetchHalloweenGames();
-  }, []);
+  }, [halloweenGameSlugs.length]);
 
   if (isLoading) {
     return (
@@ -69,16 +69,23 @@ export default function HalloweenGamesGrid({ isEditing }) {
       {isEditing && <div className="absolute inset-0 bg-transparent z-10" />}
       <Box
         sx={{
-          padding: "2rem",
+          padding: "3rem",
           borderRadius: "1rem",
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
           backdropFilter: "blur(10px)",
         }}
       >
-        <Typography variant="h4" component="h2" sx={{ color: "#ff6600", textAlign: "center", marginBottom: "1rem" }}>
+        <Typography
+          variant="h4"
+          component="h2"
+          sx={{ color: "#ff6600", textAlign: "center", marginBottom: "1rem" }}
+        >
           🎃 Halloween is here! 👻
         </Typography>
-        <Typography variant="h6" component="h3" sx={{ color: "#ff9900", textAlign: "center", marginBottom: "2rem" }}>
+        <Typography
+          variant="h6"
+          component="h3"
+          sx={{ color: "#ff9900", textAlign: "center", marginBottom: "2rem" }}
+        >
           Check out our spooky selection of games 🕷️
         </Typography>
         <Box
@@ -134,7 +141,8 @@ export default function HalloweenGamesGrid({ isEditing }) {
                     flexDirection: "column",
                     justifyContent: "flex-end",
                     alignItems: "center",
-                    background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)",
+                    background:
+                      "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)",
                     color: "white",
                     padding: "16px",
                     transition: "all 0.3s ease-in-out",
@@ -156,21 +164,60 @@ export default function HalloweenGamesGrid({ isEditing }) {
                   >
                     {game.name}
                   </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
-                    <FaCalendarAlt style={{ marginRight: "4px", fontSize: "0.8rem", color: "#ff9900" }} />
-                    <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#ff9900" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    <FaCalendarAlt
+                      style={{
+                        marginRight: "4px",
+                        fontSize: "0.8rem",
+                        color: "#ff9900",
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8rem", color: "#ff9900" }}
+                    >
                       {new Date(game.releaseDate).toLocaleDateString()}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", marginBottom: "4px" }}>
-                    <FaCode style={{ marginRight: "4px", fontSize: "0.8rem", color: "#ff9900" }} />
-                    <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#ff9900" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    <FaCode
+                      style={{
+                        marginRight: "4px",
+                        fontSize: "0.8rem",
+                        color: "#ff9900",
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8rem", color: "#ff9900" }}
+                    >
                       {game.developer}
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <FaBuilding style={{ marginRight: "4px", fontSize: "0.8rem", color: "#ff9900" }} />
-                    <Typography variant="body2" sx={{ fontSize: "0.8rem", color: "#ff9900" }}>
+                    <FaBuilding
+                      style={{
+                        marginRight: "4px",
+                        fontSize: "0.8rem",
+                        color: "#ff9900",
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "0.8rem", color: "#ff9900" }}
+                    >
                       {game.publisher}
                     </Typography>
                   </Box>

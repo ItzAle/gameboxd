@@ -1,7 +1,7 @@
-import dynamic from 'next/dynamic';
+import dynamic from "next/dynamic";
 
 const ClientHalloweenParticles = dynamic(
-  () => import('./ClientHalloweenParticles'),
+  () => import("./ClientHalloweenParticles"),
   { ssr: false }
 );
 

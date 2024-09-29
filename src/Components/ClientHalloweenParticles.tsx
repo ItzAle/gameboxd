@@ -12,7 +12,12 @@ import ghostImg from "../public/images/halloween/cartoonghost.png";
 
 const ClientHalloweenParticles = () => {
   const particlesInit = useCallback(async (engine: Engine) => {
+    console.log("Initializing tsParticles");
     await loadFull(engine);
+  }, []);
+
+  const particlesLoaded = useCallback(async (container: any) => {
+    console.log("Particles loaded", container);
   }, []);
 
   return (
@@ -20,6 +25,7 @@ const ClientHalloweenParticles = () => {
       <Particles
         id="tsparticles"
         init={particlesInit}
+        loaded={particlesLoaded}
         options={{
           background: {
             color: {
@@ -54,12 +60,12 @@ const ClientHalloweenParticles = () => {
               value: "#ffffff",
             },
             move: {
-              direction: "none",
+              direction: "bottom",
               enable: true,
               outModes: {
-                default: "bounce",
+                default: "out",
               },
-              random: true,
+              random: false,
               speed: 2,
               straight: false,
             },
@@ -68,31 +74,31 @@ const ClientHalloweenParticles = () => {
                 enable: true,
                 area: 800,
               },
-              value: 20,
+              value: 80,
             },
             opacity: {
-              value: 0.8,
+              value: 0.7,
             },
             shape: {
               type: "image",
               image: [
                 { src: witchImg.src, width: 32, height: 32 },
                 { src: bat2Img.src, width: 32, height: 32 },
-                { src: pumImg.src, width: 24, height: 24 },
+                { src: pumImg.src, width: 32, height: 32 },
                 { src: ghostImg.src, width: 32, height: 32 },
               ],
             },
             size: {
-              value: { min: 20, max: 40 },
+              value: { min: 10, max: 30 },
             },
           },
           detectRetina: true,
           zIndex: {
-            value: 10,
+            value: 50,
           },
           fullScreen: {
             enable: false,
-            zIndex: -1,
+            zIndex: 50,
           },
           style: {
             position: "absolute",
@@ -104,7 +110,7 @@ const ClientHalloweenParticles = () => {
       {/* Estas imágenes son necesarias para que Next.js las optimice */}
       <div style={{ display: "none" }}>
         <Image src={witchImg} alt="witch" />
-        <Image src={bat2Img} alt="bat2" />
+        <Image src={bat2Img} alt="bat" />
         <Image src={pumImg} alt="pum" />
         <Image src={ghostImg} alt="ghost" />
       </div>

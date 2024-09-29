@@ -1,0 +1,46 @@
+@keyframes colorChange {
+  0% {
+    color: #3b82f6;
+  } /* blue-500 */
+  25% {
+    color: #60a5fa;
+  } /* blue-400 */
+  50% {
+    color: #93c5fd;
+  } /* blue-300 */
+  75% {
+    color: #60a5fa;
+  } /* blue-400 */
+  100% {
+    color: #3b82f6;
+  } /* blue-500 */
+}
+
+.animatedText {
+  animation: colorChange 5s infinite;
+}
+
+.animatedButton {
+  background: linear-gradient(
+    45deg,
+    #3b82f6,
+    #60a5fa,
+    #93c5fd,
+    #60a5fa,
+    #3b82f6
+  );
+  background-size: 400% 400%;
+  animation: gradientShift 5s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}

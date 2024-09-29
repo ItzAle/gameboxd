@@ -181,7 +181,7 @@ const CustomizableHomePage = () => {
       onContextMenu={handleContextMenu}
       style={{ paddingTop: "64px", paddingBottom: "100px" }}
     >
-      <div className="absolute top-12 right-0 text-gray-700 opacity-70 px-3 pt-1 rounded-md text-sm font-semibold">
+      <div className="absolute top-12 right-0 text-gray-700 opacity-70 px-3 pt-3 rounded-md text-sm font-semibold">
         Attention: This is a beta version. Some features may not work as
         expected.
       </div>

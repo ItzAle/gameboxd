@@ -1,8 +1,8 @@
 .halloween-mode {
-  background-color: #1a0f0f;
   color: #ff6600;
   position: relative;
   overflow: hidden;
+  z-index: 20;
 }
 
 .halloween-mode::after {

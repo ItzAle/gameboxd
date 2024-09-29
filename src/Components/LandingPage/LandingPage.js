@@ -24,36 +24,12 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { FaGamepad, FaSearch, FaStar, FaTimes } from "react-icons/fa";
 import { useMediaQuery } from "react-responsive";
-import ActivityFeed from "../Activity/Activity";
-import RecentGames from "../RecentGames/RecentGames";
-import HomeFeed from "../HomeFeed/HomeFeed";
-import UpcomingGames from "../UpcomingGames/UpcomingGames";
-
-const NewYearCelebration = ({ onClose }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-    >
-      <div className="bg-gray-800 p-8 rounded-lg text-center text-white shadow-lg border border-gray-700">
-        <h2 className="text-3xl font-bold mb-4 text-yellow-400">
-          Happy new year!
-        </h2>
-        <p className="mb-6 text-gray-300">
-          From gameboxd we wish you happy new year!
-        </p>
-        <button
-          onClick={onClose}
-          className="bg-yellow-500 text-gray-900 px-6 py-2 rounded-full hover:bg-yellow-400 transition duration-300 font-semibold"
-        >
-          Cerrar
-        </button>
-      </div>
-    </motion.div>
-  );
-};
+import Link from "next/link";
+import Image from "next/image";
+import styles from "./LandingPage.module.css";
+import "../../styles/christmas.css";
+import "../../styles/halloween.css";
+import NewYearCelebration from "./NewYearCelebration";
 
 export default function LandingPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -73,6 +49,10 @@ export default function LandingPage() {
   const [isSimulatingNewYear, setIsSimulatingNewYear] = useState(false);
   const [useCustomLayout, setUseCustomLayout] = useState(true);
   const simulationStartTime = useRef(null);
+  const [countdown, setCountdown] = useState(5);
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [isNewYear, setIsNewYear] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const coverUrls = isChristmasMode
     ? christmasCoverUrls
@@ -82,7 +62,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     const fetchUserPreference = async () => {
-      if (user) {
+      if (user && user.isPro) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
@@ -96,7 +76,7 @@ export default function LandingPage() {
 
   const handleLayoutChange = async (newValue) => {
     setUseCustomLayout(newValue);
-    if (user) {
+    if (user && user.isPro) {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { useCustomLayout: newValue });
     }
@@ -111,21 +91,15 @@ export default function LandingPage() {
   }, [coverUrls.length]);
 
   useEffect(() => {
-    const updateNewYearCountdown = () => {
-      const now = new Date();
-      let newYear;
-      let difference;
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
 
-      if (isSimulatingNewYear) {
-        if (!simulationStartTime.current) {
-          simulationStartTime.current = now.getTime();
-        }
-        const elapsedTime = now.getTime() - simulationStartTime.current;
-        difference = 5000 - elapsedTime; // 5 segundos de simulación
-      } else {
-        newYear = new Date(now.getFullYear() + 1, 0, 1);
-        difference = newYear - now;
-      }
+    const hasShownCelebration =
+      localStorage.getItem("newYearCelebrationShown") === "true";
+
+    const calculateCountdown = () => {
+      const now = new Date();
+      const newYear = new Date(now.getFullYear() + 1, 0, 1);
+      const difference = newYear - now;
 
       if (difference > 0) {
         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
@@ -133,42 +107,54 @@ export default function LandingPage() {
         const minutes = Math.floor((difference / 1000 / 60) % 60);
         const seconds = Math.floor((difference / 1000) % 60);
 
-        if (isSimulatingNewYear) {
-          setTimeUntilNewYear(`${seconds}s`);
-        } else {
-          setTimeUntilNewYear(`${days}d ${hours}h ${minutes}m ${seconds}s`);
-        }
+        setTimeUntilNewYear(`${days}d ${hours}h ${minutes}m ${seconds}s`);
       } else {
-        setTimeUntilNewYear("¡Feliz Año Nuevo!");
+        setIsNewYear(true);
+        setTimeUntilNewYear("Happy new year!");
         setShowNewYearCelebration(true);
-        if (isSimulatingNewYear) {
-          setIsSimulatingNewYear(false);
-          simulationStartTime.current = null;
+
+        if (!hasShownCelebration) {
+          setShowCelebration(true);
+          localStorage.setItem("newYearCelebrationShown", "true");
+
+          // Cerrar la celebración después de 10 segundos
+          setTimeout(() => {
+            setShowCelebration(false);
+          }, 10000);
         }
       }
     };
 
-    const countdownInterval = setInterval(updateNewYearCountdown, 1000);
-    return () => clearInterval(countdownInterval);
-  }, [isSimulatingNewYear]);
+    calculateCountdown(); // Llamada inicial
+    const timer = setInterval(calculateCountdown, 1000);
 
-  const startNewYearSimulation = () => {
-    setIsSimulatingNewYear(true);
-    simulationStartTime.current = null;
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    router.push(`/search?q=${searchTerm}`);
-  };
+    return () => clearInterval(timer);
+  }, []);
 
   const handleCloseNewYearCelebration = () => {
     setShowNewYearCelebration(false);
     setShowConfetti(false);
   };
 
+  const startNewYearSimulation = () => {
+    setIsSimulatingNewYear(true);
+    let count = 5;
+    const countdownInterval = setInterval(() => {
+      count--;
+      setCountdown(count);
+      if (count === 0) {
+        clearInterval(countdownInterval);
+        setTimeout(() => {
+          setIsSimulatingNewYear(false);
+          setCountdown(5);
+        }, 3000); // Muestra "¡Feliz Año Nuevo!" durante 3 segundos
+      }
+    }, 1000);
+  };
+
   return (
     <div className="relative min-h-screen bg-gray-900">
+      <NewYearCelebration />
       {/* Fondo con animación */}
       <div className="fixed inset-0 z-0">
         <AnimatePresence initial={false}>
@@ -184,23 +170,20 @@ export default function LandingPage() {
           />
         </AnimatePresence>
       </div>
-
       {/* Partículas */}
-      <div className="fixed inset-0 z-10 pointer-events-none">
-        {isHalloweenMode && <HalloweenParticles />}
+      <div className="fixed inset-0 z-50 pointer-events-none">
         {isChristmasMode && <ChristmasParticles />}
+        {isHalloweenMode && <HalloweenParticles />}
       </div>
-
       {/* Confetti para Año Nuevo */}
       {showConfetti && (
         <div className="fixed inset-0 z-20 pointer-events-none">
           <ReactConfetti recycle={false} numberOfPieces={200} />
         </div>
       )}
-
       {/* Contenido principal */}
       <div
-        className={`relative z-30 flex flex-col min-h-screen ${
+        className={`relative z-40 flex flex-col min-h-screen ${
           isChristmasMode
             ? "christmas-mode"
             : isHalloweenMode
@@ -209,74 +192,152 @@ export default function LandingPage() {
         }`}
       >
         <TransparentNavbar />
-
-        <div className="flex justify-end items-center px-4 pt-20">
-          {user && user.isPro && (
-            <div className="flex items-center">
-              <span className="mr-2 text-white">Classic</span>
-              <Switch
-                checked={useCustomLayout}
-                onChange={handleLayoutChange}
-                className={`${
-                  useCustomLayout ? "bg-blue-600" : "bg-gray-200"
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
-              >
-                <span
-                  className={`${
-                    useCustomLayout ? "translate-x-6" : "translate-x-1"
-                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-                />
-              </Switch>
-              <span className="ml-2 text-white">PRO</span>
-            </div>
-          )}
-        </div>
-
-        <AnimatePresence>
-          {showNewYearCelebration && (
-            <NewYearCelebration onClose={handleCloseNewYearCelebration} />
-          )}
-        </AnimatePresence>
-
-        {!isLoading && user && !user.isPro && <UpgradeBanner />}
-
-        <div className="flex-grow flex flex-col items-center justify-start text-center  pb-4">
-          {(isChristmasMode || isSimulatingNewYear) && (
-            <div className="mb-4 text-white text-2xl font-bold">
-              <p>Countdown to New Year: {timeUntilNewYear}</p>
-            </div>
-          )}
-
-          {user && user.isPro && useCustomLayout ? (
-            <CustomizableHomePage />
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="w-full max-w-4xl"
+        {!isLoading && !user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center py-20 px-4"
+          >
+            <h1
+              className={`text-6xl font-extrabold ${styles.animatedText} mb-8`}
             >
-              <h2 className="text-2xl font-semibold mb-3 text-white">
-                {isChristmasMode
-                  ? ""
-                  : isHalloweenMode
-                  ? "Halloween Games"
-                  : "Upcoming Games"}
-              </h2>
-              {isChristmasMode ? (
-                <ChristmasGamesGrid />
-              ) : isHalloweenMode ? (
-                <HalloweenGamesGrid />
-              ) : (
-                <RecentGamesGrid />
+              Gameboxd
+            </h1>
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Your game diary
+            </h2>
+            <h3 className="text-2xl text-gray-300 mb-8">
+              Log the games you have played.
+              <br />
+              Save the ones you want to play.
+              <br />
+              Tell your friends which ones are good.
+            </h3>
+            <Link
+              href="/signup"
+              className={`${styles.animatedButton} text-white font-bold py-4 px-8 rounded-full text-xl transition duration-300 inline-flex items-center`}
+            >
+              <FaGamepad className="mr-2" />
+              Start now — its free!
+            </Link>
+            <p className="mt-8 text-gray-400">
+              The social network for video game lovers.
+            </p>
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="bg-gray-800 p-6 rounded-lg shadow-lg transform hover:scale-105 transition duration-300">
+                <FaGamepad className="text-4xl text-blue-400 mb-4 mx-auto" />
+                <h4 className="text-xl font-semibold text-white mb-2">
+                  Log the games you have played.
+                </h4>
+                <p className="text-gray-400">
+                  Keep track of all the games you have played and the ones you
+                  want to play. you want to play.
+                </p>
+              </div>
+              <div className="bg-gray-800 p-6 rounded-lg shadow-lg transform hover:scale-105 transition duration-300">
+                <FaSearch className="text-4xl text-blue-500 mb-4 mx-auto" />
+                <h4 className="text-xl font-semibold text-white mb-2">
+                  Discover new games
+                </h4>
+                <p className="text-gray-400">
+                  Find new games based on your tastes and those of your friends.
+                </p>
+              </div>
+              <div className="bg-gray-800 p-6 rounded-lg shadow-lg transform hover:scale-105 transition duration-300">
+                <FaStar className="text-4xl text-blue-300 mb-4 mx-auto" />
+                <h4 className="text-xl font-semibold text-white mb-2">
+                  Share your opinions
+                </h4>
+                <p className="text-gray-400">
+                  Write reviews, rate games and share your thoughts with the
+                  community.
+                </p>
+              </div>
+            </div>
+            {isChristmasMode && (
+              <div className="mt-8">
+                <button
+                  onClick={startNewYearSimulation}
+                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300"
+                  disabled={isSimulatingNewYear}
+                >
+                  {isSimulatingNewYear
+                    ? countdown > 0
+                      ? `${countdown}...`
+                      : "Happy New Year!"
+                    : "Simular Año Nuevo (5s)"}
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {!isLoading && user && (
+          <>
+            {!user.isPro && <UpgradeBanner />}
+            {user.isPro && (
+              <div className="absolute top-20 right-4 z-50">
+                <Switch.Group>
+                  <div className="flex items-center">
+                    <Switch.Label className="mr-4 text-white">
+                      {useCustomLayout ? "PRO" : "Classic"}
+                    </Switch.Label>
+                    <Switch
+                      checked={useCustomLayout}
+                      onChange={handleLayoutChange}
+                      className={`${
+                        useCustomLayout ? "bg-blue-600" : "bg-gray-200"
+                      } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                    >
+                      <span
+                        className={`${
+                          useCustomLayout ? "translate-x-6" : "translate-x-1"
+                        } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                      />
+                    </Switch>
+                  </div>
+                </Switch.Group>
+              </div>
+            )}
+            <div className="flex-grow flex flex-col items-center justify-center text-center pb-4">
+              {(isChristmasMode || isSimulatingNewYear) && (
+                <div className="mb-4 text-white text-2xl font-bold pt-16">
+                  <p>Time left until new year: {timeUntilNewYear}</p>
+                </div>
               )}
-            </motion.div>
-          )}
-        </div>
+
+              {user && user.isPro && useCustomLayout ? (
+                <CustomizableHomePage />
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                  className="w-full max-w-4xl"
+                >
+                  <h2 className="text-2xl font-semibold mb-3 text-white">
+                    {isChristmasMode
+                      ? ""
+                      : isHalloweenMode
+                      ? ""
+                      : "Upcoming Games"}
+                  </h2>
+                  {isChristmasMode ? (
+                    <ChristmasGamesGrid />
+                  ) : isHalloweenMode ? (
+                    <HalloweenGamesGrid />
+                  ) : (
+                    <RecentGamesGrid />
+                  )}
+                </motion.div>
+              )}
+            </div>
+          </>
+        )}
 
         <FooterLanding />
       </div>
-
       {/* Confetti para Año Nuevo */}
       {showNewYearCelebration && (
         <div className="fixed inset-0 z-40 pointer-events-none">
@@ -289,6 +350,44 @@ export default function LandingPage() {
           />
         </div>
       )}
+      {isSimulatingNewYear && countdown === 0 && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <ReactConfetti
+            width={windowSize.width}
+            height={windowSize.height}
+            recycle={false}
+            numberOfPieces={500}
+          />
+        </div>
+      )}
+      {isNewYear && (
+        <>
+          <NewYearCelebration />
+          <div className="fixed inset-0 z-40 pointer-events-none">
+            <ReactConfetti
+              width={windowSize.width}
+              height={windowSize.height}
+              recycle={false}
+              numberOfPieces={500}
+            />
+          </div>
+        </>
+      )}
+      <AnimatePresence>
+        {showCelebration && (
+          <>
+            <NewYearCelebration />
+            <div className="fixed inset-0 z-40 pointer-events-none">
+              <ReactConfetti
+                width={windowSize.width}
+                height={windowSize.height}
+                recycle={false}
+                numberOfPieces={500}
+              />
+            </div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

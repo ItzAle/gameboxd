@@ -69,9 +69,8 @@ export default function ChristmasGamesGrid({ isEditing }) {
       {isEditing && <div className="absolute inset-0 bg-transparent z-10" />}
       <Box
         sx={{
-          padding: "2rem",
+          padding: "1rem",
           borderRadius: "1rem",
-          backgroundColor: "rgba(10, 35, 66, 0.7)",
           backdropFilter: "blur(10px)",
         }}
       >

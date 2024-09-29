@@ -4,18 +4,31 @@ const HalloweenContext = createContext();
 
 export const HalloweenProvider = ({ children }) => {
   const [isHalloweenMode, setIsHalloweenMode] = useState(false);
+  const [isNewYear, setIsNewYear] = useState(false);
 
   useEffect(() => {
     const checkHalloweenSeason = () => {
       const now = new Date();
-      // Cambiamos la fecha de inicio al 29 de septiembre para pruebas
-      const startDate = new Date(now.getFullYear(), 9, 1); // tener en cuenta que enero es 0
-      const endDate = new Date(now.getFullYear() + 11, 1); // 1 de enero del próximo año
+      const startDate = new Date(now.getFullYear(), 9, 1); // 1 de noviembre
+      const endDate = new Date(now.getFullYear(), 10, 1);
 
-      return now >= startDate && now < endDate;
+      return now >= startDate && now <= endDate;
+    };
+
+    const checkNewYear = () => {
+      const now = new Date();
+      return now.getMonth() === 0 && now.getDate() === 1;
     };
 
     setIsHalloweenMode(checkHalloweenSeason());
+    setIsNewYear(checkNewYear());
+
+    const interval = setInterval(() => {
+      setIsHalloweenMode(checkHalloweenSeason());
+      setIsNewYear(checkNewYear());
+    }, 60000); // Comprobar cada minuto
+
+    return () => clearInterval(interval);
   }, []);
 
   const toggleHalloweenMode = () => {
@@ -23,7 +36,9 @@ export const HalloweenProvider = ({ children }) => {
   };
 
   return (
-    <HalloweenContext.Provider value={{ isHalloweenMode, toggleHalloweenMode }}>
+    <HalloweenContext.Provider
+      value={{ isHalloweenMode, toggleHalloweenMode, isNewYear }}
+    >
       {children}
     </HalloweenContext.Provider>
   );

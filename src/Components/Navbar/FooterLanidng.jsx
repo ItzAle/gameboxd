@@ -11,7 +11,7 @@ export default function Footer() {
 
   return (
     <motion.footer
-      className="bg-transparent text-white py-4 backdrop-blur-sm"
+      className="bg-transparent text-white py-12 backdrop-blur-sm"
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
