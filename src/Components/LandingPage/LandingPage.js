@@ -232,15 +232,6 @@ export default function LandingPage() {
           )}
         </div>
 
-        <div className="flex justify-end items-center px-4 py-2">
-          <button
-            onClick={startNewYearSimulation}
-            className="bg-green-500 text-white p-2 rounded mr-4 hover:bg-green-600 transition duration-300"
-          >
-            Simular Año Nuevo (5s)
-          </button>
-        </div>
-
         <AnimatePresence>
           {showNewYearCelebration && (
             <NewYearCelebration onClose={handleCloseNewYearCelebration} />
