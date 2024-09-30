@@ -15,6 +15,7 @@ import {
   FaLayerGroup,
   FaSignOutAlt,
   FaSignInAlt,
+  FaUser,
 } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
@@ -105,6 +106,12 @@ export default function TransparentNavbar() {
   const navItems = [
     { href: "/", text: "Home", icon: <FaHome />, showOnDesktop: false },
     { href: "/all", text: "Games", icon: <FaGamepad />, showOnDesktop: false },
+    {
+      href: "/profile",
+      text: "Profile",
+      icon: <FaUser />,
+      showOnDesktop: false,
+    },
     {
       href: "/activity",
       text: "Activity",
