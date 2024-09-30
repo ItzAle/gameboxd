@@ -337,11 +337,7 @@ export default function LandingPage() {
                   className="w-full max-w-4xl"
                 >
                   <h2 className="text-2xl font-semibold mb-3 text-white">
-                    {isChristmasMode
-                      ? ""
-                      : isHalloweenMode
-                      ? ""
-                      : "Upcoming Games"}
+                    {isChristmasMode ? "" : isHalloweenMode ? "" : ""}
                   </h2>
                   {renderGameGrid}
                 </motion.div>

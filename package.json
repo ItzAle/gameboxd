@@ -53,6 +53,7 @@
     "recharts": "^2.12.7",
     "stripe": "^16.11.0",
     "surprise": "^0.0.4",
+    "swiper": "^11.1.14",
     "tailwindcss": "^3.4.1",
     "tsparticles": "^2.9.3",
     "tsparticles-interaction-external-push": "^2.12.0",

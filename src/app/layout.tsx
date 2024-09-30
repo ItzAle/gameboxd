@@ -11,6 +11,8 @@ import { HalloweenProvider } from "../context/HalloweenContext";
 import { ChristmasProvider } from "../context/ChristmasContext";
 import Footer from "../Components/Navbar/Footer";
 import { usePathname } from "next/navigation";
+import "swiper/css";
+import "swiper/css/pagination";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
