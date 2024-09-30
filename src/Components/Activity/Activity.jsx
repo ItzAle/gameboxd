@@ -265,7 +265,7 @@ export default function Component() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-900">
+      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-black">
         <Loader2 className="animate-spin text-blue-500" />
       </div>
     );
@@ -273,7 +273,7 @@ export default function Component() {
 
   if (error || reviewsError) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
         <div className="bg-red-900 p-6 rounded-lg shadow-lg">
           <h2 className="text-2xl font-bold mb-2">Error</h2>
           <p>{error || reviewsError}</p>
@@ -283,7 +283,7 @@ export default function Component() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <TransparentNavbar />
       <div className="container mx-auto px-4 py-8 mt-24">
         <h1 className="text-4xl font-bold mb-8 text-center text-blue-400">
