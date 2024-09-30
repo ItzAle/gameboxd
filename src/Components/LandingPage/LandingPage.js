@@ -73,6 +73,14 @@ export default function LandingPage() {
     );
   }, [isChristmasMode, isHalloweenMode]);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % coverUrls.length);
+    }, 10000); // Cambia la imagen cada 10 segundos
+
+    return () => clearInterval(interval);
+  }, [coverUrls]);
+
   const fetchUserPreference = useCallback(async () => {
     if (user && user.isPro) {
       const userRef = doc(db, "users", user.uid);

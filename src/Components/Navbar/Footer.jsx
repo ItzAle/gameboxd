@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { FaTwitter, FaInstagram, FaTiktok } from "react-icons/fa";
+import { FaTwitter, FaInstagram, FaTiktok, FaReddit } from "react-icons/fa";
 import { RiThreadsLine } from "react-icons/ri";
 import { useAuth } from "../../context/AuthContext"; // Asegúrate de importar useAuth
 
@@ -91,6 +91,14 @@ export default function Footer() {
               className="text-white hover:text-blue-400 transition"
             >
               <RiThreadsLine size={16} />
+            </a>
+            <a
+              href="https://www.reddit.com/r/gameboxd"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white hover:text-blue-400 transition"
+            >
+              <FaReddit size={16} />
             </a>
           </div>
         </div>
