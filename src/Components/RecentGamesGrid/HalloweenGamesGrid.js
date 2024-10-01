@@ -1,17 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Card, CardMedia, Typography, Box } from "@mui/material";
-import { FaCalendarAlt, FaCode, FaBuilding } from "react-icons/fa";
+import { Typography, Box, useMediaQuery, useTheme } from "@mui/material";
+import {
+  FaCalendarAlt,
+  FaCode,
+  FaBuilding,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import CircularProgress from "@mui/material/CircularProgress";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { motion } from "framer-motion";
+import { Card, CardMedia } from "@mui/material";
+
+import "swiper/css";
+import "swiper/css/pagination";
 
 export default function HalloweenGamesGrid({ isEditing }) {
   const [halloweenGames, setHalloweenGames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const swiperRef = useRef(null);
 
-  // Lista de slugs de juegos de Halloween
   const halloweenGameSlugs = [
     "resident-evil-village",
     "phasmophobia",
@@ -46,7 +61,195 @@ export default function HalloweenGamesGrid({ isEditing }) {
     };
 
     fetchHalloweenGames();
-  }, [halloweenGameSlugs.length]);
+  }, []);
+
+  const handlePrev = (e) => {
+    e.preventDefault();
+    if (swiperRef.current && swiperRef.current.swiper) {
+      swiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleNext = (e) => {
+    e.preventDefault();
+    if (swiperRef.current && swiperRef.current.swiper) {
+      swiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const MobileGameCard = ({ game }) => (
+    <Card
+      sx={{
+        height: "350px",
+        position: "relative",
+        overflow: "hidden",
+        boxShadow: "0 4px 8px rgba(255,102,0,0.3)",
+        transition: "box-shadow 0.3s ease-in-out",
+        "&:hover": {
+          boxShadow: "0 8px 16px rgba(255,102,0,0.5)",
+        },
+        border: "1px solid rgba(255, 102, 0, 0.3)",
+        borderRadius: "12px",
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <CardMedia
+        component="img"
+        image={game.coverImageUrl}
+        alt={game.name}
+        sx={{
+          width: "100%",
+          height: "70%",
+          objectFit: "cover",
+        }}
+      />
+      <Box
+        sx={{
+          padding: "16px",
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
+      >
+        <Typography
+          variant="h6"
+          component="div"
+          sx={{
+            fontSize: "1rem",
+            fontWeight: "bold",
+            color: "#ff6600",
+            marginBottom: "4px",
+          }}
+        >
+          {game.name}
+        </Typography>
+        <Box
+          sx={{ display: "flex", alignItems: "center", marginBottom: "4px" }}
+        >
+          <FaCalendarAlt
+            style={{ marginRight: "4px", fontSize: "0.8rem", color: "#ff9900" }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "0.8rem", color: "#ff9900" }}
+          >
+            {new Date(game.releaseDate).toLocaleDateString()}
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <FaCode
+            style={{ marginRight: "4px", fontSize: "0.8rem", color: "#ff9900" }}
+          />
+          <Typography
+            variant="body2"
+            sx={{ fontSize: "0.8rem", color: "#ff9900" }}
+          >
+            {game.developer}
+          </Typography>
+        </Box>
+      </Box>
+    </Card>
+  );
+
+  const HalloweenGameSlide = ({ game }) => (
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        height: "520px",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: "20px",
+        boxShadow: "0 4px 10px rgba(255,102,0,0.5)",
+      }}
+    >
+      <Box
+        sx={{
+          width: "100%",
+          height: "420px",
+          backgroundImage: `url(${game.coverImageUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <Box
+        sx={{
+          width: "100%",
+          height: "100px",
+          padding: "1rem",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          backgroundColor: "rgba(0, 0, 0, 0.8)",
+        }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Typography
+            variant="h4"
+            component="h2"
+            sx={{ color: "#ff6600", marginBottom: "0.5rem" }}
+          >
+            {game.name}
+          </Typography>
+        </motion.div>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <FaCalendarAlt
+                style={{ color: "#ff9900", marginRight: "0.5rem" }}
+              />
+              <Typography variant="body1" sx={{ color: "#ff9900" }}>
+                {new Date(game.releaseDate).toLocaleDateString()}
+              </Typography>
+            </Box>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <FaCode style={{ color: "#ff9900", marginRight: "0.5rem" }} />
+              <Typography variant="body1" sx={{ color: "#ff9900" }}>
+                {game.developer}
+              </Typography>
+            </Box>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <FaBuilding style={{ color: "#ff9900", marginRight: "0.5rem" }} />
+              <Typography variant="body1" sx={{ color: "#ff9900" }}>
+                {game.publisher}
+              </Typography>
+            </Box>
+          </motion.div>
+        </Box>
+      </Box>
+    </Box>
+  );
 
   if (isLoading) {
     return (
@@ -65,168 +268,111 @@ export default function HalloweenGamesGrid({ isEditing }) {
   }
 
   return (
-    <div className="relative">
+    <div className="relative pt-12">
       {isEditing && <div className="absolute inset-0 bg-transparent z-10" />}
-      <Box
-        sx={{
-          padding: "3rem",
-          borderRadius: "1rem",
-          backdropFilter: "blur(10px)",
-        }}
+      <Typography
+        variant="h4"
+        component="h2"
+        sx={{ color: "#ff6600", marginBottom: "1rem", textAlign: "center" }}
       >
-        <Typography
-          variant="h4"
-          component="h2"
-          sx={{ color: "#ff6600", textAlign: "center", marginBottom: "1rem" }}
-        >
-          🎃 Halloween is here! 👻
-        </Typography>
-        <Typography
-          variant="h6"
-          component="h3"
-          sx={{ color: "#ff9900", textAlign: "center", marginBottom: "2rem" }}
-        >
-          Check out our spooky selection of games 🕷️
-        </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 3,
-          }}
-        >
-          {halloweenGames.map((game) => (
-            <Link
-              href={`/games/${game.slug}`}
-              key={game.slug}
-              style={{ textDecoration: "none" }}
-            >
-              <Card
-                sx={{
-                  height: "300px",
-                  position: "relative",
-                  overflow: "hidden",
-                  boxShadow: "0 4px 8px rgba(255,102,0,0.3)",
-                  transition: "all 0.3s ease-in-out",
-                  "&:hover": {
-                    boxShadow: "0 8px 16px rgba(255,102,0,0.5)",
-                  },
-                  border: "2px solid #ff6600",
-                  borderRadius: "12px",
-                  backgroundColor: "rgba(0, 0, 0, 0.8)",
-                }}
-              >
-                <CardMedia
-                  component="img"
-                  image={game.coverImageUrl}
-                  alt={game.name}
-                  sx={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    transition: "all 0.3s ease-in-out",
-                    ".MuiCard-root:hover &": {
-                      transform: "scale(1.05)",
-                    },
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "flex-end",
-                    alignItems: "center",
-                    background:
-                      "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)",
-                    color: "white",
-                    padding: "16px",
-                    transition: "all 0.3s ease-in-out",
-                    opacity: 0,
-                    ".MuiCard-root:hover &": {
-                      opacity: 1,
-                    },
-                  }}
+        🎃 Halloween is here! 👻
+      </Typography>
+      <Typography
+        variant="h6"
+        component="h3"
+        sx={{ color: "#ff9900", textAlign: "center", marginBottom: "2rem" }}
+      >
+        Check out our spooky selection of games 🕷️
+      </Typography>
+      {isMobile ? (
+        <Box sx={{ padding: "16px" }}>
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            spaceBetween={16}
+            slidesPerView={1}
+            autoplay={{
+              delay: 10000,
+              disableOnInteraction: false,
+            }}
+            pagination={{ clickable: true }}
+          >
+            {halloweenGames.map((game) => (
+              <SwiperSlide key={game.slug}>
+                <Link
+                  href={`/games/${game.slug}`}
+                  style={{ textDecoration: "none" }}
                 >
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    sx={{
-                      marginBottom: "8px",
-                      textAlign: "center",
-                      fontSize: "1rem",
-                      color: "#ff6600",
-                    }}
-                  >
-                    {game.name}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    <FaCalendarAlt
-                      style={{
-                        marginRight: "4px",
-                        fontSize: "0.8rem",
-                        color: "#ff9900",
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: "0.8rem", color: "#ff9900" }}
-                    >
-                      {new Date(game.releaseDate).toLocaleDateString()}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    <FaCode
-                      style={{
-                        marginRight: "4px",
-                        fontSize: "0.8rem",
-                        color: "#ff9900",
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: "0.8rem", color: "#ff9900" }}
-                    >
-                      {game.developer}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <FaBuilding
-                      style={{
-                        marginRight: "4px",
-                        fontSize: "0.8rem",
-                        color: "#ff9900",
-                      }}
-                    />
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: "0.8rem", color: "#ff9900" }}
-                    >
-                      {game.publisher}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Card>
-            </Link>
-          ))}
+                  <MobileGameCard game={game} />
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </Box>
-      </Box>
+      ) : (
+        <Box sx={{ padding: "16px", position: "relative" }}>
+          <Box sx={{ position: "relative" }}>
+            <Swiper
+              ref={swiperRef}
+              modules={[Autoplay, Pagination, Navigation]}
+              spaceBetween={30}
+              slidesPerView={1}
+              autoplay={{
+                delay: 10000,
+                disableOnInteraction: false,
+              }}
+              pagination={{
+                clickable: true,
+                el: ".swiper-pagination",
+                bulletClass: "swiper-pagination-bullet",
+                bulletActiveClass: "swiper-pagination-bullet-active",
+              }}
+              style={{ height: "560px", borderRadius: "20px" }}
+            >
+              {halloweenGames.map((game) => (
+                <SwiperSlide key={game.slug}>
+                  <Link
+                    href={`/games/${game.slug}`}
+                    style={{ textDecoration: "none" }}
+                  >
+                    <HalloweenGameSlide game={game} />
+                  </Link>
+                </SwiperSlide>
+              ))}
+            </Swiper>
+            <Box
+              onClick={handlePrev}
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "-50px",
+                transform: "translateY(-50%)",
+                color: "#ff6600",
+                fontSize: "2rem",
+                cursor: "pointer",
+                zIndex: 2,
+              }}
+            >
+              <FaChevronLeft />
+            </Box>
+            <Box
+              onClick={handleNext}
+              sx={{
+                position: "absolute",
+                top: "50%",
+                right: "-50px",
+                transform: "translateY(-50%)",
+                color: "#ff6600",
+                fontSize: "2rem",
+                cursor: "pointer",
+                zIndex: 2,
+              }}
+            >
+              <FaChevronRight />
+            </Box>
+          </Box>
+          <div className="swiper-pagination"></div>
+        </Box>
+      )}
     </div>
   );
 }
