@@ -266,7 +266,7 @@ export default function Component() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-black">
-        <Loader2 className="animate-spin text-blue-500" />
+        <Loader2 className="animate-spin text-white" />
       </div>
     );
   }

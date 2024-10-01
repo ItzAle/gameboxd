@@ -16,6 +16,7 @@ import {
   FaSignOutAlt,
   FaSignInAlt,
   FaUser,
+  FaSearch,
 } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
@@ -36,6 +37,8 @@ export default function TransparentNavbar() {
   const router = useRouter();
   const userMenuRef = useRef(null);
   const { isHalloweenMode, toggleHalloweenMode } = useHalloween();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -100,6 +103,15 @@ export default function TransparentNavbar() {
       setIsUserMenuHovered(false);
     } catch (error) {
       console.error("Error signing out: ", error);
+    }
+  };
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchTerm)}`);
+      setIsSearchOpen(false);
+      setSearchTerm("");
     }
   };
 
@@ -214,6 +226,33 @@ export default function TransparentNavbar() {
               Sign In
             </Link>
           )}
+          <AnimatePresence>
+            {isSearchOpen && (
+              <motion.form
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: "300px", opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                onSubmit={handleSearch}
+                className="relative"
+              >
+                <input
+                  type="text"
+                  placeholder="Search games, users or collections..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none"
+                />
+              </motion.form>
+            )}
+          </AnimatePresence>
+          <button
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            className="text-white hover:text-blue-400 transition"
+            aria-label="Toggle search"
+          >
+            <FaSearch />
+          </button>
         </div>
 
         {/* Mobile menu button */}
@@ -284,6 +323,15 @@ export default function TransparentNavbar() {
                   <span>Sign In</span>
                 </Link>
               )}
+              <form onSubmit={handleSearch} className="mb-4">
+                <input
+                  type="text"
+                  placeholder="Search games, users or collections..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none"
+                />
+              </form>
             </div>
           </motion.div>
         )}
