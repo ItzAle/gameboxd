@@ -48,6 +48,9 @@ import StyledUsername from "../common/StyledUsername";
 import Image from "next/image";
 import AddReviewModal from "../AddReviewModal/AddReviewModal";
 import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
+import { useHalloween } from "../../context/HalloweenContext";
+import HalloweenParticles from "../HalloweenParticles";
+import "../../styles/halloween.css";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
@@ -95,7 +98,9 @@ const ReviewCard = React.memo(
             {[...Array(5)].map((_, i) => (
               <FaStar
                 key={i}
-                className={i < review.rating ? "text-yellow-400" : "text-gray-400"}
+                className={
+                  i < review.rating ? "text-yellow-400" : "text-gray-400"
+                }
               />
             ))}
           </div>
@@ -220,6 +225,7 @@ export default function GameDetailsPage({ id }) {
   const [showComments, setShowComments] = useState({});
   const [editingComment, setEditingComment] = useState(null);
   const [showGameDetails, setShowGameDetails] = useState(true);
+  const { isHalloweenMode } = useHalloween();
 
   const detailsVariants = useMemo(
     () => ({
@@ -589,6 +595,31 @@ export default function GameDetailsPage({ id }) {
     fetchGameDetails();
   }, [id, user]);
 
+  const isHorrorGame = game && game.genres && game.genres.includes("Horror");
+
+  const halloweenOverlayStyle =
+    isHalloweenMode && isHorrorGame
+      ? {
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          pointerEvents: "none",
+          zIndex: 1,
+        }
+      : {};
+
+  const containerClass = `min-h-screen bg-gray-900 text-white relative ${
+    isHalloweenMode && isHorrorGame ? "halloween-mode" : ""
+  }`;
+
+  const halloweenClass =
+    isHalloweenMode && isHorrorGame ? "halloween-text" : "";
+  const halloweenClassLight =
+    isHalloweenMode && isHorrorGame ? "halloween-text-light" : "";
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
@@ -603,253 +634,266 @@ export default function GameDetailsPage({ id }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4 md:p-8"
+      exit={{ opacity: 0 }}
+      className={containerClass}
     >
-      <MemoizedTransparentNavbar />
-      {isLoading ? (
-        <div className="flex justify-center items-center h-screen">
-          <Loader2 className="animate-spin text-white" />
-        </div>
-      ) : game ? (
-        <div className="max-w-7xl mx-auto mt-24">
-          <div className="flex flex-col lg:flex-row gap-8">
-            <div className="lg:w-1/3">
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <h1 className="text-4xl font-bold mb-4 text-blue-300">
-                  {game.name}
-                </h1>
-                <img
-                  src={game.coverImageUrl}
-                  alt={`${game.name} cover`}
-                  className="w-full rounded-lg shadow-lg mb-4"
-                />
-                <p className="text-gray-300 mb-4">
-                  Release date:{" "}
-                  {game.releaseDate
-                    ? new Date(game.releaseDate).toLocaleDateString()
-                    : "No release date available"}
-                </p>
-                <div className="flex justify-between mb-4">
-                  <button
-                    onClick={handleLikeClick}
-                    className={`flex items-center justify-center px-4 py-2 rounded-full ${
-                      isFavorite
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-gray-700 hover:bg-gray-600"
-                    } transition duration-300`}
-                  >
-                    {isFavorite ? <FaHeart /> : <FaRegHeart />}
-                    <span className="ml-2">
-                      {isFavorite ? "Favorite" : "Add to favorites"}
-                    </span>
-                  </button>
-                </div>
-                <div className="grid grid-cols-3 gap-2 mb-4">
-                  <button
-                    onClick={() => handleAddToLibrary("playing")}
-                    className={`flex flex-col items-center justify-center p-2 rounded ${
-                      libraryStatus === "playing"
-                        ? "bg-blue-500 hover:bg-blue-600"
-                        : "bg-gray-700 hover:bg-gray-600"
-                    } transition duration-300`}
-                  >
-                    <FaPlayCircle className="text-2xl mb-1" />
-                    <span className="text-xs">Playing</span>
-                  </button>
-                  <button
-                    onClick={() => handleAddToLibrary("completed")}
-                    className={`flex flex-col items-center justify-center p-2 rounded ${
-                      libraryStatus === "completed"
-                        ? "bg-green-500 hover:bg-green-600"
-                        : "bg-gray-700 hover:bg-gray-600"
-                    } transition duration-300`}
-                  >
-                    <FaCheckCircle className="text-2xl mb-1" />
-                    <span className="text-xs">Completed</span>
-                  </button>
-                  <button
-                    onClick={() => handleAddToLibrary("toPlay")}
-                    className={`flex flex-col items-center justify-center p-2 rounded ${
-                      libraryStatus === "toPlay"
-                        ? "bg-yellow-500 hover:bg-yellow-600"
-                        : "bg-gray-700 hover:bg-gray-600"
-                    } transition duration-300`}
-                  >
-                    <FaListUl className="text-2xl mb-1" />
-                    <span className="text-xs">To play</span>
-                  </button>
-                </div>
-                {game.storeLinks &&
-                  Object.entries(game.storeLinks).filter(
-                    ([store, link]) => link
-                  ).length > 0 && (
-                    <div className="grid grid-cols-2 gap-2 mt-4">
-                      {Object.entries(game.storeLinks)
-                        .filter(([store, link]) => link)
-                        .map(([store, link]) => {
-                          let Icon;
-                          let storeName = store;
-                          switch (store.toLowerCase()) {
-                            case "steam":
-                              Icon = FaSteam;
-                              storeName = "Steam";
-                              break;
-                            case "playstation":
-                              Icon = FaPlaystation;
-                              storeName = "PlayStation";
-                              break;
-                            case "xbox":
-                              Icon = FaXbox;
-                              storeName = "Xbox";
-                              break;
-                            case "nintendo":
-                              Icon = FaGamepad;
-                              storeName = "Nintendo";
-                              break;
-                            case "epicgames":
-                              Icon = FaDesktop;
-                              storeName = "Epic Games";
-                              break;
-                            default:
-                              Icon = FaGamepad;
-                          }
-                          return (
-                            <a
-                              key={store}
-                              href={link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center justify-center"
-                            >
-                              <Icon className="mr-2" /> {storeName}
-                            </a>
-                          );
-                        })}
-                    </div>
-                  )}
-              </motion.div>
-            </div>
+      {isHalloweenMode && isHorrorGame && (
+        <>
+          <div style={halloweenOverlayStyle}></div>
+          <HalloweenParticles />
+        </>
+      )}
 
-            <div className="lg:w-2/3">
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-gray-800 rounded-lg p-6 mb-8"
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-2xl font-semibold">Game Details</h2>
-                  <button
-                    onClick={() => setShowGameDetails(!showGameDetails)}
-                    className="flex items-center justify-center w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition duration-300"
-                  >
-                    {showGameDetails ? <FaChevronUp /> : <FaChevronDown />}
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {showGameDetails && (
-                    <motion.div
-                      variants={detailsVariants}
-                      initial="hidden"
-                      animate="visible"
-                      exit="hidden"
-                    >
-                      <div className="mb-6">
-                        <h3 className="text-xl font-semibold mb-2">
-                          Description
-                        </h3>
-                        <p className="text-gray-300">{game.description}</p>
-                      </div>
-
-                      <div className="mb-6 flex flex-wrap">
-                        <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
-                          <h3 className="text-xl font-semibold mb-2">
-                            Platforms
-                          </h3>
-                          <div className="flex flex-wrap gap-2">
-                            {game.platforms &&
-                              game.platforms.map((platform, index) => (
-                                <span
-                                  key={index}
-                                  className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                >
-                                  {platform}
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                        <div className="w-full sm:w-1/2 pl-2">
-                          <h3 className="text-xl font-semibold mb-2">Genres</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {game.genres &&
-                              game.genres.map((genre, index) => (
-                                <span
-                                  key={index}
-                                  className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                >
-                                  {genre}
-                                </span>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap">
-                        <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
-                          <h3 className="text-xl font-semibold mb-2">
-                            Developer
-                          </h3>
-                          <p className="text-gray-300">{game.developer}</p>
-                        </div>
-                        <div className="w-full sm:w-1/2 pl-2">
-                          <h3 className="text-xl font-semibold mb-2">
-                            Publisher
-                          </h3>
-                          <p className="text-gray-300">{game.publisher}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                className="bg-gray-800 rounded-lg p-6"
-              >
-                <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-                <button
-                  onClick={handleAddReviewClick}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 transition duration-300"
+      <div className="relative z-10">
+        <MemoizedTransparentNavbar />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-screen">
+            <Loader2 className="animate-spin text-white" />
+          </div>
+        ) : game ? (
+          <div className="max-w-7xl mx-auto mt-24">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="lg:w-1/3">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
                 >
-                  Add a review
-                </button>
-                {reviews.map((review) => (
-                  <ReviewCard
-                    key={review.id}
-                    review={review}
-                    user={user}
-                    onToggleComments={toggleComments}
-                    showComments={showComments}
-                    onAddComment={handleAddComment}
-                    onEditComment={handleEditComment}
-                    onDeleteComment={handleDeleteComment}
-                    editingComment={editingComment}
-                    setEditingComment={setEditingComment}
+                  <h1 className={`text-4xl font-bold mb-4 ${halloweenClass}`}>
+                    {game.name}
+                  </h1>
+                  <img
+                    src={game.coverImageUrl}
+                    alt={`${game.name} cover`}
+                    className="w-full rounded-lg shadow-lg mb-4"
                   />
-                ))}
-              </motion.div>
+                  <p className={`text-gray-300 mb-4 ${halloweenClass}`}>
+                    Release date:{" "}
+                    {game.releaseDate
+                      ? new Date(game.releaseDate).toLocaleDateString()
+                      : "No release date available"}
+                  </p>
+                  <div className="flex justify-between mb-4">
+                    <button
+                      onClick={handleLikeClick}
+                      className={`flex items-center justify-center px-4 py-2 rounded-full ${
+                        isFavorite
+                          ? "bg-red-500 hover:bg-red-600"
+                          : "bg-gray-700 hover:bg-gray-600"
+                      } transition duration-300`}
+                    >
+                      {isFavorite ? <FaHeart /> : <FaRegHeart />}
+                      <span className="ml-2">
+                        {isFavorite ? "Favorite" : "Add to favorites"}
+                      </span>
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    <button
+                      onClick={() => handleAddToLibrary("playing")}
+                      className={`flex flex-col items-center justify-center p-2 rounded ${
+                        libraryStatus === "playing"
+                          ? `bg-blue-500 hover:bg-blue-600 `
+                          : `bg-gray-700 hover:bg-gray-600 `
+                      } transition duration-300`}
+                    >
+                      <FaPlayCircle className="text-2xl mb-1" />
+                      <span className="text-xs">Playing</span>
+                    </button>
+                    <button
+                      onClick={() => handleAddToLibrary("completed")}
+                      className={`flex flex-col items-center justify-center p-2 rounded ${
+                        libraryStatus === "completed"
+                          ? `bg-green-500 hover:bg-green-600 `
+                          : `bg-gray-700 hover:bg-gray-600 `
+                      } transition duration-300`}
+                    >
+                      <FaCheckCircle className="text-2xl mb-1" />
+                      <span className="text-xs">Completed</span>
+                    </button>
+                    <button
+                      onClick={() => handleAddToLibrary("toPlay")}
+                      className={`flex flex-col items-center justify-center p-2 rounded ${
+                        libraryStatus === "toPlay"
+                          ? `bg-yellow-500 hover:bg-yellow-600 `
+                          : `bg-gray-700 hover:bg-gray-600 `
+                      } transition duration-300`}
+                    >
+                      <FaListUl className="text-2xl mb-1" />
+                      <span className="text-xs">To play</span>
+                    </button>
+                  </div>
+                  {game.storeLinks &&
+                    Object.entries(game.storeLinks).filter(
+                      ([store, link]) => link
+                    ).length > 0 && (
+                      <div className="grid grid-cols-2 gap-2 mt-4">
+                        {Object.entries(game.storeLinks)
+                          .filter(([store, link]) => link)
+                          .map(([store, link]) => {
+                            let Icon;
+                            let storeName = store;
+                            switch (store.toLowerCase()) {
+                              case "steam":
+                                Icon = FaSteam;
+                                storeName = "Steam";
+                                break;
+                              case "playstation":
+                                Icon = FaPlaystation;
+                                storeName = "PlayStation";
+                                break;
+                              case "xbox":
+                                Icon = FaXbox;
+                                storeName = "Xbox";
+                                break;
+                              case "nintendo":
+                                Icon = FaGamepad;
+                                storeName = "Nintendo";
+                                break;
+                              case "epicgames":
+                                Icon = FaDesktop;
+                                storeName = "Epic Games";
+                                break;
+                              default:
+                                Icon = FaGamepad;
+                            }
+                            return (
+                              <a
+                                key={store}
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center justify-center"
+                              >
+                                <Icon className="mr-2" /> {storeName}
+                              </a>
+                            );
+                          })}
+                      </div>
+                    )}
+                </motion.div>
+              </div>
+
+              <div className="lg:w-2/3">
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="bg-gray-800 rounded-lg p-6 mb-8"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className={`text-2xl font-semibold `}>Game Details</h2>
+                    <button
+                      onClick={() => setShowGameDetails(!showGameDetails)}
+                      className="flex items-center justify-center w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition duration-300"
+                    >
+                      {showGameDetails ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {showGameDetails && (
+                      <motion.div
+                        variants={detailsVariants}
+                        initial="hidden"
+                        animate="visible"
+                        exit="hidden"
+                      >
+                        <div className="mb-6">
+                          <h3 className={`text-xl font-semibold mb-2 `}>
+                            Description
+                          </h3>
+                          <p className={`text-gray-300`}>{game.description}</p>
+                        </div>
+
+                        <div className="mb-6 flex flex-wrap">
+                          <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
+                            <h3 className={`text-xl font-semibold mb-2 `}>
+                              Platforms
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {game.platforms &&
+                                game.platforms.map((platform, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                  >
+                                    {platform}
+                                  </span>
+                                ))}
+                            </div>
+                          </div>
+                          <div className="w-full sm:w-1/2 pl-2">
+                            <h3 className={`text-xl font-semibold mb-2 `}>
+                              Genres
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                              {game.genres &&
+                                game.genres.map((genre, index) => (
+                                  <span
+                                    key={index}
+                                    className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                  >
+                                    {genre}
+                                  </span>
+                                ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap">
+                          <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
+                            <h3 className={`text-xl font-semibold mb-2 `}>
+                              Developer
+                            </h3>
+                            <p className={`text-gray-300`}>{game.developer}</p>
+                          </div>
+                          <div className="w-full sm:w-1/2 pl-2">
+                            <h3
+                              className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                            >
+                              Publisher
+                            </h3>
+                            <p className={`text-gray-300`}>{game.publisher}</p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="bg-gray-800 rounded-lg p-6"
+                >
+                  <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
+                  <button
+                    onClick={handleAddReviewClick}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 transition duration-300"
+                  >
+                    Add a review
+                  </button>
+                  {reviews.map((review) => (
+                    <ReviewCard
+                      key={review.id}
+                      review={review}
+                      user={user}
+                      onToggleComments={toggleComments}
+                      showComments={showComments}
+                      onAddComment={handleAddComment}
+                      onEditComment={handleEditComment}
+                      onDeleteComment={handleDeleteComment}
+                      editingComment={editingComment}
+                      setEditingComment={setEditingComment}
+                    />
+                  ))}
+                </motion.div>
+              </div>
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {showModal && (
         <MemoizedAddReviewModal

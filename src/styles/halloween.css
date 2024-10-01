@@ -1,3 +1,10 @@
+.halloween-mode .halloween-text {
+  color: #ff6600 !important;
+}
+
+.halloween-mode .halloween-text-light {
+  color: #ff9900 !important;
+}
 .halloween-mode {
   color: #ff6600;
   position: relative;
