@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,15 @@ import { Loader2 } from "lucide-react";
 
 const SearchResults = () => {
   const router = useRouter();
+
+  return (
+    <Suspense fallback={<Loader2 className="animate-spin text-white" />}>
+      <SearchResultsContent />
+    </Suspense>
+  );
+};
+
+const SearchResultsContent = () => {
   const searchParams = useSearchParams();
   const [q, setQ] = useState("");
   const [results, setResults] = useState({
