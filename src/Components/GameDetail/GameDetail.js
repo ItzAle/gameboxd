@@ -58,10 +58,11 @@ import { useHalloween } from "../../context/HalloweenContext";
 import HalloweenParticles from "../HalloweenParticles";
 import "../../styles/halloween.css";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Pagination } from "swiper/modules";
+import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
+import "swiper/css/autoplay";
 import ReactPlayer from "react-player/lazy";
 import { format, parseISO } from "date-fns";
 
@@ -899,7 +900,7 @@ export default function GameDetailsPage({ id }) {
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
-                            className=" rounded-lg p-6 mb-8"
+                            className=" rounded-lg p-4 mb-8 bg-slate-800"
                           >
                             {/* Sección de información del juego */}
                             <h2
@@ -987,7 +988,7 @@ export default function GameDetailsPage({ id }) {
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.5, delay: 0.2 }}
-                          className="rounded-lg p-6 mb-8"
+                          className="rounded-lg p-2 mb-8"
                         >
                           {/* Sección de información del juego */}
                           <h2
@@ -1068,7 +1069,7 @@ export default function GameDetailsPage({ id }) {
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.5, delay: 0.3 }}
-                          className=" p-6 mb-8"
+                          className=" p-2"
                         >
                           <h2
                             className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
@@ -1076,11 +1077,15 @@ export default function GameDetailsPage({ id }) {
                             Images and Videos
                           </h2>
                           <Swiper
-                            modules={[Navigation, Pagination]}
+                            modules={[Navigation, Pagination, Autoplay]}
                             spaceBetween={30}
                             slidesPerView={1}
                             navigation
                             pagination={{ clickable: true }}
+                            autoplay={{
+                              delay: 10000, // 10 segundos
+                              disableOnInteraction: false, // Continúa el autoplay después de la interacción del usuario
+                            }}
                             className="mb-6"
                           >
                             {game.images?.map((image, index) => (
@@ -1113,7 +1118,7 @@ export default function GameDetailsPage({ id }) {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className=" p-6"
+                        className=" p-2"
                       >
                         <h2
                           className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
