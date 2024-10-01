@@ -10,11 +10,12 @@ import {
   FaChevronLeft,
   FaChevronRight,
 } from "react-icons/fa";
-import CircularProgress from "@mui/material/CircularProgress";
+
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, EffectFade, Navigation } from "swiper/modules";
 import { motion } from "framer-motion";
 import { Card, CardMedia } from "@mui/material";
+import { Loader2 } from "lucide-react";
 
 import "swiper/css";
 import "swiper/css/pagination";
@@ -82,7 +83,7 @@ export default function RecentGamesGrid({ isEditing }) {
   };
 
   if (isLoading) {
-    return <CircularProgress />;
+    return <Loader2 className="animate-spin text-white mx-auto" />;
   }
 
   if (error) {
