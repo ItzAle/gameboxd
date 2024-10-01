@@ -12,7 +12,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
   const [library, setLibrary] = useState({
@@ -142,6 +142,7 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
 
   const renderGames = (games, status) => (
     <AnimatePresence>
+      <ToastContainer position="bottom-right" theme="dark" />
       {expanded[status] && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}

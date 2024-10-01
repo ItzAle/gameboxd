@@ -8,7 +8,7 @@ export default function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="text-center h-screen flex justify-center items-center bg-gradient-to-b from-gray-900 to-blue-900">
+      <div className="text-center h-screen flex justify-center items-center  bg-gradient-to-b from-gray-900 to-black">
         <Loader2 className="animate-spin text-white" />
       </div>
     );

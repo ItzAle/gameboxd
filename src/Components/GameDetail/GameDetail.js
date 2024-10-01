@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useAuth } from "../../context/AuthContext";
 import { db } from "../../../lib/firebase";
 import {
@@ -51,6 +57,13 @@ import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 import { useHalloween } from "../../context/HalloweenContext";
 import HalloweenParticles from "../HalloweenParticles";
 import "../../styles/halloween.css";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import ReactPlayer from "react-player/lazy";
+import { format, parseISO } from "date-fns";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
@@ -211,6 +224,60 @@ const ReviewCard = React.memo(
 
 ReviewCard.displayName = "ReviewCard";
 
+const YouTubePlayer = React.memo(({ videoId }) => {
+  const playerRef = useRef(null);
+
+  useEffect(() => {
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      new window.YT.Player(playerRef.current, {
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          rel: 0,
+          showinfo: 0,
+          modestbranding: 1,
+          loop: 1,
+          playlist: videoId,
+          mute: 1, // Necesario para la reproducción automática en la mayoría de los navegadores
+        },
+        events: {
+          onReady: (event) => {
+            event.target.setPlaybackQuality("hd720");
+            event.target.playVideo();
+          },
+        },
+      });
+    };
+  }, [videoId]);
+
+  return (
+    <div className="relative aspect-w-16 aspect-h-9">
+      <div ref={playerRef} className="absolute inset-0"></div>
+    </div>
+  );
+});
+
+YouTubePlayer.displayName = "YouTubePlayer";
+
+// Función auxiliar para formatear la fecha
+const formatReleaseDate = (dateString) => {
+  if (!dateString) return "Fecha no disponible";
+
+  try {
+    const date = parseISO(dateString);
+    return format(date, "d MMM yyyy");
+  } catch (error) {
+    console.error("Error al formatear la fecha:", error);
+    return dateString; // Devuelve la fecha original si hay un error
+  }
+};
+
 export default function GameDetailsPage({ id }) {
   const { user } = useAuth();
   const [game, setGame] = useState(null);
@@ -226,8 +293,26 @@ export default function GameDetailsPage({ id }) {
   const [editingComment, setEditingComment] = useState(null);
   const [showGameDetails, setShowGameDetails] = useState(true);
   const { isHalloweenMode } = useHalloween();
+  const [showMediaSection, setShowMediaSection] = useState(true);
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   const detailsVariants = useMemo(
+    () => ({
+      hidden: {
+        opacity: 0,
+        height: 0,
+        transition: { duration: 0.3 },
+      },
+      visible: {
+        opacity: 1,
+        height: "auto",
+        transition: { duration: 0.3 },
+      },
+    }),
+    []
+  );
+
+  const mediaVariants = useMemo(
     () => ({
       hidden: {
         opacity: 0,
@@ -523,6 +608,30 @@ export default function GameDetailsPage({ id }) {
     [reviews]
   );
 
+  const toggleDescription = () => {
+    setShowFullDescription(!showFullDescription);
+  };
+
+  const renderDescription = (description) => {
+    const shortDescription = description.slice(0, 150) + "...";
+
+    return (
+      <>
+        <p className="text-gray-300 mb-2">
+          {showFullDescription ? description : shortDescription}
+        </p>
+        {description.length > 150 && (
+          <button
+            onClick={toggleDescription}
+            className="text-blue-400 hover:underline"
+          >
+            {showFullDescription ? "Read Less" : "Read More"}
+          </button>
+        )}
+      </>
+    );
+  };
+
   useEffect(() => {
     const fetchGameDetails = async () => {
       setIsLoading(true);
@@ -611,7 +720,7 @@ export default function GameDetailsPage({ id }) {
         }
       : {};
 
-  const containerClass = `min-h-screen bg-gray-900 text-white relative ${
+  const containerClass = `min-h-screen  bg-gradient-to-b from-gray-900 to-black text-white relative ${
     isHalloweenMode && isHorrorGame ? "halloween-mode" : ""
   }`;
 
@@ -622,8 +731,8 @@ export default function GameDetailsPage({ id }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-red-500 text-xl bg-gray-800 p-6 rounded-lg shadow-lg">
+      <div className="min-h-screen  bg-gradient-to-b from-gray-900 to-black text-white flex items-center justify-center">
+        <div className="text-red-500 text-xl  bg-gradient-to-b from-gray-900 to-black p-6 rounded-lg shadow-lg">
           Error: {error.message}
         </div>
       </div>
@@ -631,283 +740,430 @@ export default function GameDetailsPage({ id }) {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className={containerClass}
-    >
-      {isHalloweenMode && isHorrorGame && (
-        <>
-          <div style={halloweenOverlayStyle}></div>
-          <HalloweenParticles />
-        </>
-      )}
+    <div className="bg-gradient-to-b from-gray-900 to-black">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className={`min-h-screen ${containerClass}`}
+      >
+        {isHalloweenMode && isHorrorGame && (
+          <>
+            <div style={halloweenOverlayStyle}></div>
+            <HalloweenParticles />
+          </>
+        )}
 
-      <div className="relative z-10">
-        <MemoizedTransparentNavbar />
-        {isLoading ? (
-          <div className="flex justify-center items-center h-screen">
-            <Loader2 className="animate-spin text-white" />
-          </div>
-        ) : game ? (
-          <div className="max-w-7xl mx-auto mt-24">
-            <div className="flex flex-col lg:flex-row gap-8">
-              <div className="lg:w-1/3">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <h1 className={`text-4xl font-bold mb-4 ${halloweenClass}`}>
-                    {game.name}
-                  </h1>
-                  <img
-                    src={game.coverImageUrl}
-                    alt={`${game.name} cover`}
-                    className="w-full rounded-lg shadow-lg mb-4"
-                  />
-                  <p className={`text-gray-300 mb-4 ${halloweenClass}`}>
-                    Release date:{" "}
-                    {game.releaseDate
-                      ? new Date(game.releaseDate).toLocaleDateString()
-                      : "No release date available"}
-                  </p>
-                  <div className="flex justify-between mb-4">
-                    <button
-                      onClick={handleLikeClick}
-                      className={`flex items-center justify-center px-4 py-2 rounded-full ${
-                        isFavorite
-                          ? "bg-red-500 hover:bg-red-600"
-                          : "bg-gray-700 hover:bg-gray-600"
-                      } transition duration-300`}
-                    >
-                      {isFavorite ? <FaHeart /> : <FaRegHeart />}
-                      <span className="ml-2">
-                        {isFavorite ? "Favorite" : "Add to favorites"}
-                      </span>
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-4">
-                    <button
-                      onClick={() => handleAddToLibrary("playing")}
-                      className={`flex flex-col items-center justify-center p-2 rounded ${
-                        libraryStatus === "playing"
-                          ? `bg-blue-500 hover:bg-blue-600 `
-                          : `bg-gray-700 hover:bg-gray-600 `
-                      } transition duration-300`}
-                    >
-                      <FaPlayCircle className="text-2xl mb-1" />
-                      <span className="text-xs">Playing</span>
-                    </button>
-                    <button
-                      onClick={() => handleAddToLibrary("completed")}
-                      className={`flex flex-col items-center justify-center p-2 rounded ${
-                        libraryStatus === "completed"
-                          ? `bg-green-500 hover:bg-green-600 `
-                          : `bg-gray-700 hover:bg-gray-600 `
-                      } transition duration-300`}
-                    >
-                      <FaCheckCircle className="text-2xl mb-1" />
-                      <span className="text-xs">Completed</span>
-                    </button>
-                    <button
-                      onClick={() => handleAddToLibrary("toPlay")}
-                      className={`flex flex-col items-center justify-center p-2 rounded ${
-                        libraryStatus === "toPlay"
-                          ? `bg-yellow-500 hover:bg-yellow-600 `
-                          : `bg-gray-700 hover:bg-gray-600 `
-                      } transition duration-300`}
-                    >
-                      <FaListUl className="text-2xl mb-1" />
-                      <span className="text-xs">To play</span>
-                    </button>
-                  </div>
-                  {game.storeLinks &&
-                    Object.entries(game.storeLinks).filter(
-                      ([store, link]) => link
-                    ).length > 0 && (
-                      <div className="grid grid-cols-2 gap-2 mt-4">
-                        {Object.entries(game.storeLinks)
-                          .filter(([store, link]) => link)
-                          .map(([store, link]) => {
-                            let Icon;
-                            let storeName = store;
-                            switch (store.toLowerCase()) {
-                              case "steam":
-                                Icon = FaSteam;
-                                storeName = "Steam";
-                                break;
-                              case "playstation":
-                                Icon = FaPlaystation;
-                                storeName = "PlayStation";
-                                break;
-                              case "xbox":
-                                Icon = FaXbox;
-                                storeName = "Xbox";
-                                break;
-                              case "nintendo":
-                                Icon = FaGamepad;
-                                storeName = "Nintendo";
-                                break;
-                              case "epicgames":
-                                Icon = FaDesktop;
-                                storeName = "Epic Games";
-                                break;
-                              default:
-                                Icon = FaGamepad;
-                            }
-                            return (
-                              <a
-                                key={store}
-                                href={link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center justify-center"
-                              >
-                                <Icon className="mr-2" /> {storeName}
-                              </a>
-                            );
-                          })}
-                      </div>
-                    )}
-                </motion.div>
-              </div>
+        <div className="relative z-10 ">
+          <MemoizedTransparentNavbar />
+          {isLoading ? (
+            <div className="flex justify-center items-center h-screen">
+              <Loader2 className="animate-spin text-white" />
+            </div>
+          ) : game ? (
+            (() => {
+              const hasMediaContent =
+                game.images?.length > 0 || game.videos?.length > 0;
 
-              <div className="lg:w-2/3">
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="bg-gray-800 rounded-lg p-6 mb-8"
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className={`text-2xl font-semibold `}>Game Details</h2>
-                    <button
-                      onClick={() => setShowGameDetails(!showGameDetails)}
-                      className="flex items-center justify-center w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-full transition duration-300"
-                    >
-                      {showGameDetails ? <FaChevronUp /> : <FaChevronDown />}
-                    </button>
-                  </div>
-
-                  <AnimatePresence>
-                    {showGameDetails && (
+              return (
+                <div className="max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8">
+                  <div className="flex flex-col lg:flex-row gap-8">
+                    <div className="lg:w-1/3">
                       <motion.div
-                        variants={detailsVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="hidden"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.5 }}
                       >
-                        <div className="mb-6">
-                          <h3 className={`text-xl font-semibold mb-2 `}>
-                            Description
-                          </h3>
-                          <p className={`text-gray-300`}>{game.description}</p>
+                        <div className="flex items-center justify-between mb-4">
+                          <h1
+                            className={`text-4xl font-bold ${halloweenClass}`}
+                          >
+                            {game.name}
+                          </h1>
+                          <button
+                            onClick={handleLikeClick}
+                            className="text-2xl"
+                            title={
+                              isFavorite
+                                ? "Remove from favorites"
+                                : "Add to favorites"
+                            }
+                          >
+                            {isFavorite ? (
+                              <FaHeart className="text-red-500" />
+                            ) : (
+                              <FaRegHeart />
+                            )}
+                          </button>
+                        </div>
+                        <img
+                          src={game.coverImageUrl}
+                          alt={`${game.name} cover`}
+                          className="w-full rounded-lg shadow-lg mb-4"
+                        />
+                        <p className="text-gray-400 mb-4">
+                          Release date: {formatReleaseDate(game.releaseDate)}
+                        </p>
+                        <button
+                          onClick={handleAddReviewClick}
+                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 w-full transition duration-300"
+                        >
+                          Add a review
+                        </button>
+
+                        {/* Botones de estado de juego */}
+                        <div className="grid grid-cols-3 gap-2 mb-4">
+                          <button
+                            onClick={() => handleAddToLibrary("playing")}
+                            className={`flex flex-col items-center justify-center p-2 rounded ${
+                              libraryStatus === "playing"
+                                ? `bg-blue-500 hover:bg-blue-600 `
+                                : `bg-gray-700 hover:bg-gray-600 `
+                            } transition duration-300`}
+                          >
+                            <FaPlayCircle className="text-2xl mb-1" />
+                            <span className="text-xs">Playing</span>
+                          </button>
+                          <button
+                            onClick={() => handleAddToLibrary("completed")}
+                            className={`flex flex-col items-center justify-center p-2 rounded ${
+                              libraryStatus === "completed"
+                                ? `bg-green-500 hover:bg-green-600 `
+                                : `bg-gray-700 hover:bg-gray-600 `
+                            } transition duration-300`}
+                          >
+                            <FaCheckCircle className="text-2xl mb-1" />
+                            <span className="text-xs">Completed</span>
+                          </button>
+                          <button
+                            onClick={() => handleAddToLibrary("toPlay")}
+                            className={`flex flex-col items-center justify-center p-2 rounded ${
+                              libraryStatus === "toPlay"
+                                ? `bg-yellow-500 hover:bg-yellow-600 `
+                                : `bg-gray-700 hover:bg-gray-600 `
+                            } transition duration-300`}
+                          >
+                            <FaListUl className="text-2xl mb-1" />
+                            <span className="text-xs">To play</span>
+                          </button>
                         </div>
 
-                        <div className="mb-6 flex flex-wrap">
-                          <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
-                            <h3 className={`text-xl font-semibold mb-2 `}>
-                              Platforms
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                              {game.platforms &&
-                                game.platforms.map((platform, index) => (
-                                  <span
-                                    key={index}
-                                    className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                        {/* Botones de tiendas */}
+                        <div className="grid grid-cols-1 gap-2 mb-4">
+                          {game.storeLinks &&
+                            Object.entries(game.storeLinks)
+                              .filter(([store, link]) => link)
+                              .map(([store, link]) => {
+                                let Icon;
+                                let storeName = store;
+                                switch (store.toLowerCase()) {
+                                  case "steam":
+                                    Icon = FaSteam;
+                                    storeName = "Steam";
+                                    break;
+                                  case "playstation":
+                                    Icon = FaPlaystation;
+                                    storeName = "PlayStation";
+                                    break;
+                                  case "xbox":
+                                    Icon = FaXbox;
+                                    storeName = "Xbox";
+                                    break;
+                                  case "nintendo":
+                                    Icon = FaGamepad;
+                                    storeName = "Nintendo";
+                                    break;
+                                  case "epicgames":
+                                    Icon = FaDesktop;
+                                    storeName = "Epic Games";
+                                    break;
+                                  default:
+                                    Icon = FaGamepad;
+                                }
+                                return (
+                                  <a
+                                    key={store}
+                                    href={link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center justify-center"
                                   >
-                                    {platform}
-                                  </span>
-                                ))}
-                            </div>
-                          </div>
-                          <div className="w-full sm:w-1/2 pl-2">
-                            <h3 className={`text-xl font-semibold mb-2 `}>
-                              Genres
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                              {game.genres &&
-                                game.genres.map((genre, index) => (
-                                  <span
-                                    key={index}
-                                    className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                  >
-                                    {genre}
-                                  </span>
-                                ))}
-                            </div>
-                          </div>
+                                    <Icon className="mr-2" /> {storeName}
+                                  </a>
+                                );
+                              })}
                         </div>
 
-                        <div className="flex flex-wrap">
-                          <div className="w-full sm:w-1/2 mb-4 sm:mb-0 pr-2">
-                            <h3 className={`text-xl font-semibold mb-2 `}>
-                              Developer
-                            </h3>
-                            <p className={`text-gray-300`}>{game.developer}</p>
-                          </div>
-                          <div className="w-full sm:w-1/2 pl-2">
+                        {hasMediaContent && (
+                          <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                            className="bg-gray-800 rounded-lg p-6 mb-8"
+                          >
+                            {/* Sección de información del juego */}
+                            <h2
+                              className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
+                            >
+                              Game Details
+                            </h2>
+
                             <h3
                               className={`text-xl font-semibold mb-2 ${halloweenClass}`}
                             >
-                              Publisher
+                              Description
                             </h3>
-                            <p className={`text-gray-300`}>{game.publisher}</p>
-                          </div>
-                        </div>
+                            {renderDescription(game.description)}
+
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <h3
+                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                                >
+                                  Platforms
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                  {game.platforms &&
+                                    game.platforms.map((platform, index) => (
+                                      <span
+                                        key={index}
+                                        className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                      >
+                                        {platform}
+                                      </span>
+                                    ))}
+                                </div>
+                              </div>
+                              <div>
+                                <h3
+                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                                >
+                                  Genres
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                  {game.genres &&
+                                    game.genres.map((genre, index) => (
+                                      <span
+                                        key={index}
+                                        className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                      >
+                                        {genre}
+                                      </span>
+                                    ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mt-4">
+                              <div>
+                                <h3
+                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                                >
+                                  Developer
+                                </h3>
+                                <p className="text-gray-300">
+                                  {game.developer}
+                                </p>
+                              </div>
+                              <div>
+                                <h3
+                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                                >
+                                  Publisher
+                                </h3>
+                                <p className="text-gray-300">
+                                  {game.publisher}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
                       </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-                <motion.div
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.5, delay: 0.4 }}
-                  className="bg-gray-800 rounded-lg p-6"
-                >
-                  <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-                  <button
-                    onClick={handleAddReviewClick}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 transition duration-300"
-                  >
-                    Add a review
-                  </button>
-                  {reviews.map((review) => (
-                    <ReviewCard
-                      key={review.id}
-                      review={review}
-                      user={user}
-                      onToggleComments={toggleComments}
-                      showComments={showComments}
-                      onAddComment={handleAddComment}
-                      onEditComment={handleEditComment}
-                      onDeleteComment={handleDeleteComment}
-                      editingComment={editingComment}
-                      setEditingComment={setEditingComment}
-                    />
-                  ))}
-                </motion.div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
+                    </div>
 
-      {showModal && (
-        <MemoizedAddReviewModal
-          game={{
-            slug: game.slug,
-            name: game.name,
-            coverImageUrl: game.coverImageUrl,
-          }}
-          onClose={() => setShowModal(false)}
-          onSave={handleSaveReview}
-        />
-      )}
+                    <div className="lg:w-2/3">
+                      {!hasMediaContent && (
+                        <motion.div
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ duration: 0.5, delay: 0.2 }}
+                          className="bg-gray-800 rounded-lg p-6 mb-8"
+                        >
+                          {/* Sección de información del juego */}
+                          <h2
+                            className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
+                          >
+                            Game Details
+                          </h2>
 
-      <ToastContainer position="bottom-right" theme="dark" />
-    </motion.div>
+                          <h3
+                            className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                          >
+                            Description
+                          </h3>
+                          {renderDescription(game.description)}
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <h3
+                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                              >
+                                Platforms
+                              </h3>
+                              <div className="flex flex-wrap gap-2">
+                                {game.platforms &&
+                                  game.platforms.map((platform, index) => (
+                                    <span
+                                      key={index}
+                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                    >
+                                      {platform}
+                                    </span>
+                                  ))}
+                              </div>
+                            </div>
+                            <div>
+                              <h3
+                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                              >
+                                Genres
+                              </h3>
+                              <div className="flex flex-wrap gap-2">
+                                {game.genres &&
+                                  game.genres.map((genre, index) => (
+                                    <span
+                                      key={index}
+                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                    >
+                                      {genre}
+                                    </span>
+                                  ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 mt-4">
+                            <div>
+                              <h3
+                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                              >
+                                Developer
+                              </h3>
+                              <p className="text-gray-300">{game.developer}</p>
+                            </div>
+                            <div>
+                              <h3
+                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                              >
+                                Publisher
+                              </h3>
+                              <p className="text-gray-300">{game.publisher}</p>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {hasMediaContent && (
+                        <motion.div
+                          initial={{ y: 20, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ duration: 0.5, delay: 0.3 }}
+                          className="bg-gray-800 rounded-lg p-6 mb-8"
+                        >
+                          <h2
+                            className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
+                          >
+                            Images and Videos
+                          </h2>
+                          <Swiper
+                            modules={[Navigation, Pagination]}
+                            spaceBetween={30}
+                            slidesPerView={1}
+                            navigation
+                            pagination={{ clickable: true }}
+                            className="mb-6"
+                          >
+                            {game.images?.map((image, index) => (
+                              <SwiperSlide key={`image-${index}`}>
+                                <img
+                                  src={image.url}
+                                  alt={
+                                    image.description ||
+                                    `${game.name} image ${index + 1}`
+                                  }
+                                  width={800}
+                                  height={450}
+                                  className="rounded-lg object-cover w-full h-auto"
+                                />
+                              </SwiperSlide>
+                            ))}
+                            {game.videos?.map((video, index) => (
+                              <SwiperSlide key={`video-${index}`}>
+                                <YouTubePlayer
+                                  videoId={getYouTubeVideoId(video.url)}
+                                />
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        </motion.div>
+                      )}
+
+                      {/* Sección de reviews */}
+                      <motion.div
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.4 }}
+                        className="bg-gray-800 rounded-lg p-6"
+                      >
+                        <h2
+                          className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
+                        >
+                          Reviews
+                        </h2>
+                        {reviews.map((review) => (
+                          <ReviewCard
+                            key={review.id}
+                            review={review}
+                            user={user}
+                            onToggleComments={toggleComments}
+                            showComments={showComments}
+                            onAddComment={handleAddComment}
+                            onEditComment={handleEditComment}
+                            onDeleteComment={handleDeleteComment}
+                            editingComment={editingComment}
+                            setEditingComment={setEditingComment}
+                          />
+                        ))}
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          ) : null}
+        </div>
+
+        {showModal && (
+          <MemoizedAddReviewModal
+            game={{
+              slug: game.slug,
+              name: game.name,
+              coverImageUrl: game.coverImageUrl,
+            }}
+            onClose={() => setShowModal(false)}
+            onSave={handleSaveReview}
+          />
+        )}
+
+        <ToastContainer position="bottom-right" theme="dark" />
+      </motion.div>
+    </div>
   );
+}
+
+function getYouTubeVideoId(url) {
+  const regExp =
+    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
 }
