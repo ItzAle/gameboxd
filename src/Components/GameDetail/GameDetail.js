@@ -82,7 +82,7 @@ const ReviewCard = React.memo(
     editingComment,
     setEditingComment,
   }) => (
-    <div key={review.id} className="bg-gray-700 rounded-lg p-4 mb-4">
+    <div key={review.id} className="bg-slate-800 rounded-lg p-4 mb-4">
       <div className="flex items-center mb-2">
         <Link href={`/user/${review.userId}`}>
           <p>
@@ -134,7 +134,7 @@ const ReviewCard = React.memo(
         <div className="mt-4">
           {review.comments &&
             review.comments.map((comment) => (
-              <div key={comment.id} className="bg-gray-600 rounded p-3 mb-2">
+              <div key={comment.id} className="bg-slate-700 rounded p-3 mb-2">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-semibold">{comment.username}</span>
                   <span className="text-xs text-gray-400">
@@ -886,7 +886,7 @@ export default function GameDetailsPage({ id }) {
                                     href={link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center justify-center"
+                                    className="bg-slate-800 hover:bg-gray-400 transition duration-300 text-white px-4 py-2 rounded flex items-center justify-center"
                                   >
                                     <Icon className="mr-2" /> {storeName}
                                   </a>
@@ -899,7 +899,7 @@ export default function GameDetailsPage({ id }) {
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
-                            className="bg-gray-800 rounded-lg p-6 mb-8"
+                            className=" rounded-lg p-6 mb-8"
                           >
                             {/* Sección de información del juego */}
                             <h2
@@ -987,7 +987,7 @@ export default function GameDetailsPage({ id }) {
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.5, delay: 0.2 }}
-                          className="bg-gray-800 rounded-lg p-6 mb-8"
+                          className="rounded-lg p-6 mb-8"
                         >
                           {/* Sección de información del juego */}
                           <h2
@@ -1068,7 +1068,7 @@ export default function GameDetailsPage({ id }) {
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.5, delay: 0.3 }}
-                          className="bg-gray-800 rounded-lg p-6 mb-8"
+                          className=" p-6 mb-8"
                         >
                           <h2
                             className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
@@ -1113,7 +1113,7 @@ export default function GameDetailsPage({ id }) {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className="bg-gray-800 rounded-lg p-6"
+                        className=" p-6"
                       >
                         <h2
                           className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
