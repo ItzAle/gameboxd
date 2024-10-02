@@ -1118,27 +1118,39 @@ export default function GameDetailsPage({ id }) {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.5, delay: 0.4 }}
-                        className=" p-2"
+                        className="p-2"
                       >
                         <h2
                           className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
                         >
                           Reviews
                         </h2>
-                        {reviews.map((review) => (
-                          <ReviewCard
-                            key={review.id}
-                            review={review}
-                            user={user}
-                            onToggleComments={toggleComments}
-                            showComments={showComments}
-                            onAddComment={handleAddComment}
-                            onEditComment={handleEditComment}
-                            onDeleteComment={handleDeleteComment}
-                            editingComment={editingComment}
-                            setEditingComment={setEditingComment}
-                          />
-                        ))}
+                        {reviews.length > 0 ? (
+                          reviews.map((review) => (
+                            <ReviewCard
+                              key={review.id}
+                              review={review}
+                              user={user}
+                              onToggleComments={toggleComments}
+                              showComments={showComments}
+                              onAddComment={handleAddComment}
+                              onEditComment={handleEditComment}
+                              onDeleteComment={handleDeleteComment}
+                              editingComment={editingComment}
+                              setEditingComment={setEditingComment}
+                            />
+                          ))
+                        ) : (
+                          <p className="text-gray-400 text-center py-4">
+                            There are no reviews yet,{" "}
+                            <span
+                              onClick={handleAddReviewClick}
+                              className="text-blue-400 hover:underline cursor-pointer"
+                            >
+                              you can add one by clicking here
+                            </span>
+                          </p>
+                        )}
                       </motion.div>
                     </div>
                   </div>
