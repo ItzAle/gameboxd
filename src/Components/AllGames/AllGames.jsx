@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import TransparentNavbar from "../Navbar/TransparentNavbar";
@@ -52,6 +53,8 @@ const GameCard = React.memo(({ game }) => (
 GameCard.displayName = "GameCard";
 
 export default function AllGames() {
+  const router = useRouter();
+
   const [allGames, setAllGames] = useState([]);
   const [displayedGames, setDisplayedGames] = useState([]);
   const [error, setError] = useState(null);
@@ -60,9 +63,13 @@ export default function AllGames() {
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("");
+  const [selectedDeveloper, setSelectedDeveloper] = useState("");
+  const [selectedPublisher, setSelectedPublisher] = useState("");
   const [years, setYears] = useState([]);
   const [genres, setGenres] = useState([]);
   const [platforms, setPlatforms] = useState([]);
+  const [developers, setDevelopers] = useState([]);
+  const [publishers, setPublishers] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [gamesPerPage] = useState(12);
   const apiUrl = "https://api.gameboxd.me/api/games";
@@ -103,10 +110,18 @@ export default function AllGames() {
       const uniquePlatforms = [
         ...new Set(data.flatMap((game) => game.platforms || [])),
       ];
+      const uniqueDevelopers = [
+        ...new Set(data.map((game) => game.developer).filter(Boolean)),
+      ];
+      const uniquePublishers = [
+        ...new Set(data.map((game) => game.publisher).filter(Boolean)),
+      ];
 
       setYears(uniqueYears.sort((a, b) => b - a));
       setGenres(uniqueGenres.sort());
       setPlatforms(uniquePlatforms.sort());
+      setDevelopers(uniqueDevelopers.sort());
+      setPublishers(uniquePublishers.sort());
     } catch (err) {
       console.error("Error fetching data:", err);
       setError(err);
@@ -130,7 +145,11 @@ export default function AllGames() {
           (game.platforms &&
             game.platforms.some((platform) =>
               platform.toLowerCase().includes(lowercasedTerm)
-            ))
+            )) ||
+          (game.developer &&
+            game.developer.toLowerCase().includes(lowercasedTerm)) ||
+          (game.publisher &&
+            game.publisher.toLowerCase().includes(lowercasedTerm))
       );
     }
 
@@ -153,17 +172,56 @@ export default function AllGames() {
       );
     }
 
+    if (selectedDeveloper) {
+      filteredGames = filteredGames.filter(
+        (game) => game.developer === selectedDeveloper
+      );
+    }
+
+    if (selectedPublisher) {
+      filteredGames = filteredGames.filter(
+        (game) => game.publisher === selectedPublisher
+      );
+    }
+
     setDisplayedGames(filteredGames);
     setCurrentPage(1);
-  }, [allGames, searchTerm, selectedYear, selectedGenre, selectedPlatform]);
+  }, [
+    allGames,
+    searchTerm,
+    selectedYear,
+    selectedGenre,
+    selectedPlatform,
+    selectedDeveloper,
+    selectedPublisher,
+  ]);
 
   useEffect(() => {
     fetchGames();
   }, [fetchGames]);
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const genreParam = searchParams.get("genre");
+    const platformParam = searchParams.get("platform");
+    const developerParam = searchParams.get("developer");
+    const publisherParam = searchParams.get("publisher");
+
+    if (genreParam) setSelectedGenre(genreParam);
+    if (platformParam) setSelectedPlatform(platformParam);
+    if (developerParam) setSelectedDeveloper(developerParam);
+    if (publisherParam) setSelectedPublisher(publisherParam);
+  }, []);
+
+  useEffect(() => {
     applyFilters();
-  }, [applyFilters]);
+  }, [
+    applyFilters,
+    selectedGenre,
+    selectedPlatform,
+    selectedDeveloper,
+    selectedPublisher,
+  ]);
 
   const currentGames = useMemo(() => {
     const indexOfLastGame = currentPage * gamesPerPage;
@@ -189,20 +247,87 @@ export default function AllGames() {
     setSelectedYear(event.target.value);
   }, []);
 
-  const handleGenreChange = useCallback((event) => {
-    setSelectedGenre(event.target.value);
-  }, []);
+  const updateURL = useCallback(
+    (params) => {
+      const searchParams = new URLSearchParams(window.location.search);
+      Object.entries(params).forEach(([key, value]) => {
+        if (value) {
+          searchParams.set(key, value);
+        } else {
+          searchParams.delete(key);
+        }
+      });
+      const newURL = `${window.location.pathname}?${searchParams.toString()}`;
+      router.push(newURL);
+    },
+    [router]
+  );
 
-  const handlePlatformChange = useCallback((event) => {
-    setSelectedPlatform(event.target.value);
-  }, []);
+  const handleGenreChange = useCallback(
+    (event) => {
+      const newGenre = event.target.value;
+      setSelectedGenre(newGenre);
+      updateURL({
+        genre: newGenre,
+        platform: selectedPlatform,
+        developer: selectedDeveloper,
+        publisher: selectedPublisher,
+      });
+    },
+    [selectedPlatform, selectedDeveloper, selectedPublisher, updateURL]
+  );
+
+  const handlePlatformChange = useCallback(
+    (event) => {
+      const newPlatform = event.target.value;
+      setSelectedPlatform(newPlatform);
+      updateURL({
+        genre: selectedGenre,
+        platform: newPlatform,
+        developer: selectedDeveloper,
+        publisher: selectedPublisher,
+      });
+    },
+    [selectedGenre, selectedDeveloper, selectedPublisher, updateURL]
+  );
+
+  const handleDeveloperChange = useCallback(
+    (event) => {
+      const newDeveloper = event.target.value;
+      setSelectedDeveloper(newDeveloper);
+      updateURL({
+        genre: selectedGenre,
+        platform: selectedPlatform,
+        developer: newDeveloper,
+        publisher: selectedPublisher,
+      });
+    },
+    [selectedGenre, selectedPlatform, selectedPublisher, updateURL]
+  );
+
+  const handlePublisherChange = useCallback(
+    (event) => {
+      const newPublisher = event.target.value;
+      setSelectedPublisher(newPublisher);
+      updateURL({
+        genre: selectedGenre,
+        platform: selectedPlatform,
+        developer: selectedDeveloper,
+        publisher: newPublisher,
+      });
+    },
+    [selectedGenre, selectedPlatform, selectedDeveloper, updateURL]
+  );
 
   const clearFilters = useCallback(() => {
     setSearchTerm("");
     setSelectedYear("");
     setSelectedGenre("");
     setSelectedPlatform("");
-  }, []);
+    setSelectedDeveloper("");
+    setSelectedPublisher("");
+    router.push("/all");
+  }, [router]);
 
   if (error) {
     return (
@@ -241,7 +366,7 @@ export default function AllGames() {
               className="flex-grow px-6 py-3 bg-gray-800 text-white border border-gray-700 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"
             />
           </div>
-          <div className="flex flex-wrap w-full space-x-4 space-y-4">
+          <div className="flex flex-wrap w-full space-x-4 ">
             <select
               value={selectedYear}
               onChange={handleYearChange}

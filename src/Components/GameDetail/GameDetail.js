@@ -65,6 +65,7 @@ import "swiper/css/pagination";
 import "swiper/css/autoplay";
 import ReactPlayer from "react-player/lazy";
 import { format, parseISO } from "date-fns";
+import { useRouter } from "next/navigation";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
@@ -296,6 +297,7 @@ export default function GameDetailsPage({ id }) {
   const { isHalloweenMode } = useHalloween();
   const [showMediaSection, setShowMediaSection] = useState(true);
   const [showFullDescription, setShowFullDescription] = useState(false);
+  const router = useRouter();
 
   const detailsVariants = useMemo(
     () => ({
@@ -633,6 +635,20 @@ export default function GameDetailsPage({ id }) {
     );
   };
 
+  const handleFilterClick = (type, value) => {
+    router.push(`/all?${type}=${encodeURIComponent(value)}`);
+  };
+
+  const renderFilterableItem = (item, type) => (
+    <Link
+      href={`/all?${type}=${encodeURIComponent(item)}`}
+      key={item}
+      className="bg-gray-700 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-600 transition-colors duration-200"
+    >
+      {item}
+    </Link>
+  );
+
   useEffect(() => {
     const fetchGameDetails = async () => {
       setIsLoading(true);
@@ -925,14 +941,9 @@ export default function GameDetailsPage({ id }) {
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                   {game.platforms &&
-                                    game.platforms.map((platform, index) => (
-                                      <span
-                                        key={index}
-                                        className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                      >
-                                        {platform}
-                                      </span>
-                                    ))}
+                                    game.platforms.map((platform) =>
+                                      renderFilterableItem(platform, "platform")
+                                    )}
                                 </div>
                               </div>
                               <div>
@@ -943,14 +954,9 @@ export default function GameDetailsPage({ id }) {
                                 </h3>
                                 <div className="flex flex-wrap gap-2">
                                   {game.genres &&
-                                    game.genres.map((genre, index) => (
-                                      <span
-                                        key={index}
-                                        className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                      >
-                                        {genre}
-                                      </span>
-                                    ))}
+                                    game.genres.map((genre) =>
+                                      renderFilterableItem(genre, "genre")
+                                    )}
                                 </div>
                               </div>
                             </div>
@@ -963,7 +969,10 @@ export default function GameDetailsPage({ id }) {
                                   Developer
                                 </h3>
                                 <p className="text-gray-300">
-                                  {game.developer}
+                                  {renderFilterableItem(
+                                    game.developer,
+                                    "developer"
+                                  )}
                                 </p>
                               </div>
                               <div>
@@ -973,7 +982,10 @@ export default function GameDetailsPage({ id }) {
                                   Publisher
                                 </h3>
                                 <p className="text-gray-300">
-                                  {game.publisher}
+                                  {renderFilterableItem(
+                                    game.publisher,
+                                    "publisher"
+                                  )}
                                 </p>
                               </div>
                             </div>
@@ -1013,14 +1025,9 @@ export default function GameDetailsPage({ id }) {
                               </h3>
                               <div className="flex flex-wrap gap-2">
                                 {game.platforms &&
-                                  game.platforms.map((platform, index) => (
-                                    <span
-                                      key={index}
-                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                    >
-                                      {platform}
-                                    </span>
-                                  ))}
+                                  game.platforms.map((platform) =>
+                                    renderFilterableItem(platform, "platform")
+                                  )}
                               </div>
                             </div>
                             <div>
@@ -1031,14 +1038,9 @@ export default function GameDetailsPage({ id }) {
                               </h3>
                               <div className="flex flex-wrap gap-2">
                                 {game.genres &&
-                                  game.genres.map((genre, index) => (
-                                    <span
-                                      key={index}
-                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                    >
-                                      {genre}
-                                    </span>
-                                  ))}
+                                  game.genres.map((genre) =>
+                                    renderFilterableItem(genre, "genre")
+                                  )}
                               </div>
                             </div>
                           </div>
@@ -1050,7 +1052,12 @@ export default function GameDetailsPage({ id }) {
                               >
                                 Developer
                               </h3>
-                              <p className="text-gray-300">{game.developer}</p>
+                              <p className="text-gray-300">
+                                {renderFilterableItem(
+                                  game.developer,
+                                  "developer"
+                                )}
+                              </p>
                             </div>
                             <div>
                               <h3
@@ -1058,7 +1065,12 @@ export default function GameDetailsPage({ id }) {
                               >
                                 Publisher
                               </h3>
-                              <p className="text-gray-300">{game.publisher}</p>
+                              <p className="text-gray-300">
+                                {renderFilterableItem(
+                                  game.publisher,
+                                  "publisher"
+                                )}
+                              </p>
                             </div>
                           </div>
                         </motion.div>
