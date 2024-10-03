@@ -25,3 +25,34 @@ iframe[src*="youtube.com"] {
   width: 100%;
   height: 100%;
 }
+
+.youtube-container {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+}
+
+.youtube-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ytp-chrome-top,
+.ytp-chrome-bottom,
+.ytp-watermark,
+.ytp-small-redirect,
+.ytp-gradient-top,
+.ytp-gradient-bottom,
+.ytp-show-cards-title,
+.ytp-pause-overlay,
+.ytp-youtube-button,
+.ytp-embed,
+.ytp-title {
+  display: none !important;
+}

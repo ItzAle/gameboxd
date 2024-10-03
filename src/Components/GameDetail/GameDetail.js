@@ -229,19 +229,18 @@ const ReviewCard = React.memo(
 ReviewCard.displayName = "ReviewCard";
 
 const getYouTubeVideoId = (url) => {
+  if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
-const CustomVideoPlayer = React.memo(({ videoUrl }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [player, setPlayer] = useState(null);
+const CustomVideoPlayer = React.memo(({ videoUrl, isVisible, onReady }) => {
   const videoId = getYouTubeVideoId(videoUrl);
 
   const opts = {
-    height: '100%',
-    width: '100%',
+    height: "100%",
+    width: "100%",
     playerVars: {
       autoplay: 1,
       controls: 0,
@@ -253,57 +252,142 @@ const CustomVideoPlayer = React.memo(({ videoUrl }) => {
       playsinline: 1,
       loop: 1,
       playlist: videoId,
-      origin: window.location.origin
+      origin: window.location.origin,
     },
   };
 
-  const onReady = useCallback((event) => {
-    setPlayer(event.target);
-    event.target.playVideo();
-    setIsPlaying(true);
-  }, []);
+  const onPlayerReady = useCallback(
+    (event) => {
+      onReady(event.target);
+    },
+    [onReady]
+  );
 
-  const handlePlayPause = useCallback(() => {
-    if (player) {
-      if (isPlaying) {
-        player.pauseVideo();
-      } else {
-        player.playVideo();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  }, [isPlaying, player]);
+  if (!isVisible) return null;
 
   return (
-    <div className="relative w-full pt-[56.25%] overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-full">
-        <YouTube
-          videoId={videoId}
-          opts={opts}
-          onReady={onReady}
-          className="youtube-player"
-        />
-      </div>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-[100px] bg-gradient-to-b from-black to-transparent z-10"></div>
-        <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-t from-black to-transparent z-10"></div>
-      </div>
-      <div 
-        className="absolute inset-0 flex items-center justify-center cursor-pointer z-20"
-        onClick={handlePlayPause}
-      >
-        {!isPlaying && (
-          <div className="bg-black bg-opacity-50 rounded-full p-4">
-            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-            </svg>
-          </div>
-        )}
-      </div>
+    <div className="absolute inset-0 overflow-hidden">
+      <YouTube
+        videoId={videoId}
+        opts={opts}
+        onReady={onPlayerReady}
+        className="youtube-player"
+      />
     </div>
   );
 });
 
+const ImageVideoPlayer = React.memo(({ imageUrl, videoUrl, onDoubleClick, isPlaying, setIsPlaying }) => {
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const playerRef = useRef(null);
+  const videoId = getYouTubeVideoId(videoUrl);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsVideoVisible(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (!isPlaying) {
+      setIsVideoVisible(false);
+    }
+  }, [isPlaying]);
+
+  const handleClick = useCallback(() => {
+    setIsPlaying(true);
+    setIsVideoVisible(true);
+  }, [setIsPlaying]);
+
+  const handleDoubleClick = useCallback((event) => {
+    event.preventDefault();
+    onDoubleClick(videoUrl);
+  }, [onDoubleClick, videoUrl]);
+
+  const onReady = useCallback((event) => {
+    console.log("YouTube player ready");
+    playerRef.current = event.target;
+    setIsPlayerReady(true);
+  }, []);
+
+  const safePlayerCall = useCallback((method) => {
+    console.log(`Attempting to call ${method}`, { isPlayerReady, playerRefExists: !!playerRef.current });
+    if (isPlayerReady && playerRef.current) {
+      if (typeof playerRef.current[method] === 'function') {
+        try {
+          playerRef.current[method]();
+        } catch (error) {
+          console.error(`Error calling ${method}:`, error);
+        }
+      } else {
+        console.warn(`Method ${method} is not a function`);
+      }
+    } else {
+      console.warn(`Cannot call ${method}: player not ready or ref is null`);
+    }
+  }, [isPlayerReady]);
+
+  useEffect(() => {
+    console.log("isPlaying changed:", isPlaying);
+    if (isPlaying) {
+      safePlayerCall('playVideo');
+    } else {
+      safePlayerCall('pauseVideo');
+    }
+  }, [isPlaying, safePlayerCall]);
+
+  useEffect(() => {
+    return () => {
+      console.log("Component unmounting, destroying player");
+      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
+        playerRef.current.destroy();
+      }
+    };
+  }, []);
+
+  return (
+    <div 
+      className="relative w-full pt-[56.25%] overflow-hidden rounded-lg select-none"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+    >
+      <img 
+        src={imageUrl} 
+        alt="Game preview" 
+        className="absolute inset-0 w-full h-full object-cover rounded-lg"
+        draggable="false"
+      />
+      {videoId && (isVideoVisible || isPlaying) && (
+        <div className="absolute inset-0 youtube-container rounded-lg">
+          <YouTube
+            videoId={videoId}
+            opts={{
+              height: '100%',
+              width: '100%',
+              playerVars: {
+                autoplay: 1,
+                controls: 0,
+                modestbranding: 1,
+                rel: 0,
+                showinfo: 0,
+                mute: 1,
+                loop: 1,
+                playlist: videoId,
+                iv_load_policy: 3,
+                fs: 0
+              },
+            }}
+            onReady={onReady}
+            className="absolute inset-0 w-full h-full rounded-lg"
+          />
+        </div>
+      )}
+    </div>
+  );
+});
+
+ImageVideoPlayer.displayName = "ImageVideoPlayer";
 CustomVideoPlayer.displayName = "CustomVideoPlayer";
 
 // Función auxiliar para formatear la fecha
@@ -340,6 +424,8 @@ export default function GameDetailsPage({ id, initialGameData }) {
   const swiperRef = useRef(null);
   const playerRef = useRef(null);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [fullscreenVideo, setFullscreenVideo] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   const detailsVariants = useMemo(
     () => ({
@@ -809,6 +895,19 @@ export default function GameDetailsPage({ id, initialGameData }) {
     }
   };
 
+  const handleVideoDoubleClick = useCallback((videoUrl) => {
+    console.log("Double click detected, opening fullscreen video");
+    setFullscreenVideo(videoUrl);
+    setIsPlaying(false);
+  }, []);
+
+  const closeFullscreenVideo = useCallback(() => {
+    console.log("Closing fullscreen video");
+    setFullscreenVideo(null);
+    // Opcional: puedes decidir si quieres reanudar la reproducción del video pequeño o no
+    // setIsPlaying(true);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-black">
@@ -861,33 +960,15 @@ export default function GameDetailsPage({ id, initialGameData }) {
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.5 }}
+                        className="sticky top-24"
                       >
-                        <div className="flex items-center justify-between mb-4">
-                          <h1
-                            className={`text-4xl font-bold ${halloweenClass}`}
-                          >
-                            {game.name}
-                          </h1>
-                          <button
-                            onClick={handleLikeClick}
-                            className="text-2xl"
-                            title={
-                              isFavorite
-                                ? "Remove from favorites"
-                                : "Add to favorites"
-                            }
-                          >
-                            {isFavorite ? (
-                              <FaHeart className="text-red-500" />
-                            ) : (
-                              <FaRegHeart />
-                            )}
-                          </button>
-                        </div>
-                        <img
-                          src={game.coverImageUrl}
-                          alt={`${game.name} cover`}
-                          className="w-full rounded-lg shadow-lg mb-4"
+                        <ImageVideoPlayer
+                          key={game.id} // Añade una key única
+                          imageUrl={game.coverImageUrl}
+                          videoUrl={game.videos?.[0]?.url}
+                          onDoubleClick={handleVideoDoubleClick}
+                          isPlaying={isPlaying}
+                          setIsPlaying={setIsPlaying}
                         />
                         <p className="text-gray-400 mb-4">
                           Release date: {formatReleaseDate(game.releaseDate)}
@@ -1173,25 +1254,15 @@ export default function GameDetailsPage({ id, initialGameData }) {
                               swiperRef.current = swiper;
                             }}
                             onSlideChange={handleSlideChange}
-                            className="mb-6 w-full"
+                            className="mb-6 w-full rounded-lg"
                           >
                             {game.images?.map((image, index) => (
                               <SwiperSlide key={`image-${index}`}>
-                                <div className="aspect-w-16 aspect-h-9">
-                                  <img
-                                    src={image.url}
-                                    alt={
-                                      image.description ||
-                                      `${game.name} image ${index + 1}`
-                                    }
-                                    className="rounded-lg object-cover w-full h-full"
-                                  />
-                                </div>
-                              </SwiperSlide>
-                            ))}
-                            {game.videos?.map((video, index) => (
-                              <SwiperSlide key={`video-${index}`}>
-                                <CustomVideoPlayer videoUrl={video.url} />
+                                <img
+                                  src={image.url}
+                                  alt={`Game screenshot ${index + 1}`}
+                                  className="w-full h-auto object-cover"
+                                />
                               </SwiperSlide>
                             ))}
                           </Swiper>
@@ -1255,6 +1326,34 @@ export default function GameDetailsPage({ id, initialGameData }) {
             onClose={() => setShowModal(false)}
             onSave={handleSaveReview}
           />
+        )}
+
+        {fullscreenVideo && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <div className="relative w-full h-full max-w-4xl max-h-[80vh]">
+              <YouTube
+                videoId={getYouTubeVideoId(fullscreenVideo)}
+                opts={{
+                  height: '100%',
+                  width: '100%',
+                  playerVars: {
+                    autoplay: 1,
+                    controls: 1,
+                    modestbranding: 1,
+                    rel: 0,
+                    showinfo: 0,
+                  },
+                }}
+                className="w-full h-full"
+              />
+              <button
+                onClick={closeFullscreenVideo}
+                className="absolute top-4 right-4 text-white text-2xl"
+              >
+                &times;
+              </button>
+            </div>
+          </div>
         )}
 
         <ToastContainer position="bottom-right" theme="dark" />
