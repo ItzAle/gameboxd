@@ -530,6 +530,24 @@ export default function GameDetailsPage({ id, initialGameData }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
 
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      if (user && game) {
+        const userRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const likedGames = userData.likedGames || [];
+          const isGameFavorite = likedGames.some((g) => g.slug === game.slug);
+          console.log("Is game favorite:", isGameFavorite); // Para depuración
+          setIsFavorite(isGameFavorite);
+        }
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [user, game]);
+
   const toggleLayout = () => {
     setIsCompactLayout(!isCompactLayout);
   };
