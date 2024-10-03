@@ -63,7 +63,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
-import ReactPlayer from "react-player/lazy";
+import ReactPlayer from "react-player/youtube";
 import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 
@@ -226,46 +226,60 @@ const ReviewCard = React.memo(
 
 ReviewCard.displayName = "ReviewCard";
 
-const YouTubePlayer = React.memo(({ videoId }) => {
-  const playerRef = useRef(null);
+// Función para extraer el ID del video de YouTube de la URL
+const getYouTubeVideoId = (url) => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+};
+
+const CustomVideoPlayer = React.memo(({ videoId }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const iframeRef = useRef(null);
 
   useEffect(() => {
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    window.onYouTubeIframeAPIReady = () => {
-      new window.YT.Player(playerRef.current, {
-        videoId: videoId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0,
-          rel: 0,
-          showinfo: 0,
-          modestbranding: 1,
-          loop: 1,
-          playlist: videoId,
-          mute: 1, // Necesario para la reproducción automática en la mayoría de los navegadores
-        },
-        events: {
-          onReady: (event) => {
-            event.target.setPlaybackQuality("hd720");
-            event.target.playVideo();
-          },
-        },
-      });
-    };
+    const iframe = iframeRef.current;
+    if (iframe) {
+      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&mute=1`;
+    }
   }, [videoId]);
 
+  const handlePlayPause = () => {
+    const iframe = iframeRef.current;
+    if (iframe) {
+      const message = isPlaying ? '{"event":"command","func":"pauseVideo","args":""}' : '{"event":"command","func":"playVideo","args":""}';
+      iframe.contentWindow.postMessage(message, '*');
+      setIsPlaying(!isPlaying);
+    }
+  };
+
   return (
-    <div className="relative aspect-w-16 aspect-h-9">
-      <div ref={playerRef} className="absolute inset-0"></div>
+    <div className="relative w-full pt-[56.25%]">
+      <iframe
+        ref={iframeRef}
+        className="absolute top-0 left-0 w-full h-full"
+        frameBorder="0"
+        allow="autoplay; encrypted-media"
+        allowFullScreen
+        title="YouTube video player"
+      ></iframe>
+      <div 
+        className="absolute inset-0 flex items-center justify-center cursor-pointer"
+        onClick={handlePlayPause}
+      >
+        {!isPlaying && (
+          <div className="bg-black bg-opacity-50 rounded-full p-4">
+            <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
+      </div>
     </div>
   );
 });
 
-YouTubePlayer.displayName = "YouTubePlayer";
+CustomVideoPlayer.displayName = "CustomVideoPlayer";
 
 // Función auxiliar para formatear la fecha
 const formatReleaseDate = (dateString) => {
@@ -298,6 +312,9 @@ export default function GameDetailsPage({ id, initialGameData }) {
   const [showMediaSection, setShowMediaSection] = useState(true);
   const [showFullDescription, setShowFullDescription] = useState(false);
   const router = useRouter();
+  const swiperRef = useRef(null);
+  const playerRef = useRef(null);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
   const detailsVariants = useMemo(
     () => ({
@@ -713,6 +730,19 @@ export default function GameDetailsPage({ id, initialGameData }) {
     fetchReviews();
   }, [fetchGameDetails, fetchReviews]);
 
+  useEffect(() => {
+    const checkVideoEnd = setInterval(() => {
+      if (playerRef.current && playerRef.current.getCurrentTime() === playerRef.current.getDuration()) {
+        if (swiperRef.current) {
+          swiperRef.current.slideNext();
+        }
+        clearInterval(checkVideoEnd);
+      }
+    }, 1000);
+
+    return () => clearInterval(checkVideoEnd);
+  }, []);
+
   const isHorrorGame = game && game.genres && game.genres.includes("Horror");
 
   const halloweenOverlayStyle =
@@ -737,6 +767,19 @@ export default function GameDetailsPage({ id, initialGameData }) {
     isHalloweenMode && isHorrorGame ? "halloween-text" : "";
   const halloweenClassLight =
     isHalloweenMode && isHorrorGame ? "halloween-text-light" : "";
+
+  const handleSlideChange = (swiper) => {
+    const currentSlideIndex = swiper.activeIndex;
+    const isVideoSlide = currentSlideIndex >= game.images.length;
+
+    if (isVideoSlide) {
+      swiper.autoplay.stop();
+      setIsVideoPlaying(true);
+    } else {
+      swiper.autoplay.start();
+      setIsVideoPlaying(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -1081,12 +1124,10 @@ export default function GameDetailsPage({ id, initialGameData }) {
                           initial={{ y: 20, opacity: 0 }}
                           animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.5, delay: 0.3 }}
-                          className=" p-2"
+                          className="p-2"
                         >
-                          <h2
-                            className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
-                          >
-                            Images and Videos
+                          <h2 className={`text-2xl font-semibold mb-4 ${halloweenClass}`}>
+                            Imágenes y Videos
                           </h2>
                           <Swiper
                             modules={[Navigation, Pagination, Autoplay]}
@@ -1095,30 +1136,29 @@ export default function GameDetailsPage({ id, initialGameData }) {
                             navigation
                             pagination={{ clickable: true }}
                             autoplay={{
-                              delay: 10000, // 10 segundos
-                              disableOnInteraction: false, // Continúa el autoplay después de la interacción del usuario
+                              delay: 10000,
+                              disableOnInteraction: false,
                             }}
-                            className="mb-6"
+                            onSwiper={(swiper) => {
+                              swiperRef.current = swiper;
+                            }}
+                            onSlideChange={handleSlideChange}
+                            className="mb-6 w-full"
                           >
                             {game.images?.map((image, index) => (
                               <SwiperSlide key={`image-${index}`}>
-                                <img
-                                  src={image.url}
-                                  alt={
-                                    image.description ||
-                                    `${game.name} image ${index + 1}`
-                                  }
-                                  width={800}
-                                  height={450}
-                                  className="rounded-lg object-cover w-full h-auto"
-                                />
+                                <div className="aspect-w-16 aspect-h-9">
+                                  <img
+                                    src={image.url}
+                                    alt={image.description || `${game.name} image ${index + 1}`}
+                                    className="rounded-lg object-cover w-full h-full"
+                                  />
+                                </div>
                               </SwiperSlide>
                             ))}
                             {game.videos?.map((video, index) => (
                               <SwiperSlide key={`video-${index}`}>
-                                <YouTubePlayer
-                                  videoId={getYouTubeVideoId(video.url)}
-                                />
+                                <CustomVideoPlayer videoId={getYouTubeVideoId(video.url)} />
                               </SwiperSlide>
                             ))}
                           </Swiper>
@@ -1188,11 +1228,4 @@ export default function GameDetailsPage({ id, initialGameData }) {
       </motion.div>
     </div>
   );
-}
-
-function getYouTubeVideoId(url) {
-  const regExp =
-    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-  const match = url.match(regExp);
-  return match && match[2].length === 11 ? match[2] : null;
 }

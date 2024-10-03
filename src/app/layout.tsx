@@ -36,7 +36,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     !isSignUpPage &&
                     !isProPage &&
                     !isUpgradePage && <Footer />}
-
                   <ToastContainer position="bottom-right" theme="dark" />
                 </HalloweenProvider>
               </ChristmasProvider>
