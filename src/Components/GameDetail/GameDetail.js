@@ -963,7 +963,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
                         className="sticky top-24"
                       >
                         <ImageVideoPlayer
-                          key={game.id} // Añade una key única
+                          key={game.id}
                           imageUrl={game.coverImageUrl}
                           videoUrl={game.videos?.[0]?.url}
                           onDoubleClick={handleVideoDoubleClick}
@@ -1348,7 +1348,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
               />
               <button
                 onClick={closeFullscreenVideo}
-                className="absolute top-4 right-4 text-white text-2xl"
+                className="absolute top-4 right-4 text-white text-2xl bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
               >
                 &times;
               </button>

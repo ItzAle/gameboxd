@@ -56,3 +56,22 @@ iframe[src*="youtube.com"] {
 .ytp-title {
   display: none !important;
 }
+
+/* Estilos para el video pequeño */
+.youtube-container iframe {
+  pointer-events: none;
+}
+
+/* Estilos generales para ocultar elementos de YouTube */
+.ytp-chrome-top,
+.ytp-gradient-top,
+.ytp-gradient-bottom,
+.ytp-watermark,
+.ytp-small-redirect {
+  display: none !important;
+}
+
+/* Permitir interacciones para el video a pantalla completa */
+.fixed iframe {
+  pointer-events: auto;
+}
