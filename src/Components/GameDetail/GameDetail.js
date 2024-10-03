@@ -1154,12 +1154,12 @@ export default function GameDetailsPage({ id, initialGameData }) {
                           ))
                         ) : (
                           <p className="text-gray-400 text-center py-4">
-                            No hay reseñas aún,{" "}
+                            No reviews yet,{" "}
                             <span
                               onClick={handleAddReviewClick}
                               className="text-blue-400 hover:underline cursor-pointer"
                             >
-                              puedes añadir una haciendo clic aquí
+                              you can add one by clicking here
                             </span>
                           </p>
                         )}
