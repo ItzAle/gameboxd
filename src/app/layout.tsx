@@ -21,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const isSignUpPage = pathname === "/signup";
   const isProPage = pathname === "/pro";
   const isUpgradePage = pathname === "/upgrade";
+  const isGameDetailPage = pathname.includes("/games/");
 
   return (
     <html lang="en">
@@ -35,7 +36,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     !isSignInPage &&
                     !isSignUpPage &&
                     !isProPage &&
-                    !isUpgradePage && <Footer />}
+                    !isUpgradePage &&
+                    !isGameDetailPage && <Footer />}
                   <ToastContainer position="bottom-right" theme="dark" />
                 </HalloweenProvider>
               </ChristmasProvider>

@@ -45,6 +45,8 @@ import {
   FaTrash,
   FaChevronDown,
   FaChevronUp,
+  FaLightbulb,
+  FaTimes,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
@@ -68,6 +70,13 @@ import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 import "../../index.css";
 import YouTube from "react-youtube";
+import { BsGrid3X3GapFill, BsListUl } from "react-icons/bs";
+import "../../utils/customScrollbar.css";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
+import "yet-another-react-lightbox/plugins/thumbnails.css";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
@@ -230,9 +239,10 @@ ReviewCard.displayName = "ReviewCard";
 
 const getYouTubeVideoId = (url) => {
   if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const regExp =
+    /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  return (match && match[2].length === 11) ? match[2] : null;
+  return match && match[2].length === 11 ? match[2] : null;
 };
 
 const CustomVideoPlayer = React.memo(({ videoUrl, isVisible, onReady }) => {
@@ -277,115 +287,205 @@ const CustomVideoPlayer = React.memo(({ videoUrl, isVisible, onReady }) => {
   );
 });
 
-const ImageVideoPlayer = React.memo(({ imageUrl, videoUrl, onDoubleClick, isPlaying, setIsPlaying }) => {
-  const [isVideoVisible, setIsVideoVisible] = useState(false);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const playerRef = useRef(null);
-  const videoId = getYouTubeVideoId(videoUrl);
+const ImageVideoPlayer = React.memo(
+  ({
+    imageUrl,
+    videoUrl,
+    onDoubleClick,
+    isPlaying,
+    setIsPlaying,
+    gameName,
+    isFavorite,
+    onToggleFavorite,
+  }) => {
+    const [isVideoVisible, setIsVideoVisible] = useState(false);
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
+    const [showBanner, setShowBanner] = useState(true);
+    const playerRef = useRef(null);
+    const videoId = getYouTubeVideoId(videoUrl);
+    const bannerTimeoutRef = useRef(null);
 
-  const handleMouseEnter = useCallback(() => {
-    setIsVideoVisible(true);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!isPlaying) {
-      setIsVideoVisible(false);
-    }
-  }, [isPlaying]);
-
-  const handleClick = useCallback(() => {
-    setIsPlaying(true);
-    setIsVideoVisible(true);
-  }, [setIsPlaying]);
-
-  const handleDoubleClick = useCallback((event) => {
-    event.preventDefault();
-    onDoubleClick(videoUrl);
-  }, [onDoubleClick, videoUrl]);
-
-  const onReady = useCallback((event) => {
-    console.log("YouTube player ready");
-    playerRef.current = event.target;
-    setIsPlayerReady(true);
-  }, []);
-
-  const safePlayerCall = useCallback((method) => {
-    console.log(`Attempting to call ${method}`, { isPlayerReady, playerRefExists: !!playerRef.current });
-    if (isPlayerReady && playerRef.current) {
-      if (typeof playerRef.current[method] === 'function') {
-        try {
-          playerRef.current[method]();
-        } catch (error) {
-          console.error(`Error calling ${method}:`, error);
-        }
+    useEffect(() => {
+      const bannerDismissed = localStorage.getItem("videoBannerDismissed");
+      if (bannerDismissed) {
+        setShowBanner(false);
       } else {
-        console.warn(`Method ${method} is not a function`);
+        bannerTimeoutRef.current = setTimeout(() => {
+          setShowBanner(false);
+        }, 5000); // Banner disappears after 5 seconds
       }
-    } else {
-      console.warn(`Cannot call ${method}: player not ready or ref is null`);
-    }
-  }, [isPlayerReady]);
 
-  useEffect(() => {
-    console.log("isPlaying changed:", isPlaying);
-    if (isPlaying) {
-      safePlayerCall('playVideo');
-    } else {
-      safePlayerCall('pauseVideo');
-    }
-  }, [isPlaying, safePlayerCall]);
+      return () => {
+        if (bannerTimeoutRef.current) {
+          clearTimeout(bannerTimeoutRef.current);
+        }
+      };
+    }, []);
 
-  useEffect(() => {
-    return () => {
-      console.log("Component unmounting, destroying player");
-      if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-        playerRef.current.destroy();
+    const handleMouseEnter = useCallback(() => {
+      setIsVideoVisible(true);
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+      if (!isPlaying) {
+        setIsVideoVisible(false);
       }
-    };
-  }, []);
+    }, [isPlaying]);
 
-  return (
-    <div 
-      className="relative w-full pt-[56.25%] overflow-hidden rounded-lg select-none"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
-    >
-      <img 
-        src={imageUrl} 
-        alt="Game preview" 
-        className="absolute inset-0 w-full h-full object-cover rounded-lg"
-        draggable="false"
-      />
-      {videoId && (isVideoVisible || isPlaying) && (
-        <div className="absolute inset-0 youtube-container rounded-lg">
-          <YouTube
-            videoId={videoId}
-            opts={{
-              height: '100%',
-              width: '100%',
-              playerVars: {
-                autoplay: 1,
-                controls: 0,
-                modestbranding: 1,
-                rel: 0,
-                showinfo: 0,
-                mute: 1,
-                loop: 1,
-                playlist: videoId,
-                iv_load_policy: 3,
-                fs: 0
-              },
-            }}
-            onReady={onReady}
-            className="absolute inset-0 w-full h-full rounded-lg"
-          />
+    const handleClick = useCallback(() => {
+      setIsPlaying(!isPlaying);
+    }, [isPlaying, setIsPlaying]);
+
+    const handleDoubleClick = useCallback(
+      (event) => {
+        event.preventDefault();
+        onDoubleClick(videoUrl);
+      },
+      [onDoubleClick, videoUrl]
+    );
+
+    const dismissBanner = useCallback(() => {
+      setShowBanner(false);
+      localStorage.setItem("videoBannerDismissed", "true");
+    }, []);
+
+    const onReady = useCallback((event) => {
+      console.log("YouTube player ready");
+      playerRef.current = event.target;
+      setIsPlayerReady(true);
+    }, []);
+
+    const safePlayerCall = useCallback(
+      (method) => {
+        console.log(`Attempting to call ${method}`, {
+          isPlayerReady,
+          playerRefExists: !!playerRef.current,
+        });
+        if (isPlayerReady && playerRef.current) {
+          if (typeof playerRef.current[method] === "function") {
+            try {
+              playerRef.current[method]();
+            } catch (error) {
+              console.error(`Error calling ${method}:`, error);
+            }
+          } else {
+            console.warn(`Method ${method} is not a function`);
+          }
+        } else {
+          console.warn(
+            `Cannot call ${method}: player not ready or ref is null`
+          );
+        }
+      },
+      [isPlayerReady]
+    );
+    useEffect(() => {
+      console.log("isPlaying changed:", isPlaying);
+      if (isPlaying) {
+        safePlayerCall("playVideo");
+      } else {
+        safePlayerCall("pauseVideo");
+      }
+    }, [isPlaying, safePlayerCall]);
+
+    useEffect(() => {
+      return () => {
+        console.log("Component unmounting, destroying player");
+        if (
+          playerRef.current &&
+          typeof playerRef.current.destroy === "function"
+        ) {
+          playerRef.current.destroy();
+        }
+      };
+    }, []);
+
+    return (
+      <div className="relative w-full pt-[56.25%] overflow-hidden rounded-lg select-none">
+        <AnimatePresence>
+          {showBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="absolute top-2 left-2 bg-black bg-opacity-75 text-white p-2 rounded-lg z-20 flex items-center"
+            >
+              <FaLightbulb className="mr-2 text-yellow-400" />
+              <span className="text-sm">
+                Hover: Preview video | Click: Play/Pause | Double-click:
+                Fullscreen
+              </span>
+              <button
+                onClick={dismissBanner}
+                className="ml-2 text-gray-400 hover:text-white"
+              >
+                <FaTimes />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Nombre del juego y botón de favoritos */}
+        <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black to-transparent z-10">
+          <div className="flex justify-between items-center">
+            <h2 className="text-white text-2xl font-bold">{gameName}</h2>
+            <button
+              onClick={onToggleFavorite}
+              className="text-white hover:text-red-500 transition-colors duration-200"
+            >
+              {isFavorite ? (
+                <FaHeart className="text-red-500" size={24} />
+              ) : (
+                <FaRegHeart size={24} />
+              )}
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  );
-});
+
+        <div
+          className="absolute inset-0 w-full h-full"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+        >
+          <img
+            src={imageUrl}
+            alt="Game preview"
+            className="absolute inset-0 w-full h-full object-cover rounded-lg"
+            draggable="false"
+          />
+          {videoId && (isVideoVisible || isPlaying) && (
+            <div className="absolute inset-0 youtube-container rounded-lg">
+              <YouTube
+                videoId={videoId}
+                opts={{
+                  height: "100%",
+                  width: "100%",
+                  playerVars: {
+                    autoplay: 1,
+                    controls: 0,
+                    modestbranding: 1,
+                    rel: 0,
+                    showinfo: 0,
+                    mute: 1,
+                    loop: 1,
+                    playlist: videoId,
+                    iv_load_policy: 3,
+                    fs: 0,
+                  },
+                }}
+                onReady={onReady}
+                className="absolute inset-0 w-full h-full rounded-lg"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
 
 ImageVideoPlayer.displayName = "ImageVideoPlayer";
 CustomVideoPlayer.displayName = "CustomVideoPlayer";
@@ -426,6 +526,18 @@ export default function GameDetailsPage({ id, initialGameData }) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [fullscreenVideo, setFullscreenVideo] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [photoIndex, setPhotoIndex] = useState(0);
+
+  const toggleLayout = () => {
+    setIsCompactLayout(!isCompactLayout);
+  };
+
+  const openLightbox = (index) => {
+    setPhotoIndex(index);
+    setIsLightboxOpen(true);
+  };
 
   const detailsVariants = useMemo(
     () => ({
@@ -927,12 +1039,12 @@ export default function GameDetailsPage({ id, initialGameData }) {
   }
 
   return (
-    <div className="bg-gradient-to-b from-gray-900 to-black">
+    <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className={`min-h-screen ${containerClass}`}
+        className="min-h-screen relative"
       >
         {isHalloweenMode && isHorrorGame && (
           <>
@@ -941,378 +1053,519 @@ export default function GameDetailsPage({ id, initialGameData }) {
           </>
         )}
 
-        <div className="relative z-10 ">
+        <div className="relative z-10">
           <MemoizedTransparentNavbar />
+          <button
+            onClick={toggleLayout}
+            className="fixed top-20 right-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300 z-50 hidden lg:flex items-center"
+          >
+            {isCompactLayout ? (
+              <>
+                <BsListUl className="mr-2" /> Original Layout
+              </>
+            ) : (
+              <>
+                <BsGrid3X3GapFill className="mr-2" /> Compact Layout
+              </>
+            )}
+          </button>
           {isLoading ? (
             <div className="flex justify-center items-center h-screen">
               <Loader2 className="animate-spin text-white" />
             </div>
           ) : game ? (
-            (() => {
-              const hasMediaContent =
-                game.images?.length > 0 || game.videos?.length > 0;
-
-              return (
-                <div className="max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8">
-                  <div className="flex flex-col lg:flex-row gap-8">
-                    <div className="lg:w-1/3">
-                      <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.5 }}
-                        className="sticky top-24"
+            isCompactLayout ? (
+              // Diseño compacto
+              <div className="max-w-full mx-auto pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-64px)] flex flex-col">
+                <div className="flex-grow flex flex-col lg:flex-row gap-4 overflow-hidden">
+                  {/* Columna izquierda */}
+                  <div className="lg:w-5/12 flex flex-col">
+                    <ImageVideoPlayer
+                      key={game.id}
+                      imageUrl={game.coverImageUrl}
+                      videoUrl={game.videos?.[0]?.url}
+                      onDoubleClick={handleVideoDoubleClick}
+                      isPlaying={isPlaying}
+                      setIsPlaying={setIsPlaying}
+                      gameName={game.name}
+                      isFavorite={isFavorite}
+                      onToggleFavorite={handleLikeClick}
+                    />
+                    <p className="text-gray-400 text-sm mt-2">
+                      Release date: {formatReleaseDate(game.releaseDate)}
+                    </p>
+                    <button
+                      onClick={handleAddReviewClick}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2 transition duration-300 text-sm"
+                    >
+                      Add a review
+                    </button>
+                    <div className="grid grid-cols-3 gap-2 mt-2">
+                      <button
+                        onClick={() => handleAddToLibrary("playing")}
+                        className={`flex flex-col items-center justify-center p-1 rounded text-xs ${
+                          libraryStatus === "playing"
+                            ? `bg-blue-500 hover:bg-blue-600`
+                            : `bg-gray-700 hover:bg-gray-600`
+                        } transition duration-300`}
                       >
-                        <ImageVideoPlayer
-                          key={game.id}
-                          imageUrl={game.coverImageUrl}
-                          videoUrl={game.videos?.[0]?.url}
-                          onDoubleClick={handleVideoDoubleClick}
-                          isPlaying={isPlaying}
-                          setIsPlaying={setIsPlaying}
-                        />
-                        <p className="text-gray-400 mb-4">
-                          Release date: {formatReleaseDate(game.releaseDate)}
-                        </p>
-                        <button
-                          onClick={handleAddReviewClick}
-                          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mb-4 w-full transition duration-300"
-                        >
-                          Add a review
-                        </button>
-
-                        {/* Botones de estado de juego */}
-                        <div className="grid grid-cols-3 gap-2 mb-4">
-                          <button
-                            onClick={() => handleAddToLibrary("playing")}
-                            className={`flex flex-col items-center justify-center p-2 rounded ${
-                              libraryStatus === "playing"
-                                ? `bg-blue-500 hover:bg-blue-600 `
-                                : `bg-gray-700 hover:bg-gray-600 `
-                            } transition duration-300`}
-                          >
-                            <FaPlayCircle className="text-2xl mb-1" />
-                            <span className="text-xs">Playing</span>
-                          </button>
-                          <button
-                            onClick={() => handleAddToLibrary("completed")}
-                            className={`flex flex-col items-center justify-center p-2 rounded ${
-                              libraryStatus === "completed"
-                                ? `bg-green-500 hover:bg-green-600 `
-                                : `bg-gray-700 hover:bg-gray-600 `
-                            } transition duration-300`}
-                          >
-                            <FaCheckCircle className="text-2xl mb-1" />
-                            <span className="text-xs">Completed</span>
-                          </button>
-                          <button
-                            onClick={() => handleAddToLibrary("toPlay")}
-                            className={`flex flex-col items-center justify-center p-2 rounded ${
-                              libraryStatus === "toPlay"
-                                ? `bg-yellow-500 hover:bg-yellow-600 `
-                                : `bg-gray-700 hover:bg-gray-600 `
-                            } transition duration-300`}
-                          >
-                            <FaListUl className="text-2xl mb-1" />
-                            <span className="text-xs">To play</span>
-                          </button>
-                        </div>
-
-                        {/* Botones de tiendas */}
-                        <div className="grid grid-cols-1 gap-2 mb-4">
-                          {game.storeLinks &&
-                            Object.entries(game.storeLinks)
-                              .filter(([store, link]) => link)
-                              .map(([store, link]) => {
-                                let Icon;
-                                let storeName = store;
-                                switch (store.toLowerCase()) {
-                                  case "steam":
-                                    Icon = FaSteam;
-                                    storeName = "Steam";
-                                    break;
-                                  case "playstation":
-                                    Icon = FaPlaystation;
-                                    storeName = "PlayStation";
-                                    break;
-                                  case "xbox":
-                                    Icon = FaXbox;
-                                    storeName = "Xbox";
-                                    break;
-                                  case "nintendo":
-                                    Icon = FaGamepad;
-                                    storeName = "Nintendo";
-                                    break;
-                                  case "epicgames":
-                                    Icon = FaDesktop;
-                                    storeName = "Epic Games";
-                                    break;
-                                  default:
-                                    Icon = FaGamepad;
-                                }
-                                return (
-                                  <a
-                                    key={store}
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="bg-slate-800 hover:bg-gray-400 transition duration-300 text-white px-4 py-2 rounded flex items-center justify-center"
-                                  >
-                                    <Icon className="mr-2" /> {storeName}
-                                  </a>
-                                );
-                              })}
-                        </div>
-
-                        {hasMediaContent && (
-                          <motion.div
-                            initial={{ y: 20, opacity: 0 }}
-                            animate={{ y: 0, opacity: 1 }}
-                            transition={{ duration: 0.5, delay: 0.2 }}
-                            className=" rounded-lg p-4 mb-8 bg-slate-800"
-                          >
-                            {/* Sección de información del juego */}
-                            <h2
-                              className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
-                            >
-                              Game Details
-                            </h2>
-
-                            <h3
-                              className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                            >
-                              Description
-                            </h3>
-                            {renderDescription(game.description)}
-
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <h3
-                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                                >
-                                  Platforms
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                  {game.platforms &&
-                                    game.platforms.map((platform) =>
-                                      renderFilterableItem(platform, "platform")
-                                    )}
-                                </div>
-                              </div>
-                              <div>
-                                <h3
-                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                                >
-                                  Genres
-                                </h3>
-                                <div className="flex flex-wrap gap-2">
-                                  {game.genres &&
-                                    game.genres.map((genre) =>
-                                      renderFilterableItem(genre, "genre")
-                                    )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 mt-4">
-                              <div>
-                                <h3
-                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                                >
-                                  Developer
-                                </h3>
-                                <p className="text-gray-300">
-                                  {renderFilterableItem(
-                                    game.developer,
-                                    "developer"
-                                  )}
-                                </p>
-                              </div>
-                              <div>
-                                <h3
-                                  className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                                >
-                                  Publisher
-                                </h3>
-                                <p className="text-gray-300">
-                                  {renderFilterableItem(
-                                    game.publisher,
-                                    "publisher"
-                                  )}
-                                </p>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </motion.div>
+                        <FaPlayCircle className="text-lg mb-1" />
+                        <span>Playing</span>
+                      </button>
+                      <button
+                        onClick={() => handleAddToLibrary("completed")}
+                        className={`flex flex-col items-center justify-center p-1 rounded text-xs ${
+                          libraryStatus === "completed"
+                            ? `bg-green-500 hover:bg-green-600`
+                            : `bg-gray-700 hover:bg-gray-600`
+                        } transition duration-300`}
+                      >
+                        <FaCheckCircle className="text-lg mb-1" />
+                        <span>Completed</span>
+                      </button>
+                      <button
+                        onClick={() => handleAddToLibrary("toPlay")}
+                        className={`flex flex-col items-center justify-center p-1 rounded text-xs ${
+                          libraryStatus === "toPlay"
+                            ? `bg-yellow-500 hover:bg-yellow-600`
+                            : `bg-gray-700 hover:bg-gray-600`
+                        } transition duration-300`}
+                      >
+                        <FaListUl className="text-lg mb-1" />
+                        <span>To play</span>
+                      </button>
                     </div>
-
-                    <div className="lg:w-2/3">
-                      {!hasMediaContent && (
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.5, delay: 0.2 }}
-                          className="rounded-lg p-2 mb-8"
-                        >
-                          {/* Sección de información del juego */}
-                          <h2
-                            className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
-                          >
-                            Game Details
-                          </h2>
-
-                          <h3
-                            className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                          >
-                            Description
-                          </h3>
-                          {renderDescription(game.description)}
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <h3
-                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      {game.storeLinks &&
+                        Object.entries(game.storeLinks)
+                          .filter(([store, link]) => link)
+                          .map(([store, link]) => {
+                            let Icon;
+                            let storeName = store;
+                            switch (store.toLowerCase()) {
+                              case "steam":
+                                Icon = FaSteam;
+                                storeName = "Steam";
+                                break;
+                              case "playstation":
+                                Icon = FaPlaystation;
+                                storeName = "PlayStation";
+                                break;
+                              case "xbox":
+                                Icon = FaXbox;
+                                storeName = "Xbox";
+                                break;
+                              case "nintendo":
+                                Icon = FaGamepad;
+                                storeName = "Nintendo";
+                                break;
+                              case "epicgames":
+                                Icon = FaDesktop;
+                                storeName = "Epic Games";
+                                break;
+                              default:
+                                Icon = FaGamepad;
+                            }
+                            return (
+                              <a
+                                key={store}
+                                href={link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-slate-800 hover:bg-gray-700 transition duration-300 text-white px-4 py-2 rounded flex items-center justify-center text-sm"
                               >
-                                Platforms
-                              </h3>
-                              <div className="flex flex-wrap gap-2">
-                                {game.platforms &&
-                                  game.platforms.map((platform) =>
-                                    renderFilterableItem(platform, "platform")
-                                  )}
-                              </div>
-                            </div>
-                            <div>
-                              <h3
-                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                              >
-                                Genres
-                              </h3>
-                              <div className="flex flex-wrap gap-2">
-                                {game.genres &&
-                                  game.genres.map((genre) =>
-                                    renderFilterableItem(genre, "genre")
-                                  )}
-                              </div>
-                            </div>
-                          </div>
+                                <Icon className="mr-2" /> {storeName}
+                              </a>
+                            );
+                          })}
+                    </div>
+                  </div>
 
-                          <div className="grid grid-cols-2 gap-4 mt-4">
-                            <div>
-                              <h3
-                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                              >
-                                Developer
-                              </h3>
-                              <p className="text-gray-300">
-                                {renderFilterableItem(
-                                  game.developer,
-                                  "developer"
-                                )}
-                              </p>
-                            </div>
-                            <div>
-                              <h3
-                                className={`text-xl font-semibold mb-2 ${halloweenClass}`}
-                              >
-                                Publisher
-                              </h3>
-                              <p className="text-gray-300">
-                                {renderFilterableItem(
-                                  game.publisher,
-                                  "publisher"
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-
-                      {hasMediaContent && (
-                        <motion.div
-                          initial={{ y: 20, opacity: 0 }}
-                          animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.5, delay: 0.3 }}
-                          className="p-2"
-                        >
-                          <h2
-                            className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
-                          >
-                            Imágenes y Videos
-                          </h2>
-                          <Swiper
-                            modules={[Navigation, Pagination, Autoplay]}
-                            spaceBetween={30}
-                            slidesPerView={1}
-                            navigation
-                            pagination={{ clickable: true }}
-                            autoplay={{
-                              delay: 10000,
-                              disableOnInteraction: false,
-                            }}
-                            onSwiper={(swiper) => {
-                              swiperRef.current = swiper;
-                            }}
-                            onSlideChange={handleSlideChange}
-                            className="mb-6 w-full rounded-lg"
-                          >
-                            {game.images?.map((image, index) => (
-                              <SwiperSlide key={`image-${index}`}>
-                                <img
-                                  src={image.url}
-                                  alt={`Game screenshot ${index + 1}`}
-                                  className="w-full h-auto object-cover"
-                                />
-                              </SwiperSlide>
-                            ))}
-                          </Swiper>
-                        </motion.div>
-                      )}
-
-                      {/* Sección de reviews */}
-                      <motion.div
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.5, delay: 0.4 }}
-                        className="p-2"
+                  {/* Columna derecha */}
+                  <div className="lg:w-7/12 flex flex-col overflow-hidden">
+                    <div className="flex-grow overflow-y-auto pr-4">
+                      <h2
+                        className={`text-xl font-semibold mb-2 ${halloweenClass}`}
                       >
-                        <h2
-                          className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
+                        Game Details
+                      </h2>
+                      <div className="text-sm">
+                        <h3 className={`font-semibold ${halloweenClass}`}>
+                          Description
+                        </h3>
+                        {renderDescription(game.description)}
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                        <div>
+                          <h3
+                            className={`font-semibold ${halloweenClass} mb-1`}
+                          >
+                            Platforms
+                          </h3>
+                          <div className="flex flex-wrap gap-1">
+                            {game.platforms &&
+                              game.platforms.map((platform) =>
+                                renderFilterableItem(platform, "platform")
+                              )}
+                          </div>
+                        </div>
+                        <div>
+                          <h3
+                            className={`font-semibold ${halloweenClass} mb-1`}
+                          >
+                            Genres
+                          </h3>
+                          <div className="flex flex-wrap gap-1">
+                            {game.genres &&
+                              game.genres.map((genre) =>
+                                renderFilterableItem(genre, "genre")
+                              )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
+                        <div>
+                          <h3
+                            className={`font-semibold ${halloweenClass} mb-1`}
+                          >
+                            Developer
+                          </h3>
+                          <div>
+                            {renderFilterableItem(game.developer, "developer")}
+                          </div>
+                        </div>
+                        <div>
+                          <h3
+                            className={`font-semibold ${halloweenClass} mb-1`}
+                          >
+                            Publisher
+                          </h3>
+                          <div>
+                            {renderFilterableItem(game.publisher, "publisher")}
+                          </div>
+                        </div>
+                      </div>
+
+                      <h2
+                        className={`text-xl font-semibold mt-4 mb-2 ${halloweenClass}`}
+                      >
+                        Imágenes y Videos
+                      </h2>
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        {game.images?.slice(0, 6).map((image, index) => (
+                          <img
+                            key={index}
+                            src={image.url}
+                            alt={`Game screenshot ${index + 1}`}
+                            className="w-full h-auto object-cover rounded cursor-pointer"
+                            onClick={() => openLightbox(index)}
+                          />
+                        ))}
+                      </div>
+                      {game.images?.length > 6 && (
+                        <button
+                          onClick={() => openLightbox(0)}
+                          className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300 w-full text-sm"
                         >
-                          Reviews
-                        </h2>
-                        {reviews.length > 0 ? (
-                          reviews.map((review) => (
-                            <ReviewCard
-                              key={review.id}
-                              review={review}
-                              user={user}
-                              onToggleComments={toggleComments}
-                              showComments={showComments}
-                              onAddComment={handleAddComment}
-                              onEditComment={handleEditComment}
-                              onDeleteComment={handleDeleteComment}
-                              editingComment={editingComment}
-                              setEditingComment={setEditingComment}
-                            />
-                          ))
-                        ) : (
-                          <p className="text-gray-400 text-center py-4">
-                            No reviews yet,{" "}
-                            <span
-                              onClick={handleAddReviewClick}
-                              className="text-blue-400 hover:underline cursor-pointer"
-                            >
-                              you can add one by clicking here
-                            </span>
-                          </p>
-                        )}
-                      </motion.div>
+                          Ver todas las imágenes ({game.images.length})
+                        </button>
+                      )}
+
+                      {/* Lightbox component */}
+                      <Lightbox
+                        open={isLightboxOpen}
+                        close={() => setIsLightboxOpen(false)}
+                        index={0}
+                        slides={game.images?.map((img) => ({ src: img.url }))}
+                      />
+                      <h2
+                        className={`text-xl font-semibold mb-2 mt-4 ${halloweenClass}`}
+                      >
+                        Reviews
+                      </h2>
+                      {reviews.length > 0 ? (
+                        reviews.map((review) => (
+                          <ReviewCard
+                            key={review.id}
+                            review={review}
+                            user={user}
+                            onToggleComments={toggleComments}
+                            showComments={showComments}
+                            onAddComment={handleAddComment}
+                            onEditComment={handleEditComment}
+                            onDeleteComment={handleDeleteComment}
+                            editingComment={editingComment}
+                            setEditingComment={setEditingComment}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-gray-400 text-center py-4">
+                          No reviews yet,{" "}
+                          <span
+                            onClick={handleAddReviewClick}
+                            className="text-blue-400 hover:underline cursor-pointer"
+                          >
+                            you can add one by clicking here
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
-              );
-            })()
+              </div>
+            ) : (
+              // Diseño original
+              <div className="max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col lg:flex-row gap-8">
+                  {/* Columna izquierda */}
+                  <div className="lg:w-1/3">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5 }}
+                      className="sticky top-24"
+                    >
+                      <ImageVideoPlayer
+                        key={game.id}
+                        imageUrl={game.coverImageUrl}
+                        videoUrl={game.videos?.[0]?.url}
+                        onDoubleClick={handleVideoDoubleClick}
+                        isPlaying={isPlaying}
+                        setIsPlaying={setIsPlaying}
+                        gameName={game.name}
+                        isFavorite={isFavorite}
+                        onToggleFavorite={handleLikeClick}
+                      />
+                      <p className="text-gray-400 text-sm mt-2">
+                        Release date: {formatReleaseDate(game.releaseDate)}
+                      </p>
+                      <button
+                        onClick={handleAddReviewClick}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2 transition duration-300 w-full"
+                      >
+                        Add a review
+                      </button>
+                      <div className="grid grid-cols-3 gap-2 mt-2">
+                        <button
+                          onClick={() => handleAddToLibrary("playing")}
+                          className={`flex flex-col items-center justify-center p-2 rounded ${
+                            libraryStatus === "playing"
+                              ? `bg-blue-500 hover:bg-blue-600`
+                              : `bg-gray-700 hover:bg-gray-600`
+                          } transition duration-300`}
+                        >
+                          <FaPlayCircle className="text-2xl mb-1" />
+                          <span>Playing</span>
+                        </button>
+                        <button
+                          onClick={() => handleAddToLibrary("completed")}
+                          className={`flex flex-col items-center justify-center p-2 rounded ${
+                            libraryStatus === "completed"
+                              ? `bg-green-500 hover:bg-green-600`
+                              : `bg-gray-700 hover:bg-gray-600`
+                          } transition duration-300`}
+                        >
+                          <FaCheckCircle className="text-2xl mb-1" />
+                          <span>Completed</span>
+                        </button>
+                        <button
+                          onClick={() => handleAddToLibrary("toPlay")}
+                          className={`flex flex-col items-center justify-center p-2 rounded ${
+                            libraryStatus === "toPlay"
+                              ? `bg-yellow-500 hover:bg-yellow-600`
+                              : `bg-gray-700 hover:bg-gray-600`
+                          } transition duration-300`}
+                        >
+                          <FaListUl className="text-2xl mb-1" />
+                          <span>To play</span>
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 mt-2">
+                        {game.storeLinks &&
+                          Object.entries(game.storeLinks)
+                            .filter(([store, link]) => link)
+                            .map(([store, link]) => {
+                              let Icon;
+                              let storeName = store;
+                              switch (store.toLowerCase()) {
+                                case "steam":
+                                  Icon = FaSteam;
+                                  storeName = "Steam";
+                                  break;
+                                case "playstation":
+                                  Icon = FaPlaystation;
+                                  storeName = "PlayStation";
+                                  break;
+                                case "xbox":
+                                  Icon = FaXbox;
+                                  storeName = "Xbox";
+                                  break;
+                                case "nintendo":
+                                  Icon = FaGamepad;
+                                  storeName = "Nintendo";
+                                  break;
+                                case "epicgames":
+                                  Icon = FaDesktop;
+                                  storeName = "Epic Games";
+                                  break;
+                                default:
+                                  Icon = FaGamepad;
+                              }
+                              return (
+                                <a
+                                  key={store}
+                                  href={link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="bg-slate-800 hover:bg-gray-700 transition duration-300 text-white px-4 py-2 rounded flex items-center justify-center"
+                                >
+                                  <Icon className="mr-2" /> {storeName}
+                                </a>
+                              );
+                            })}
+                      </div>
+                      <div className="mt-4 bg-slate-800 p-4 rounded-lg">
+                        <h2
+                          className={`text-xl font-bold mb-2 ${halloweenClass}`}
+                        >
+                          Game Details
+                        </h2>
+                        <div className="text-sm">
+                          <h3 className={`font-semibold ${halloweenClass}`}>
+                            Description
+                          </h3>
+                          {renderDescription(game.description)}
+                        </div>
+                        <div className="mt-2">
+                          <h3 className={`font-semibold ${halloweenClass}`}>
+                            Platforms
+                          </h3>
+                          <div className="flex flex-wrap gap-1">
+                            {game.platforms &&
+                              game.platforms.map((platform) =>
+                                renderFilterableItem(platform, "platform")
+                              )}
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <h3 className={`font-semibold ${halloweenClass}`}>
+                            Genres
+                          </h3>
+                          <div className="flex flex-wrap gap-1">
+                            {game.genres &&
+                              game.genres.map((genre) =>
+                                renderFilterableItem(genre, "genre")
+                              )}
+                          </div>
+                        </div>
+                        <div className="mt-2">
+                          <h3 className={`font-semibold ${halloweenClass}`}>
+                            Developer
+                          </h3>
+                          <p>
+                            {renderFilterableItem(game.developer, "developer")}
+                          </p>
+                        </div>
+                        <div className="mt-2">
+                          <h3 className={`font-semibold ${halloweenClass}`}>
+                            Publisher
+                          </h3>
+                          <p>
+                            {renderFilterableItem(game.publisher, "publisher")}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Columna derecha */}
+                  <div className="lg:w-2/3">
+                    <motion.div
+                      initial={{ y: 20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      transition={{ duration: 0.5, delay: 0.2 }}
+                    >
+                      <h2
+                        className={`text-2xl font-bold mb-4 ${halloweenClass}`}
+                      >
+                        Images and Videos
+                      </h2>
+                      <Swiper
+                        modules={[Navigation, Pagination, Autoplay]}
+                        spaceBetween={10}
+                        slidesPerView={1}
+                        navigation
+                        pagination={{ clickable: true }}
+                        autoplay={{ delay: 5000, disableOnInteraction: false }}
+                        className="mb-8"
+                      >
+                        {game.images?.map((image, index) => (
+                          <SwiperSlide key={`image-${index}`}>
+                            <img
+                              src={image.url}
+                              alt={`Game screenshot ${index + 1}`}
+                              className="w-full h-auto object-cover rounded-lg"
+                            />
+                          </SwiperSlide>
+                        ))}
+                        {game.videos?.map((video, index) => (
+                          <SwiperSlide key={`video-${index}`}>
+                            <div className="relative pt-[56.25%]">
+                              <YouTube
+                                videoId={getYouTubeVideoId(video.url)}
+                                opts={{
+                                  width: "100%",
+                                  height: "100%",
+                                  playerVars: {
+                                    autoplay: 0,
+                                    controls: 1,
+                                    modestbranding: 1,
+                                    rel: 0,
+                                    showinfo: 0,
+                                  },
+                                }}
+                                className="absolute top-0 left-0 w-full h-full"
+                              />
+                            </div>
+                          </SwiperSlide>
+                        ))}
+                      </Swiper>
+                      <h2
+                        className={`text-2xl font-bold mb-4 ${halloweenClass}`}
+                      >
+                        Reviews
+                      </h2>
+                      {reviews.length > 0 ? (
+                        reviews.map((review) => (
+                          <ReviewCard
+                            key={review.id}
+                            review={review}
+                            user={user}
+                            onToggleComments={toggleComments}
+                            showComments={showComments}
+                            onAddComment={handleAddComment}
+                            onEditComment={handleEditComment}
+                            onDeleteComment={handleDeleteComment}
+                            editingComment={editingComment}
+                            setEditingComment={setEditingComment}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-gray-400 text-center py-4">
+                          No reviews yet,{" "}
+                          <span
+                            onClick={handleAddReviewClick}
+                            className="text-blue-400 hover:underline cursor-pointer"
+                          >
+                            you can add one by clicking here
+                          </span>
+                        </p>
+                      )}
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+            )
           ) : null}
         </div>
 
@@ -1328,14 +1581,34 @@ export default function GameDetailsPage({ id, initialGameData }) {
           />
         )}
 
+        {isLightboxOpen && (
+          <Lightbox
+            mainSrc={game.images[photoIndex].url}
+            nextSrc={game.images[(photoIndex + 1) % game.images.length].url}
+            prevSrc={
+              game.images[
+                (photoIndex + game.images.length - 1) % game.images.length
+              ].url
+            }
+            onCloseRequest={() => setIsLightboxOpen(false)}
+            onMovePrevRequest={() =>
+              setPhotoIndex(
+                (photoIndex + game.images.length - 1) % game.images.length
+              )
+            }
+            onMoveNextRequest={() =>
+              setPhotoIndex((photoIndex + 1) % game.images.length)
+            }
+          />
+        )}
         {fullscreenVideo && (
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
             <div className="relative w-full h-full max-w-4xl max-h-[80vh]">
               <YouTube
                 videoId={getYouTubeVideoId(fullscreenVideo)}
                 opts={{
-                  height: '100%',
-                  width: '100%',
+                  height: "100%",
+                  width: "100%",
                   playerVars: {
                     autoplay: 1,
                     controls: 1,
