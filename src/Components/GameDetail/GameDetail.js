@@ -379,6 +379,7 @@ const ImageVideoPlayer = React.memo(
       },
       [isPlayerReady]
     );
+
     useEffect(() => {
       console.log("isPlaying changed:", isPlaying);
       if (isPlaying) {
@@ -526,7 +527,10 @@ export default function GameDetailsPage({ id, initialGameData }) {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [fullscreenVideo, setFullscreenVideo] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isCompactLayout, setIsCompactLayout] = useState(false);
+  const [isCompactLayout, setIsCompactLayout] = useState(() => {
+    const savedLayout = localStorage.getItem("preferredLayout");
+    return savedLayout === "compact";
+  });
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
 
@@ -548,9 +552,16 @@ export default function GameDetailsPage({ id, initialGameData }) {
     checkFavoriteStatus();
   }, [user, game]);
 
-  const toggleLayout = () => {
-    setIsCompactLayout(!isCompactLayout);
-  };
+  const toggleLayout = useCallback(() => {
+    setIsCompactLayout((prevLayout) => {
+      const newLayout = !prevLayout;
+      localStorage.setItem(
+        "preferredLayout",
+        newLayout ? "compact" : "original"
+      );
+      return newLayout;
+    });
+  }, []);
 
   const openLightbox = (index) => {
     setPhotoIndex(index);
@@ -1025,6 +1036,40 @@ export default function GameDetailsPage({ id, initialGameData }) {
     }
   };
 
+  const LayoutToggleButton = ({ isCompactLayout, toggleLayout }) => {
+    return (
+      <motion.button
+        onClick={toggleLayout}
+        className="fixed top-20 right-4 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-full shadow-lg transition duration-300 z-50 hidden lg:flex items-center"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <motion.div
+          initial={false}
+          animate={{ rotate: isCompactLayout ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {isCompactLayout ? (
+            <BsListUl className="text-xl" />
+          ) : (
+            <BsGrid3X3GapFill className="text-xl" />
+          )}
+        </motion.div>
+        <motion.span
+          className="ml-2 text-sm font-medium"
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: "auto" }}
+          transition={{ duration: 0.3 }}
+        >
+          {isCompactLayout ? " " : ""}
+        </motion.span>
+      </motion.button>
+    );
+  };
+
   const handleVideoDoubleClick = useCallback((videoUrl) => {
     console.log("Double click detected, opening fullscreen video");
     setFullscreenVideo(videoUrl);
@@ -1056,12 +1101,34 @@ export default function GameDetailsPage({ id, initialGameData }) {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        when: "beforeChildren",
+        staggerChildren: 0.05,
+        duration: 0.01,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { y: 10, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: { duration: 0.2 },
+    },
+  };
+
   return (
     <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         className="min-h-screen relative"
       >
         {isHalloweenMode && isHorrorGame && (
@@ -1073,20 +1140,10 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
         <div className="relative z-10">
           <MemoizedTransparentNavbar />
-          <button
-            onClick={toggleLayout}
-            className="fixed top-20 right-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300 z-50 hidden lg:flex items-center"
-          >
-            {isCompactLayout ? (
-              <>
-                <BsListUl className="mr-2" /> Original Layout
-              </>
-            ) : (
-              <>
-                <BsGrid3X3GapFill className="mr-2" /> Compact Layout
-              </>
-            )}
-          </button>
+          <LayoutToggleButton
+            isCompactLayout={isCompactLayout}
+            toggleLayout={toggleLayout}
+          />
           {isLoading ? (
             <div className="flex justify-center items-center h-screen">
               <Loader2 className="animate-spin text-white" />
@@ -1094,10 +1151,21 @@ export default function GameDetailsPage({ id, initialGameData }) {
           ) : game ? (
             isCompactLayout ? (
               // Diseño compacto
-              <div className="max-w-full mx-auto pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-64px)] flex flex-col">
-                <div className="flex-grow flex flex-col lg:flex-row gap-4 overflow-hidden">
+              <motion.div
+                className="max-w-full mx-auto pt-16 px-4 sm:px-6 lg:px-8 h-[calc(100vh-64px)] flex flex-col"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+              >
+                <motion.div
+                  className="flex-grow flex flex-col lg:flex-row gap-4 overflow-hidden"
+                  variants={containerVariants}
+                >
                   {/* Columna izquierda */}
-                  <div className="lg:w-5/12 flex flex-col">
+                  <motion.div
+                    className="lg:w-5/12 flex flex-col"
+                    variants={itemVariants}
+                  >
                     <ImageVideoPlayer
                       key={game.id}
                       imageUrl={game.coverImageUrl}
@@ -1109,51 +1177,72 @@ export default function GameDetailsPage({ id, initialGameData }) {
                       isFavorite={isFavorite}
                       onToggleFavorite={handleLikeClick}
                     />
-                    <p className="text-gray-400 text-sm mt-2">
+                    <motion.p
+                      className="text-gray-400 text-sm mt-2"
+                      variants={itemVariants}
+                    >
                       Release date: {formatReleaseDate(game.releaseDate)}
-                    </p>
-                    <button
+                    </motion.p>
+                    <motion.button
                       onClick={handleAddReviewClick}
                       className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2 transition duration-300 text-sm"
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
                       Add a review
-                    </button>
-                    <div className="grid grid-cols-3 gap-2 mt-2">
-                      <button
+                    </motion.button>
+                    <motion.div
+                      className="grid grid-cols-3 gap-2 mt-2"
+                      variants={containerVariants}
+                    >
+                      <motion.button
                         onClick={() => handleAddToLibrary("playing")}
                         className={`flex flex-col items-center justify-center p-1 rounded text-xs ${
                           libraryStatus === "playing"
                             ? `bg-blue-500 hover:bg-blue-600`
                             : `bg-gray-700 hover:bg-gray-600`
                         } transition duration-300`}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <FaPlayCircle className="text-lg mb-1" />
                         <span>Playing</span>
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => handleAddToLibrary("completed")}
                         className={`flex flex-col items-center justify-center p-1 rounded text-xs ${
                           libraryStatus === "completed"
                             ? `bg-green-500 hover:bg-green-600`
                             : `bg-gray-700 hover:bg-gray-600`
                         } transition duration-300`}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <FaCheckCircle className="text-lg mb-1" />
                         <span>Completed</span>
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => handleAddToLibrary("toPlay")}
                         className={`flex flex-col items-center justify-center p-1 rounded text-xs ${
                           libraryStatus === "toPlay"
                             ? `bg-yellow-500 hover:bg-yellow-600`
                             : `bg-gray-700 hover:bg-gray-600`
                         } transition duration-300`}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                       >
                         <FaListUl className="text-lg mb-1" />
                         <span>To play</span>
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      </motion.button>
+                    </motion.div>
+                    <motion.div
+                      className="grid grid-cols-1 gap-2 mt-2"
+                      variants={containerVariants}
+                    >
                       {game.storeLinks &&
                         Object.entries(game.storeLinks)
                           .filter(([store, link]) => link)
@@ -1185,36 +1274,49 @@ export default function GameDetailsPage({ id, initialGameData }) {
                                 Icon = FaGamepad;
                             }
                             return (
-                              <a
+                              <motion.a
                                 key={store}
                                 href={link}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="bg-slate-800 hover:bg-gray-700 transition duration-300 text-white px-4 py-2 rounded flex items-center justify-center text-sm"
+                                variants={itemVariants}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
                               >
                                 <Icon className="mr-2" /> {storeName}
-                              </a>
+                              </motion.a>
                             );
                           })}
-                    </div>
-                  </div>
+                    </motion.div>
+                  </motion.div>
 
                   {/* Columna derecha */}
-                  <div className="lg:w-7/12 flex flex-col overflow-hidden">
-                    <div className="flex-grow overflow-y-auto pr-4">
-                      <h2
+                  <motion.div
+                    className="lg:w-7/12 flex flex-col overflow-hidden"
+                    variants={itemVariants}
+                  >
+                    <motion.div
+                      className="flex-grow overflow-y-auto pr-4"
+                      variants={containerVariants}
+                    >
+                      <motion.h2
                         className={`text-xl font-semibold mb-2 ${halloweenClass}`}
+                        variants={itemVariants}
                       >
                         Game Details
-                      </h2>
-                      <div className="text-sm">
+                      </motion.h2>
+                      <motion.div className="text-sm" variants={itemVariants}>
                         <h3 className={`font-semibold ${halloweenClass}`}>
                           Description
                         </h3>
                         {renderDescription(game.description)}
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-                        <div>
+                      </motion.div>
+                      <motion.div
+                        className="grid grid-cols-2 gap-4 mt-4 text-sm"
+                        variants={containerVariants}
+                      >
+                        <motion.div variants={itemVariants}>
                           <h3
                             className={`font-semibold ${halloweenClass} mb-1`}
                           >
@@ -1226,8 +1328,8 @@ export default function GameDetailsPage({ id, initialGameData }) {
                                 renderFilterableItem(platform, "platform")
                               )}
                           </div>
-                        </div>
-                        <div>
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
                           <h3
                             className={`font-semibold ${halloweenClass} mb-1`}
                           >
@@ -1239,10 +1341,13 @@ export default function GameDetailsPage({ id, initialGameData }) {
                                 renderFilterableItem(genre, "genre")
                               )}
                           </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mt-4 text-sm">
-                        <div>
+                        </motion.div>
+                      </motion.div>
+                      <motion.div
+                        className="grid grid-cols-2 gap-4 mt-4 text-sm"
+                        variants={containerVariants}
+                      >
+                        <motion.div variants={itemVariants}>
                           <h3
                             className={`font-semibold ${halloweenClass} mb-1`}
                           >
@@ -1251,8 +1356,8 @@ export default function GameDetailsPage({ id, initialGameData }) {
                           <div>
                             {renderFilterableItem(game.developer, "developer")}
                           </div>
-                        </div>
-                        <div>
+                        </motion.div>
+                        <motion.div variants={itemVariants}>
                           <h3
                             className={`font-semibold ${halloweenClass} mb-1`}
                           >
@@ -1261,80 +1366,95 @@ export default function GameDetailsPage({ id, initialGameData }) {
                           <div>
                             {renderFilterableItem(game.publisher, "publisher")}
                           </div>
-                        </div>
-                      </div>
+                        </motion.div>
+                      </motion.div>
 
-                      <h2
+                      <motion.h2
                         className={`text-xl font-semibold mt-4 mb-2 ${halloweenClass}`}
+                        variants={itemVariants}
                       >
                         Imágenes y Videos
-                      </h2>
-                      <div className="grid grid-cols-3 gap-2 mt-2">
+                      </motion.h2>
+                      <motion.div
+                        className="grid grid-cols-3 gap-2 mt-2"
+                        variants={containerVariants}
+                      >
                         {game.images?.slice(0, 6).map((image, index) => (
-                          <img
+                          <motion.img
                             key={index}
                             src={image.url}
                             alt={`Game screenshot ${index + 1}`}
                             className="w-full h-auto object-cover rounded cursor-pointer"
                             onClick={() => openLightbox(index)}
+                            variants={itemVariants}
+                            whileHover={{ scale: 1.05 }}
                           />
                         ))}
-                      </div>
+                      </motion.div>
                       {game.images?.length > 6 && (
-                        <button
+                        <motion.button
                           onClick={() => openLightbox(0)}
                           className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300 w-full text-sm"
+                          variants={itemVariants}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           Ver todas las imágenes ({game.images.length})
-                        </button>
+                        </motion.button>
                       )}
 
-                      {/* Lightbox component */}
-                      <Lightbox
-                        open={isLightboxOpen}
-                        close={() => setIsLightboxOpen(false)}
-                        index={0}
-                        slides={game.images?.map((img) => ({ src: img.url }))}
-                      />
-                      <h2
+                      <motion.h2
                         className={`text-xl font-semibold mb-2 mt-4 ${halloweenClass}`}
+                        variants={itemVariants}
                       >
                         Reviews
-                      </h2>
-                      {reviews.length > 0 ? (
-                        reviews.map((review) => (
-                          <ReviewCard
-                            key={review.id}
-                            review={review}
-                            user={user}
-                            onToggleComments={toggleComments}
-                            showComments={showComments}
-                            onAddComment={handleAddComment}
-                            onEditComment={handleEditComment}
-                            onDeleteComment={handleDeleteComment}
-                            editingComment={editingComment}
-                            setEditingComment={setEditingComment}
-                          />
-                        ))
-                      ) : (
-                        <p className="text-gray-400 text-center py-4">
-                          No reviews yet,{" "}
-                          <span
-                            onClick={handleAddReviewClick}
-                            className="text-blue-400 hover:underline cursor-pointer"
+                      </motion.h2>
+                      <AnimatePresence>
+                        {reviews.length > 0 ? (
+                          reviews.map((review) => (
+                            <motion.div
+                              key={review.id}
+                              variants={itemVariants}
+                              initial="hidden"
+                              animate="visible"
+                              exit="hidden"
+                            >
+                              <ReviewCard
+                                review={review}
+                                user={user}
+                                onToggleComments={toggleComments}
+                                showComments={showComments}
+                                onAddComment={handleAddComment}
+                                onEditComment={handleEditComment}
+                                onDeleteComment={handleDeleteComment}
+                                editingComment={editingComment}
+                                setEditingComment={setEditingComment}
+                              />
+                            </motion.div>
+                          ))
+                        ) : (
+                          <motion.p
+                            className="text-gray-400 text-center py-4"
+                            variants={itemVariants}
                           >
-                            you can add one by clicking here
-                          </span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                            No reviews yet,{" "}
+                            <span
+                              onClick={handleAddReviewClick}
+                              className="text-blue-400 hover:underline cursor-pointer"
+                            >
+                              you can add one by clicking here
+                            </span>
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
             ) : (
               // Diseño original
               <div className="max-w-7xl mx-auto pt-24 px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col lg:flex-row gap-8">
+                <div className="flex flex-col lg:flex-row gap-8 pb-10">
                   {/* Columna izquierda */}
                   <div className="lg:w-1/3">
                     <motion.div
