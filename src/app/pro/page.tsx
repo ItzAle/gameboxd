@@ -6,7 +6,7 @@ import ProBadge from "@/Components/common/ProBadge";
 
 export default function ProPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-blue-900 text-white">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <div className="container mx-auto px-4 py-8 md:py-16">
         <h1 className="text-3xl md:text-5xl font-bold mb-6 md:mb-12 text-center text-blue-300">
           Unlock the Power of PRO 🚀
@@ -46,7 +46,7 @@ export default function ProPage() {
               whileTap={{ scale: 0.95 }}
               className="bg-blue-600 text-white px-4 md:px-8 py-2 md:py-4 rounded-full text-base md:text-xl font-bold hover:bg-blue-700 transition duration-300"
             >
-              Upgrade to PRO Now! 💎
+              Upgrade to PRO Now!
             </motion.button>
           </Link>
         </motion.div>

@@ -19,6 +19,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const isHomePage = pathname === "/";
   const isSignInPage = pathname === "/signin";
   const isSignUpPage = pathname === "/signup";
+  const isProPage = pathname === "/pro";
+  const isUpgradePage = pathname === "/upgrade";
 
   return (
     <html lang="en">
@@ -29,7 +31,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <ChristmasProvider>
                 <HalloweenProvider>
                   <div className="flex-grow">{children}</div>
-                  {!isHomePage && !isSignInPage && !isSignUpPage && <Footer />}
+                  {!isHomePage &&
+                    !isSignInPage &&
+                    !isSignUpPage &&
+                    !isProPage &&
+                    !isUpgradePage && <Footer />}
 
                   <ToastContainer position="bottom-right" theme="dark" />
                 </HalloweenProvider>
