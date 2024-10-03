@@ -51,6 +51,7 @@
     "react-router-dom": "^6.26.0",
     "react-toastify": "^10.0.5",
     "react-tsparticles": "^2.9.3",
+    "react-youtube": "^10.1.0",
     "recharts": "^2.12.7",
     "stripe": "^16.11.0",
     "surprise": "^0.0.4",

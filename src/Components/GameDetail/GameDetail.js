@@ -66,6 +66,8 @@ import "swiper/css/autoplay";
 import ReactPlayer from "react-player/youtube";
 import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
+import "../../index.css";
+import YouTube from "react-youtube";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
@@ -226,45 +228,68 @@ const ReviewCard = React.memo(
 
 ReviewCard.displayName = "ReviewCard";
 
-// Función para extraer el ID del video de YouTube de la URL
 const getYouTubeVideoId = (url) => {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
 };
 
-const CustomVideoPlayer = React.memo(({ videoId }) => {
+const CustomVideoPlayer = React.memo(({ videoUrl }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const iframeRef = useRef(null);
+  const [player, setPlayer] = useState(null);
+  const videoId = getYouTubeVideoId(videoUrl);
 
-  useEffect(() => {
-    const iframe = iframeRef.current;
-    if (iframe) {
-      iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=0&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1&playsinline=1&enablejsapi=1&mute=1`;
-    }
-  }, [videoId]);
-
-  const handlePlayPause = () => {
-    const iframe = iframeRef.current;
-    if (iframe) {
-      const message = isPlaying ? '{"event":"command","func":"pauseVideo","args":""}' : '{"event":"command","func":"playVideo","args":""}';
-      iframe.contentWindow.postMessage(message, '*');
-      setIsPlaying(!isPlaying);
-    }
+  const opts = {
+    height: '100%',
+    width: '100%',
+    playerVars: {
+      autoplay: 1,
+      controls: 0,
+      rel: 0,
+      showinfo: 0,
+      mute: 1,
+      modestbranding: 1,
+      iv_load_policy: 3,
+      playsinline: 1,
+      loop: 1,
+      playlist: videoId,
+      origin: window.location.origin
+    },
   };
 
+  const onReady = useCallback((event) => {
+    setPlayer(event.target);
+    event.target.playVideo();
+    setIsPlaying(true);
+  }, []);
+
+  const handlePlayPause = useCallback(() => {
+    if (player) {
+      if (isPlaying) {
+        player.pauseVideo();
+      } else {
+        player.playVideo();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  }, [isPlaying, player]);
+
   return (
-    <div className="relative w-full pt-[56.25%]">
-      <iframe
-        ref={iframeRef}
-        className="absolute top-0 left-0 w-full h-full"
-        frameBorder="0"
-        allow="autoplay; encrypted-media"
-        allowFullScreen
-        title="YouTube video player"
-      ></iframe>
+    <div className="relative w-full pt-[56.25%] overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-full">
+        <YouTube
+          videoId={videoId}
+          opts={opts}
+          onReady={onReady}
+          className="youtube-player"
+        />
+      </div>
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-[100px] bg-gradient-to-b from-black to-transparent z-10"></div>
+        <div className="absolute bottom-0 left-0 w-full h-[100px] bg-gradient-to-t from-black to-transparent z-10"></div>
+      </div>
       <div 
-        className="absolute inset-0 flex items-center justify-center cursor-pointer"
+        className="absolute inset-0 flex items-center justify-center cursor-pointer z-20"
         onClick={handlePlayPause}
       >
         {!isPlaying && (
@@ -732,7 +757,10 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
   useEffect(() => {
     const checkVideoEnd = setInterval(() => {
-      if (playerRef.current && playerRef.current.getCurrentTime() === playerRef.current.getDuration()) {
+      if (
+        playerRef.current &&
+        playerRef.current.getCurrentTime() === playerRef.current.getDuration()
+      ) {
         if (swiperRef.current) {
           swiperRef.current.slideNext();
         }
@@ -1126,7 +1154,9 @@ export default function GameDetailsPage({ id, initialGameData }) {
                           transition={{ duration: 0.5, delay: 0.3 }}
                           className="p-2"
                         >
-                          <h2 className={`text-2xl font-semibold mb-4 ${halloweenClass}`}>
+                          <h2
+                            className={`text-2xl font-semibold mb-4 ${halloweenClass}`}
+                          >
                             Imágenes y Videos
                           </h2>
                           <Swiper
@@ -1150,7 +1180,10 @@ export default function GameDetailsPage({ id, initialGameData }) {
                                 <div className="aspect-w-16 aspect-h-9">
                                   <img
                                     src={image.url}
-                                    alt={image.description || `${game.name} image ${index + 1}`}
+                                    alt={
+                                      image.description ||
+                                      `${game.name} image ${index + 1}`
+                                    }
                                     className="rounded-lg object-cover w-full h-full"
                                   />
                                 </div>
@@ -1158,7 +1191,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
                             ))}
                             {game.videos?.map((video, index) => (
                               <SwiperSlide key={`video-${index}`}>
-                                <CustomVideoPlayer videoId={getYouTubeVideoId(video.url)} />
+                                <CustomVideoPlayer videoUrl={video.url} />
                               </SwiperSlide>
                             ))}
                           </Swiper>
