@@ -280,15 +280,15 @@ const formatReleaseDate = (dateString) => {
   }
 };
 
-export default function GameDetailsPage({ id }) {
+export default function GameDetailsPage({ id, initialGameData }) {
   const { user } = useAuth();
-  const [game, setGame] = useState(null);
+  const [game, setGame] = useState(initialGameData);
   const [reviews, setReviews] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const { reviews: globalReviews, setReviews: setGlobalReviews } = useReviews();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!initialGameData);
   const [favoriteGamesCount, setFavoriteGamesCount] = useState(0);
   const [libraryStatus, setLibraryStatus] = useState(null);
   const [showComments, setShowComments] = useState({});
@@ -649,77 +649,69 @@ export default function GameDetailsPage({ id }) {
     </Link>
   );
 
-  useEffect(() => {
-    const fetchGameDetails = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`https://api.gameboxd.me/api/game/${id}`, {
-          headers: {
-            "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-          },
-        });
-        if (!response.ok) {
-          throw new Error(
-            `Error en la red: ${response.status} ${response.statusText}`
-          );
-        }
-        const data = await response.json();
-        setGame(data);
+  const fetchGameDetails = useCallback(async () => {
+    if (initialGameData) {
+      setGame(initialGameData);
+      return;
+    }
 
-        const fetchReviews = async () => {
-          const reviewsQuery = query(
-            collection(db, "reviews"),
-            where("gameId", "==", id)
-          );
-          const reviewsSnapshot = await getDocs(reviewsQuery);
-          const reviewsData = await Promise.all(
-            reviewsSnapshot.docs.map(async (reviewDoc) => {
-              const reviewData = reviewDoc.data();
-              const userDoc = await getDoc(doc(db, "users", reviewData.userId));
-              const userData = userDoc.data();
-              return {
-                id: reviewDoc.id,
-                ...reviewData,
-                username: userData.username,
-                profilePicture: userData.profilePicture || null,
-                nameEffect: userData.nameEffect,
-                nameColor: userData.nameColor,
-                effectIntensity: userData.effectIntensity,
-                isPro: userData.isPro,
-                comments: reviewData.comments || [],
-              };
-            })
-          );
-          setReviews(reviewsData);
-        };
-
-        fetchReviews();
-
-        if (user) {
-          const userRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userRef);
-
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const likedGames = userData.likedGames || [];
-            setIsFavorite(likedGames.some((g) => g.slug === id));
-            setFavoriteGamesCount(likedGames.length);
-
-            const library = userData.library || [];
-            const gameInLibrary = library.find((g) => g.slug === id);
-            setLibraryStatus(gameInLibrary ? gameInLibrary.status : null);
-          }
-        }
-      } catch (error) {
-        console.error("Error in fetchGameDetails:", error);
-        setError(error);
-      } finally {
-        setIsLoading(false);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`https://api.gameboxd.me/api/game/${id}`, {
+        headers: {
+          "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Error en la red: ${response.status} ${response.statusText}`
+        );
       }
-    };
+      const data = await response.json();
+      setGame(data);
+    } catch (error) {
+      console.error("Error fetching game details:", error);
+      setError(error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [id, initialGameData]);
 
+  const fetchReviews = useCallback(async () => {
+    try {
+      const reviewsQuery = query(
+        collection(db, "reviews"),
+        where("gameId", "==", id)
+      );
+      const reviewsSnapshot = await getDocs(reviewsQuery);
+      const reviewsData = await Promise.all(
+        reviewsSnapshot.docs.map(async (reviewDoc) => {
+          const reviewData = reviewDoc.data();
+          const userDoc = await getDoc(doc(db, "users", reviewData.userId));
+          const userData = userDoc.data();
+          return {
+            id: reviewDoc.id,
+            ...reviewData,
+            username: userData.username,
+            profilePicture: userData.profilePicture || null,
+            nameEffect: userData.nameEffect,
+            nameColor: userData.nameColor,
+            effectIntensity: userData.effectIntensity,
+            isPro: userData.isPro,
+            comments: reviewData.comments || [],
+          };
+        })
+      );
+      setReviews(reviewsData);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  }, [id]);
+
+  useEffect(() => {
     fetchGameDetails();
-  }, [id, user]);
+    fetchReviews();
+  }, [fetchGameDetails, fetchReviews]);
 
   const isHorrorGame = game && game.genres && game.genres.includes("Horror");
 
@@ -745,6 +737,14 @@ export default function GameDetailsPage({ id }) {
     isHalloweenMode && isHorrorGame ? "halloween-text" : "";
   const halloweenClassLight =
     isHalloweenMode && isHorrorGame ? "halloween-text-light" : "";
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-black">
+        <Loader2 className="animate-spin text-white" />
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -1154,12 +1154,12 @@ export default function GameDetailsPage({ id }) {
                           ))
                         ) : (
                           <p className="text-gray-400 text-center py-4">
-                            There are no reviews yet,{" "}
+                            No hay reseñas aún,{" "}
                             <span
                               onClick={handleAddReviewClick}
                               className="text-blue-400 hover:underline cursor-pointer"
                             >
-                              you can add one by clicking here
+                              puedes añadir una haciendo clic aquí
                             </span>
                           </p>
                         )}

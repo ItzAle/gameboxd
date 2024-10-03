@@ -1,28 +1,53 @@
-"use client";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { notFound } from "next/navigation";
 import OtherUserProfile from "../../../Components/UserProfile/OtherUserProfile";
-import { useAuth } from "../../../context/AuthContext";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
+import ClientRedirect from "../../../Components/ClientRedirect/ClientRedirect";
+import { Loader2 } from "lucide-react";
 
-export default function UserProfilePage() {
-  const params = useParams();
-  const router = useRouter();
-  const userId = params.userId;
-  const { user } = useAuth();
+async function getUserData(userId) {
+  const userRef = doc(db, "users", userId);
+  const userDoc = await getDoc(userRef);
+  if (userDoc.exists()) {
+    return userDoc.data();
+  }
+  return null;
+}
 
-  // Si no hay userId, muestra un mensaje de carga
-  if (!userId) {
-    return <p className="text-white">Loading...</p>;
+export async function generateMetadata({ params }) {
+  const userData = await getUserData(params.userId);
+
+  if (!userData) {
+    return {
+      title: "Usuario no encontrado",
+      description: "El perfil de usuario solicitado no existe.",
+    };
   }
 
-  // Si el userId es el mismo que el del usuario actual, redirige a la página de perfil propio
-  if (user && user.uid === userId) {
-    router.push("/profile");
-    return null;
+  return {
+    title: `Profile of ${userData.username}`,
+    description: userData.bio || `Profile of user ${userData.username}`,
+  };
+}
+
+export default async function UserProfilePage({ params }) {
+  const userData = await getUserData(params.userId);
+
+  if (!userData) {
+    notFound();
   }
 
   return (
-    <div>
-      <OtherUserProfile userId={userId} />
-    </div>
+    <Suspense
+      fallback={
+        <p className="bg-gradient-to-b from-gray-900 to-black flex justify-center items-center h-screen">
+          <Loader2 className="w-8 h-8 animate-spin" />
+        </p>
+      }
+    >
+      <ClientRedirect userId={params.userId} />
+      <OtherUserProfile userId={params.userId} initialUserData={userData} />
+    </Suspense>
   );
 }

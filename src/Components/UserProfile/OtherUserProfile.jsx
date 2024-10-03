@@ -185,11 +185,15 @@ export default function OtherUserProfile({ userId }) {
   };
 
   if (!userProfile) {
-    return <Loader2 className="animate-spin text-white" />;
+    return (
+      <p className="bg-gradient-to-b from-gray-900 to-black flex justify-center items-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </p>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white overflow-x-hidden">
       <TransparentNavbar />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-8 max-w-7xl">
         <header className="mb-8">
