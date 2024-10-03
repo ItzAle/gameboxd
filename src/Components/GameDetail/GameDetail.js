@@ -74,9 +74,7 @@ import { BsGrid3X3GapFill, BsListUl } from "react-icons/bs";
 import "../../utils/customScrollbar.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
-import Thumbnails from "yet-another-react-lightbox/plugins/thumbnails";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
-import Zoom from "yet-another-react-lightbox/plugins/zoom";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
@@ -531,8 +529,9 @@ export default function GameDetailsPage({ id, initialGameData }) {
     const savedLayout = localStorage.getItem("preferredLayout");
     return savedLayout === "compact";
   });
+
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [photoIndex, setPhotoIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -563,10 +562,10 @@ export default function GameDetailsPage({ id, initialGameData }) {
     });
   }, []);
 
-  const openLightbox = (index) => {
-    setPhotoIndex(index);
+  const openLightbox = useCallback((index) => {
+    setLightboxIndex(index);
     setIsLightboxOpen(true);
-  };
+  }, []);
 
   const detailsVariants = useMemo(
     () => ({
@@ -1369,38 +1368,42 @@ export default function GameDetailsPage({ id, initialGameData }) {
                         </motion.div>
                       </motion.div>
 
-                      <motion.h2
-                        className={`text-xl font-semibold mt-4 mb-2 ${halloweenClass}`}
-                        variants={itemVariants}
-                      >
-                        Imágenes y Videos
-                      </motion.h2>
-                      <motion.div
-                        className="grid grid-cols-3 gap-2 mt-2"
-                        variants={containerVariants}
-                      >
-                        {game.images?.slice(0, 6).map((image, index) => (
-                          <motion.img
-                            key={index}
-                            src={image.url}
-                            alt={`Game screenshot ${index + 1}`}
-                            className="w-full h-auto object-cover rounded cursor-pointer"
-                            onClick={() => openLightbox(index)}
+                      {game.images && game.images.length > 0 && (
+                        <>
+                          <motion.h2
+                            className={`text-xl font-semibold mt-4 mb-2 ${halloweenClass}`}
                             variants={itemVariants}
-                            whileHover={{ scale: 1.05 }}
-                          />
-                        ))}
-                      </motion.div>
-                      {game.images?.length > 6 && (
-                        <motion.button
-                          onClick={() => openLightbox(0)}
-                          className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300 w-full text-sm"
-                          variants={itemVariants}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                        >
-                          Ver todas las imágenes ({game.images.length})
-                        </motion.button>
+                          >
+                            Imágenes y Videos
+                          </motion.h2>
+                          <motion.div
+                            className="grid grid-cols-3 gap-2 mt-2"
+                            variants={containerVariants}
+                          >
+                            {game.images?.slice(0, 6).map((image, index) => (
+                              <motion.img
+                                key={index}
+                                src={image.url}
+                                alt={`Game screenshot ${index + 1}`}
+                                className="w-full h-auto object-cover rounded cursor-pointer"
+                                onClick={() => openLightbox(index)}
+                                variants={itemVariants}
+                                whileHover={{ scale: 1.05 }}
+                              />
+                            ))}
+                          </motion.div>
+                          {game.images?.length > 6 && (
+                            <motion.button
+                              onClick={() => openLightbox(0)}
+                              className="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-300 w-full text-sm"
+                              variants={itemVariants}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              Ver todas las imágenes ({game.images.length})
+                            </motion.button>
+                          )}
+                        </>
                       )}
 
                       <motion.h2
@@ -1450,6 +1453,14 @@ export default function GameDetailsPage({ id, initialGameData }) {
                     </motion.div>
                   </motion.div>
                 </motion.div>
+                {isLightboxOpen && game.images && game.images.length > 0 && (
+                  <Lightbox
+                    open={isLightboxOpen}
+                    close={() => setIsLightboxOpen(false)}
+                    slides={game.images.map((img) => ({ src: img.url }))}
+                    index={lightboxIndex}
+                  />
+                )}
               </motion.div>
             ) : (
               // Diseño original
@@ -1562,57 +1573,66 @@ export default function GameDetailsPage({ id, initialGameData }) {
                               );
                             })}
                       </div>
-                      <div className="mt-4 bg-slate-800 p-4 rounded-lg">
-                        <h2
-                          className={`text-xl font-bold mb-2 ${halloweenClass}`}
-                        >
-                          Game Details
-                        </h2>
-                        <div className="text-sm">
-                          <h3 className={`font-semibold ${halloweenClass}`}>
-                            Description
-                          </h3>
-                          {renderDescription(game.description)}
-                        </div>
-                        <div className="mt-2">
-                          <h3 className={`font-semibold ${halloweenClass}`}>
-                            Platforms
-                          </h3>
-                          <div className="flex flex-wrap gap-1">
-                            {game.platforms &&
-                              game.platforms.map((platform) =>
-                                renderFilterableItem(platform, "platform")
+                      {(game.images && game.images.length > 0) ||
+                      (game.videos && game.videos.length > 0) ? (
+                        <div className="mt-4 bg-slate-800 p-4 rounded-lg">
+                          <h2
+                            className={`text-xl font-bold mb-2 ${halloweenClass}`}
+                          >
+                            Game Details
+                          </h2>
+                          <div className="text-sm">
+                            <h3 className={`font-semibold ${halloweenClass}`}>
+                              Description
+                            </h3>
+                            {renderDescription(game.description)}
+                          </div>
+                          <div className="mt-2">
+                            <h3 className={`font-semibold ${halloweenClass}`}>
+                              Platforms
+                            </h3>
+                            <div className="flex flex-wrap gap-1">
+                              {game.platforms &&
+                                game.platforms.map((platform) =>
+                                  renderFilterableItem(platform, "platform")
+                                )}
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <h3 className={`font-semibold ${halloweenClass}`}>
+                              Genres
+                            </h3>
+                            <div className="flex flex-wrap gap-1">
+                              {game.genres &&
+                                game.genres.map((genre) =>
+                                  renderFilterableItem(genre, "genre")
+                                )}
+                            </div>
+                          </div>
+                          <div className="mt-2">
+                            <h3 className={`font-semibold ${halloweenClass}`}>
+                              Developer
+                            </h3>
+                            <p>
+                              {renderFilterableItem(
+                                game.developer,
+                                "developer"
                               )}
+                            </p>
+                          </div>
+                          <div className="mt-2">
+                            <h3 className={`font-semibold ${halloweenClass}`}>
+                              Publisher
+                            </h3>
+                            <p>
+                              {renderFilterableItem(
+                                game.publisher,
+                                "publisher"
+                              )}
+                            </p>
                           </div>
                         </div>
-                        <div className="mt-2">
-                          <h3 className={`font-semibold ${halloweenClass}`}>
-                            Genres
-                          </h3>
-                          <div className="flex flex-wrap gap-1">
-                            {game.genres &&
-                              game.genres.map((genre) =>
-                                renderFilterableItem(genre, "genre")
-                              )}
-                          </div>
-                        </div>
-                        <div className="mt-2">
-                          <h3 className={`font-semibold ${halloweenClass}`}>
-                            Developer
-                          </h3>
-                          <p>
-                            {renderFilterableItem(game.developer, "developer")}
-                          </p>
-                        </div>
-                        <div className="mt-2">
-                          <h3 className={`font-semibold ${halloweenClass}`}>
-                            Publisher
-                          </h3>
-                          <p>
-                            {renderFilterableItem(game.publisher, "publisher")}
-                          </p>
-                        </div>
-                      </div>
+                      ) : null}
                     </motion.div>
                   </div>
 
@@ -1623,51 +1643,137 @@ export default function GameDetailsPage({ id, initialGameData }) {
                       animate={{ y: 0, opacity: 1 }}
                       transition={{ duration: 0.5, delay: 0.2 }}
                     >
-                      <h2
-                        className={`text-2xl font-bold mb-4 ${halloweenClass}`}
-                      >
-                        Images and Videos
-                      </h2>
-                      <Swiper
-                        modules={[Navigation, Pagination, Autoplay]}
-                        spaceBetween={10}
-                        slidesPerView={1}
-                        navigation
-                        pagination={{ clickable: true }}
-                        autoplay={{ delay: 5000, disableOnInteraction: false }}
-                        className="mb-8"
-                      >
-                        {game.images?.map((image, index) => (
-                          <SwiperSlide key={`image-${index}`}>
-                            <img
-                              src={image.url}
-                              alt={`Game screenshot ${index + 1}`}
-                              className="w-full h-auto object-cover rounded-lg"
-                            />
-                          </SwiperSlide>
-                        ))}
-                        {game.videos?.map((video, index) => (
-                          <SwiperSlide key={`video-${index}`}>
-                            <div className="relative pt-[56.25%]">
-                              <YouTube
-                                videoId={getYouTubeVideoId(video.url)}
-                                opts={{
-                                  width: "100%",
-                                  height: "100%",
-                                  playerVars: {
-                                    autoplay: 0,
-                                    controls: 1,
-                                    modestbranding: 1,
-                                    rel: 0,
-                                    showinfo: 0,
-                                  },
-                                }}
-                                className="absolute top-0 left-0 w-full h-full"
-                              />
+                      {(game.images && game.images.length > 0) ||
+                      (game.videos && game.videos.length > 0) ? (
+                        <>
+                          <h2
+                            className={`text-2xl font-bold mb-4 ${halloweenClass}`}
+                          >
+                            Images and Videos
+                          </h2>
+                          <Swiper
+                            modules={[Navigation, Pagination, Autoplay]}
+                            spaceBetween={10}
+                            slidesPerView={1}
+                            navigation
+                            pagination={{ clickable: true }}
+                            autoplay={{
+                              delay: 5000,
+                              disableOnInteraction: false,
+                            }}
+                            className="mb-8"
+                          >
+                            {game.images?.map((image, index) => (
+                              <SwiperSlide key={`image-${index}`}>
+                                <img
+                                  src={image.url}
+                                  alt={`Game screenshot ${index + 1}`}
+                                  className="w-full h-auto object-cover rounded-lg"
+                                />
+                              </SwiperSlide>
+                            ))}
+                            {game.videos?.map((video, index) => (
+                              <SwiperSlide key={`video-${index}`}>
+                                <div className="relative pt-[56.25%]">
+                                  <YouTube
+                                    videoId={getYouTubeVideoId(video.url)}
+                                    opts={{
+                                      width: "100%",
+                                      height: "100%",
+                                      playerVars: {
+                                        autoplay: 0,
+                                        controls: 1,
+                                        modestbranding: 1,
+                                        rel: 0,
+                                        showinfo: 0,
+                                      },
+                                    }}
+                                    className="absolute top-0 left-0 w-full h-full"
+                                  />
+                                </div>
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        </>
+                      ) : (
+                        <div className="bg-gray-800 rounded-lg p-6 mb-8">
+                          <h2
+                            className={`text-2xl font-bold mb-4 ${halloweenClass}`}
+                          >
+                            Game Details
+                          </h2>
+                          <div className="mb-4">
+                            <h3 className="text-xl font-semibold mb-2">
+                              Description
+                            </h3>
+                            <p className="text-gray-300">
+                              {game.description}
+                              {game.description.length > 150 && (
+                                <span
+                                  className="text-blue-400 cursor-pointer ml-2"
+                                  onClick={toggleDescription}
+                                >
+                                  {showFullDescription
+                                    ? "Read Less"
+                                    : "Read More"}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="text-lg font-semibold mb-2">
+                                Platforms
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {game.platforms &&
+                                  game.platforms.map((platform) => (
+                                    <span
+                                      key={platform}
+                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                    >
+                                      {platform}
+                                    </span>
+                                  ))}
+                              </div>
                             </div>
-                          </SwiperSlide>
-                        ))}
-                      </Swiper>
+                            <div>
+                              <h4 className="text-lg font-semibold mb-2">
+                                Genres
+                              </h4>
+                              <div className="flex flex-wrap gap-2">
+                                {game.genres &&
+                                  game.genres.map((genre) => (
+                                    <span
+                                      key={genre}
+                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
+                                    >
+                                      {genre}
+                                    </span>
+                                  ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-6 mt-6">
+                            <div>
+                              <h4 className="text-lg font-semibold mb-2">
+                                Developer
+                              </h4>
+                              <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">
+                                {game.developer}
+                              </span>
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold mb-2">
+                                Publisher
+                              </h4>
+                              <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">
+                                {game.publisher}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       <h2
                         className={`text-2xl font-bold mb-4 ${halloweenClass}`}
                       >
@@ -1719,26 +1825,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
           />
         )}
 
-        {isLightboxOpen && (
-          <Lightbox
-            mainSrc={game.images[photoIndex].url}
-            nextSrc={game.images[(photoIndex + 1) % game.images.length].url}
-            prevSrc={
-              game.images[
-                (photoIndex + game.images.length - 1) % game.images.length
-              ].url
-            }
-            onCloseRequest={() => setIsLightboxOpen(false)}
-            onMovePrevRequest={() =>
-              setPhotoIndex(
-                (photoIndex + game.images.length - 1) % game.images.length
-              )
-            }
-            onMoveNextRequest={() =>
-              setPhotoIndex((photoIndex + 1) % game.images.length)
-            }
-          />
-        )}
         {fullscreenVideo && (
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
             <div className="relative w-full h-full max-w-4xl max-h-[80vh]">
