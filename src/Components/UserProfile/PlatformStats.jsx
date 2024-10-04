@@ -36,8 +36,7 @@ export default function PlatformStats({ userProfile }) {
   useEffect(() => {
     const fetchGamesData = async () => {
       if (!userProfile || !userProfile.library) {
-        console.error("userProfile o userProfile.library no existe");
-        setError("No se encontró información de la biblioteca de juegos.");
+        setError("No games found in the library.");
         setIsLoading(false);
         return;
       }
@@ -82,10 +81,7 @@ export default function PlatformStats({ userProfile }) {
         setPublisherStats(sortAndSlice(publisherCounts));
         setIsLoading(false);
       } catch (error) {
-        console.error("Error al procesar datos de juegos:", error);
-        setError(
-          `No se pudieron procesar los datos de juegos: ${error.message}`
-        );
+        setError(`Failed to process game data: ${error.message}`);
         setIsLoading(false);
       }
     };

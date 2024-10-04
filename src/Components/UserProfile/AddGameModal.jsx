@@ -21,7 +21,6 @@ export default function AddGameModal({ isOpen, onClose, onAddGame }) {
         const data = await response.json();
         setAllGames(data);
       } catch (error) {
-        console.error("Error fetching games:", error);
       } finally {
         setIsLoading(false);
       }

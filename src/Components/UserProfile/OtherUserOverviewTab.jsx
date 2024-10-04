@@ -10,12 +10,7 @@ export default function OtherUserOverviewTab({ userProfile }) {
 
   useEffect(() => {
     if (userProfile && Array.isArray(userProfile.likedGames)) {
-      console.log("Liked games from userProfile:", userProfile.likedGames);
       setFavoriteGames(userProfile.likedGames);
-    } else {
-      console.warn(
-        "No liked games found in userProfile or likedGames is not an array."
-      );
     }
   }, [userProfile]);
 
@@ -26,9 +21,6 @@ export default function OtherUserOverviewTab({ userProfile }) {
       </div>
     );
   }
-
-  console.log("UserProfile in OtherUserOverviewTab:", userProfile);
-  console.log("Favorite games state:", favoriteGames);
 
   return (
     <div>

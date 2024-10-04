@@ -91,7 +91,6 @@ export default function TransparentNavbar() {
         });
       }
     } catch (error) {
-      console.error("Error al obtener el perfil del usuario:", error);
     }
   };
 
@@ -102,7 +101,6 @@ export default function TransparentNavbar() {
       setIsMobileMenuOpen(false);
       setIsUserMenuHovered(false);
     } catch (error) {
-      console.error("Error signing out: ", error);
     }
   };
 

@@ -53,7 +53,6 @@ export default function EditCollectionPage({ collectionId }) {
       const data = await response.json();
       setAllGames(data);
     } catch (error) {
-      console.error("Error fetching games:", error);
     }
   }, []);
 
@@ -76,7 +75,6 @@ export default function EditCollectionPage({ collectionId }) {
       });
       router.push(`/collections/${collectionId}`);
     } catch (error) {
-      console.error("Error updating collection:", error);
     }
   };
 
@@ -86,7 +84,6 @@ export default function EditCollectionPage({ collectionId }) {
         await deleteDoc(doc(db, "collections", collectionId));
         router.push("/collections");
       } catch (error) {
-        console.error("Error deleting collection:", error);
       }
     }
   };

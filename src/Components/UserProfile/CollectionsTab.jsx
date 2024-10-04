@@ -97,7 +97,6 @@ export default function CollectionsTab({ userProfile }) {
         }));
         setFollowedCollections(followedData);
       } catch (err) {
-        console.error("Error fetching collections:", err);
         setError("Failed to fetch collections");
       } finally {
         setIsLoading(false);

@@ -25,7 +25,6 @@ const ProOptionsModal = ({ isOpen, onClose, userProfile, onUpdate }) => {
       await onUpdate({ nameEffect, nameColor, effectIntensity });
       onClose();
     } catch (error) {
-      console.error("Error al guardar las opciones PRO:", error);
       // Aquí podrías mostrar un mensaje de error al usuario
     }
   };

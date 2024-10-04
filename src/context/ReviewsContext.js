@@ -45,9 +45,7 @@ export const ReviewsProvider = ({ children }) => {
           review.id === reviewId ? { ...review, ...updatedData } : review
         )
       );
-    } catch (error) {
-      console.error("Error al actualizar la reseña:", error);
-    }
+    } catch (error) {}
   };
 
   const deleteReview = async (reviewId) => {
@@ -58,7 +56,6 @@ export const ReviewsProvider = ({ children }) => {
         prevReviews.filter((review) => review.id !== reviewId)
       );
     } catch (error) {
-      console.error("Error al eliminar la reseña:", error);
     }
   };
 

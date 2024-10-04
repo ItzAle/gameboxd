@@ -41,7 +41,6 @@ export default function FavoriteGames({ userProfile, onUpdateFavorites }) {
       setIsModalOpen(false);
       toast.success("Game added to favorites.");
     } catch (error) {
-      console.error("Error adding game to favorites:", error);
       toast.error("An error occurred while adding the game to favorites.");
     }
   };
@@ -62,7 +61,6 @@ export default function FavoriteGames({ userProfile, onUpdateFavorites }) {
       }
       toast.success("Game removed from favorites.");
     } catch (error) {
-      console.error("Error removing game from favorites:", error);
       toast.error("An error occurred while removing the game from favorites.");
     }
   };

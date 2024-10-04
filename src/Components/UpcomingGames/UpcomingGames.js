@@ -29,7 +29,6 @@ const UpcomingGames = () => {
 
         setUpcomingGames(nextGames);
       } catch (error) {
-        console.error("Error fetching upcoming games:", error);
         setError(error.message);
       } finally {
         setIsLoading(false);

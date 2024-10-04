@@ -348,38 +348,26 @@ const ImageVideoPlayer = React.memo(
     }, []);
 
     const onReady = useCallback((event) => {
-      console.log("YouTube player ready");
       playerRef.current = event.target;
       setIsPlayerReady(true);
     }, []);
 
     const safePlayerCall = useCallback(
       (method) => {
-        console.log(`Attempting to call ${method}`, {
-          isPlayerReady,
-          playerRefExists: !!playerRef.current,
-        });
         if (isPlayerReady && playerRef.current) {
           if (typeof playerRef.current[method] === "function") {
             try {
               playerRef.current[method]();
-            } catch (error) {
-              console.error(`Error calling ${method}:`, error);
-            }
+            } catch (error) {}
           } else {
-            console.warn(`Method ${method} is not a function`);
           }
         } else {
-          console.warn(
-            `Cannot call ${method}: player not ready or ref is null`
-          );
         }
       },
       [isPlayerReady]
     );
 
     useEffect(() => {
-      console.log("isPlaying changed:", isPlaying);
       if (isPlaying) {
         safePlayerCall("playVideo");
       } else {
@@ -389,7 +377,6 @@ const ImageVideoPlayer = React.memo(
 
     useEffect(() => {
       return () => {
-        console.log("Component unmounting, destroying player");
         if (
           playerRef.current &&
           typeof playerRef.current.destroy === "function"
@@ -497,7 +484,6 @@ const formatReleaseDate = (dateString) => {
     const date = parseISO(dateString);
     return format(date, "d MMM yyyy");
   } catch (error) {
-    console.error("Error al formatear la fecha:", error);
     return dateString; // Devuelve la fecha original si hay un error
   }
 };
@@ -542,7 +528,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
           const userData = userDoc.data();
           const likedGames = userData.likedGames || [];
           const isGameFavorite = likedGames.some((g) => g.slug === game.slug);
-          console.log("Is game favorite:", isGameFavorite); // Para depuración
           setIsFavorite(isGameFavorite);
         }
       }
@@ -648,7 +633,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
         setShowModal(false);
         toast.success("Review added successfully");
       } catch (error) {
-        console.error("Error al guardar la reseña:", error);
         toast.error("An error occurred while saving the review");
       }
     },
@@ -702,8 +686,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
         }
       }
     } catch (error) {
-      console.error("Error al actualizar el estado de favorito:", error);
-      toast.error("Ocurrió un error al actualizar el estado de favorito.");
+      toast.error("An error occurred while marking the game as a favorite.");
     }
   }, [user, game, isFavorite]);
 
@@ -762,7 +745,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
           );
         }
       } catch (error) {
-        console.error("Error updating the library:", error);
         toast.error("An error occurred while updating the library.");
       }
     },
@@ -807,10 +789,9 @@ export default function GameDetailsPage({ id, initialGameData }) {
           )
         );
 
-        toast.success("Comentario añadido con éxito");
+        toast.success("Comment added successfully");
       } catch (error) {
-        console.error("Error al añadir el comentario:", error);
-        toast.error("Ocurrió un error al añadir el comentario");
+        toast.error("An error occurred while adding the comment");
       }
     },
     [user, reviews]
@@ -842,7 +823,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
         setEditingComment(null);
         toast.success("Comentario actualizado con éxito");
       } catch (error) {
-        console.error("Error editing comment:", error);
         toast.error("An error occurred while editing the comment");
       }
     },
@@ -872,7 +852,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
         toast.success("Comentario eliminado con éxito");
       } catch (error) {
-        console.error("Error deleting comment:", error);
         toast.error("An error occurred while deleting the comment");
       }
     },
@@ -938,7 +917,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
       const data = await response.json();
       setGame(data);
     } catch (error) {
-      console.error("Error fetching game details:", error);
       setError(error);
     } finally {
       setIsLoading(false);
@@ -972,7 +950,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
       );
       setReviews(reviewsData);
     } catch (error) {
-      console.error("Error fetching reviews:", error);
     }
   }, [id]);
 
@@ -1070,13 +1047,11 @@ export default function GameDetailsPage({ id, initialGameData }) {
   };
 
   const handleVideoDoubleClick = useCallback((videoUrl) => {
-    console.log("Double click detected, opening fullscreen video");
     setFullscreenVideo(videoUrl);
     setIsPlaying(false);
   }, []);
 
   const closeFullscreenVideo = useCallback(() => {
-    console.log("Closing fullscreen video");
     setFullscreenVideo(null);
     // Opcional: puedes decidir si quieres reanudar la reproducción del video pequeño o no
     // setIsPlaying(true);

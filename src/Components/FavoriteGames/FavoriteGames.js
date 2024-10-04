@@ -45,7 +45,6 @@ const FavoriteGames = ({ isEditing }) => {
         throw new Error("Network response was not ok");
       }
       const data = await response.json();
-      console.log("Fetched games:", data);
 
       const filteredGames = data
         .filter((game) =>
@@ -55,7 +54,6 @@ const FavoriteGames = ({ isEditing }) => {
 
       setSearchResults(filteredGames);
     } catch (error) {
-      console.error("Error searching games:", error);
       setSearchResults([]);
     } finally {
       setIsLoading(false);

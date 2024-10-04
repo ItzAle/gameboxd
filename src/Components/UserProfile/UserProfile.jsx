@@ -144,7 +144,6 @@ export default function UserProfile() {
           return data;
         }
       } catch (error) {
-        console.error(`Error al obtener detalles del juego ${slug}:`, error);
       }
       return null;
     },
@@ -190,7 +189,6 @@ export default function UserProfile() {
         });
       }
     } catch (error) {
-      console.error("Error al cargar el perfil del usuario:", error);
     }
   }, [user, fetchGameDetails]);
 
@@ -209,7 +207,6 @@ export default function UserProfile() {
       }));
       setUserReviews(reviewsData);
     } catch (error) {
-      console.error("Error al cargar las reseñas del usuario:", error);
     }
   }, [user]);
 

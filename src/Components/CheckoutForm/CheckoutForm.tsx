@@ -24,7 +24,6 @@ export default function CheckoutForm() {
     });
 
     if (result.error) {
-      console.error(result.error);
       // Mostrar error al usuario
     }
 

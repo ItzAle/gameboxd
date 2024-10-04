@@ -90,7 +90,6 @@ const HomeFeed = () => {
         setActivities(allActivities);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching activities:", error);
         setError("Error loading activities");
         setIsLoading(false);
       }

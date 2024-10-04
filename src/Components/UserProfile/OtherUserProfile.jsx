@@ -63,7 +63,6 @@ export default function OtherUserProfile({ userId }) {
 
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          console.log("Fetched user data:", userData); // Para depuración
           setUserProfile({
             ...userData,
             id: userId,
@@ -97,21 +96,8 @@ export default function OtherUserProfile({ userId }) {
             reviewsCount: reviewsCount,
             collectionsCount: collectionsCount,
           });
-
-          console.log("Fetched user profile:", {
-            ...userData,
-            id: userId,
-            library: userData.library || [],
-            favoriteGames: userData.favoriteGames || [],
-            reviewsCount: reviewsCount,
-            collectionsCount: collectionsCount,
-          });
-        } else {
-          console.log("No such user!");
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-      }
+      } catch (error) {}
     };
 
     const checkFollowStatus = async () => {
@@ -159,8 +145,7 @@ export default function OtherUserProfile({ userId }) {
         isFollowing ? "Usuario dejado de seguir" : "Usuario seguido"
       );
     } catch (error) {
-      console.error("Error al actualizar el estado de seguimiento:", error);
-      toast.error("Ocurrió un error al actualizar el estado de seguimiento");
+      toast.error("An error occurred while updating the follow status");
     }
   };
 

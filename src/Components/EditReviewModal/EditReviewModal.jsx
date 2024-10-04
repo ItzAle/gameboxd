@@ -90,7 +90,6 @@ export default function EditReviewModal({ review, onClose, onSave }) {
           setIsFavorite(likedGames.some((g) => g.slug === review.gameId));
         }
       } catch (error) {
-        console.error("Error checking favorite status:", error);
       }
     };
 
@@ -145,7 +144,6 @@ export default function EditReviewModal({ review, onClose, onSave }) {
       toast.success("Review updated successfully");
       onClose();
     } catch (error) {
-      console.error("Error updating review:", error);
       toast.error("An error occurred while updating the review");
     }
   };

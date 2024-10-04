@@ -113,7 +113,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
           onClose();
         }
       } catch (error) {
-        console.error("Error checking existing reviews:", error);
         toast.error("An error occurred while checking for existing reviews.");
       }
     };
@@ -147,7 +146,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
         setIsFavorite(likedGames.some((g) => g.slug === game.slug));
       }
     } catch (error) {
-      console.error("Error checking favorite status:", error);
     }
   };
 
@@ -173,7 +171,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
 
 
         if (!gameToSave.slug || !gameToSave.name || !gameToSave.coverImageUrl) {
-          console.error("Incomplete game data:", gameToSave);
           toast.error(
             "Unable to update favorite status due to incomplete game data."
           );
@@ -208,7 +205,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
         }
       }
     } catch (error) {
-      console.error("Error updating favorite status:", error);
       toast.error("An error occurred while updating favorite status.");
     }
   };
@@ -253,7 +249,6 @@ export default function AddReviewModal({ game, onClose, onSave }) {
       toast.success("Review submitted successfully");
       onClose();
     } catch (error) {
-      console.error("Error submitting review:", error);
       toast.error("An error occurred while submitting the review");
     }
   };

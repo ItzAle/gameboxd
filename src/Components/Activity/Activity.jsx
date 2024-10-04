@@ -53,7 +53,6 @@ export default function Component() {
 
         setIsLoading(false);
       } catch (error) {
-        console.error("Error loading activities:", error);
         setError("Error loading activities");
         setIsLoading(false);
       }
@@ -183,7 +182,6 @@ export default function Component() {
 
   const renderActivity = (activity) => {
     if (!activity || typeof activity !== "object") {
-      console.error("Invalid activity:", activity);
       return null;
     }
 

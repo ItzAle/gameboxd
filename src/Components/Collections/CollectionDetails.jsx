@@ -46,10 +46,8 @@ export default function CollectionDetails({ collectionId }) {
             );
           }
         } else {
-          console.log("No such collection!");
         }
       } catch (error) {
-        console.error("Error fetching collection:", error);
       } finally {
         setIsLoading(false);
       }
@@ -84,7 +82,6 @@ export default function CollectionDetails({ collectionId }) {
           : prev.followerCount + 1,
       }));
     } catch (error) {
-      console.error("Error updating followers:", error);
     }
   };
 

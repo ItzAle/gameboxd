@@ -12,13 +12,10 @@ import ghostImg from "../public/images/halloween/cartoonghost.png";
 
 const ClientHalloweenParticles = () => {
   const particlesInit = useCallback(async (engine: Engine) => {
-    console.log("Initializing tsParticles");
     await loadFull(engine);
   }, []);
 
-  const particlesLoaded = useCallback(async (container: any) => {
-    console.log("Particles loaded", container);
-  }, []);
+  const particlesLoaded = useCallback(async (container: any) => {}, []);
 
   return (
     <>

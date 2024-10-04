@@ -32,7 +32,6 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
       const categorizedLibrary = userProfile.library.reduce(
         (acc, game) => {
           if (!game || !game.status) {
-            console.warn("Invalid game object in library:", game);
             return acc;
           }
           const validStatus = ["playing", "completed", "toPlay"].includes(
@@ -60,7 +59,6 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
 
   const moveGame = async (game, newStatus) => {
     if (!userId) {
-      console.error("User ID is undefined");
       toast.error("Unable to move game: User ID is missing");
       return;
     }
@@ -93,14 +91,12 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
       toast.success(`Game moved to ${newStatus}`);
       setOpenMenu(null);
     } catch (error) {
-      console.error("Unable to move game:", error);
       toast.error("Failed to move game: " + error.message);
     }
   };
 
   const removeGame = async (game) => {
     if (!userId) {
-      console.error("User ID is undefined");
       toast.error("No se puede eliminar el juego: falta el ID de usuario");
       return;
     }
@@ -135,7 +131,6 @@ export default function LibraryTab({ userProfile, userId, updateUserProfile }) {
       toast.success("Game removed from library");
       setOpenMenu(null); // Cerrar el menú después de eliminar el juego
     } catch (error) {
-      console.error("Error al eliminar el juego:", error);
       toast.error("Failed to remove game: " + error.message);
     }
   };

@@ -54,7 +54,6 @@ export default function ChristmasGamesGrid({ isEditing }) {
         const gamesData = await Promise.all(gamesPromises);
         setChristmasGames(gamesData);
       } catch (error) {
-        console.error("Error fetching Christmas games:", error);
         setError(
           "Failed to fetch Christmas games, please refresh the page or try again later"
         );

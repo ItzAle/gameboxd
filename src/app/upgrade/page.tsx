@@ -46,7 +46,6 @@ export default function UpgradePage() {
         throw new Error("Failed to create checkout session");
       }
     } catch (error) {
-      console.error("Error:", error);
     } finally {
       setIsLoading(false);
     }

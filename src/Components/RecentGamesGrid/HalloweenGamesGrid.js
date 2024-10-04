@@ -51,7 +51,6 @@ export default function HalloweenGamesGrid({ isEditing }) {
         const gamesData = await Promise.all(gamesPromises);
         setHalloweenGames(gamesData);
       } catch (error) {
-        console.error("Error fetching Halloween games:", error);
         setError(
           "Failed to fetch Halloween games, please refresh the page or try again later"
         );

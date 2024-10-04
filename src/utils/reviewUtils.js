@@ -1,4 +1,14 @@
-import { doc, getDoc, updateDoc, deleteDoc, writeBatch, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  writeBatch,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
 export const deleteReview = async (reviewId, userEmail) => {
@@ -24,7 +34,6 @@ export const deleteReview = async (reviewId, userEmail) => {
 
     return true;
   } catch (error) {
-    console.error("Error deleting review:", error);
     return false;
   }
 };
@@ -36,19 +45,25 @@ export const addReview = async (reviewData, userEmail) => {
     // Añadir la reseña a la colección de reseñas
     const reviewsRef = collection(db, "reviews");
     const newReviewRef = doc(reviewsRef);
-    batch.set(newReviewRef, { ...reviewData, id: newReviewRef.id, user: userEmail });
+    batch.set(newReviewRef, {
+      ...reviewData,
+      id: newReviewRef.id,
+      user: userEmail,
+    });
 
     // Añadir la reseña al documento del usuario
     const userRef = doc(db, "users", userEmail);
     batch.update(userRef, {
-      reviews: [...(await getDoc(userRef)).data().reviews || [], { ...reviewData, id: newReviewRef.id }]
+      reviews: [
+        ...((await getDoc(userRef)).data().reviews || []),
+        { ...reviewData, id: newReviewRef.id },
+      ],
     });
 
     await batch.commit();
 
     return newReviewRef.id;
   } catch (error) {
-    console.error("Error adding review:", error);
     return null;
   }
 };
@@ -57,9 +72,8 @@ export const getReviewsByUser = async (userEmail) => {
   try {
     const q = query(collection(db, "reviews"), where("user", "==", userEmail));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Error fetching reviews:", error);
     return [];
   }
 };

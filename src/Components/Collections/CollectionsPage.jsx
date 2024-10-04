@@ -169,7 +169,6 @@ export default function CollectionsPage() {
       try {
         await deleteDoc(doc(db, "collections", collectionId));
       } catch (error) {
-        console.error("Error deleting collection:", error);
       }
     }
   };

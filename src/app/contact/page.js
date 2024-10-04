@@ -39,7 +39,7 @@ export default function Contact() {
       setMessage("");
       setType("suggestion");
     } catch (error) {
-      console.error("Error submitting feedback:", error);
+
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);

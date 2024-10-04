@@ -16,7 +16,6 @@ export default function EmailVerification() {
       const firebaseUser = auth.currentUser;
 
       if (!firebaseUser) {
-        console.error("No se pudo obtener el usuario de Firebase");
         return;
       }
 
@@ -29,7 +28,6 @@ export default function EmailVerification() {
             router.push("/profile");
           }
         } catch (error) {
-          console.error("Error al recargar el usuario:", error);
         }
       }, 5000); // Verifica cada 5 segundos
 

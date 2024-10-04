@@ -35,15 +35,12 @@ export default function UpgradeSuccess() {
         const data = await response.json();
 
         if (response.ok) {
-          console.log("Payment verified successfully:", data.message);
           setShowConfetti(true);
           setTimeout(() => setShowConfetti(false), 10000); // Stop confetti after 10 seconds
         } else {
-          console.error("Payment verification failed:", data.error);
           router.push("/upgrade");
         }
       } catch (error) {
-        console.error("Error verifying payment:", error);
         router.push("/upgrade");
       } finally {
         setIsVerifying(false);

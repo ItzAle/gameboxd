@@ -38,7 +38,6 @@ export default function FollowersTab({ userProfile }) {
         }
         setFollowers(followerUsers);
       } catch (error) {
-        console.error("Error fetching followers:", error);
       } finally {
         setIsLoading(false);
       }

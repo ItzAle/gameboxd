@@ -21,7 +21,6 @@ export default function ForgotPassword() {
       toast.success("An email has been sent to reset your password.");
       router.push("/signin");
     } catch (error) {
-      console.error("Error sending reset mail", error);
       toast.error(
         "Error sending the reset email. Please check your email address."
       );

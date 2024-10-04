@@ -21,8 +21,7 @@ export const ReviewsProvider = ({ children }) => {
         }));
         setReviews(fetchedReviews);
       } catch (error) {
-        console.error("Error fetching reviews:", error);
-        setError("No se pudieron cargar las reseñas. Por favor, intenta de nuevo más tarde.");
+        setError("Could not fetch reviews, please try again later");
       }
     };
 

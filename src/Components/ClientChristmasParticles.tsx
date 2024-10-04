@@ -12,12 +12,10 @@ import christmasTreeImg from "../public/images/christmas/christmastree.png";
 
 const ClientChristmasParticles = () => {
   const particlesInit = useCallback(async (engine: Engine) => {
-    console.log("Initializing tsParticles");
     await loadFull(engine);
   }, []);
 
   const particlesLoaded = useCallback(async (container: any) => {
-    console.log("Particles loaded", container);
   }, []);
 
   return (

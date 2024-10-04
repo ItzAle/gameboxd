@@ -123,7 +123,6 @@ export default function AllGames() {
       setDevelopers(uniqueDevelopers.sort());
       setPublishers(uniquePublishers.sort());
     } catch (err) {
-      console.error("Error fetching data:", err);
       setError(err);
     } finally {
       setIsLoading(false);

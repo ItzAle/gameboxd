@@ -17,7 +17,6 @@ async function getGameDetails(id) {
 
     return res.json();
   } catch (error) {
-    console.error("Error fetching game details:", error);
     return null;
   }
 }

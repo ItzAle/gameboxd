@@ -20,7 +20,6 @@ const LikedGames = ({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {games.slice(0, 6).map((game) => {
             if (!game || !game.slug) {
-              console.warn('Game without slug detected:', game);
               return null;
             }
             return (

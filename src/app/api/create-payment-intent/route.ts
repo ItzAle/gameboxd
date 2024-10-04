@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    console.error("Error creating checkout session:", err);
+    
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

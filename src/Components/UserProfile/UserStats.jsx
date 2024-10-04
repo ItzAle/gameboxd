@@ -62,7 +62,6 @@ export default function UserStats({ userProfile }) {
           collectionsCount,
         });
       } catch (error) {
-        console.error("Error fetching user stats:", error);
       }
     };
 

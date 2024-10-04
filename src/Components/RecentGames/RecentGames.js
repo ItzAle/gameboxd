@@ -32,7 +32,6 @@ const RecentGames = () => {
 
         setRecentGames(latestGames);
       } catch (error) {
-        console.error("Error fetching recent games:", error);
         setError(error);
       } finally {
         setIsLoading(false);

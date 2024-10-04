@@ -35,7 +35,6 @@ export default function CreateCollectionPage() {
         const data = await response.json();
         setAllGames(data);
       } catch (error) {
-        console.error("Error fetching games:", error);
       }
     };
 
@@ -55,7 +54,6 @@ export default function CreateCollectionPage() {
             setUsername(user.displayName || "Usuario");
           }
         } catch (error) {
-          console.error("Error fetching username:", error);
           setUsername(user.displayName || "Usuario");
         }
       }
@@ -81,10 +79,8 @@ export default function CreateCollectionPage() {
         followerCount: 0,
         createdAt: new Date(),
       });
-      console.log("Collection created with ID: ", docRef.id);
       router.push(`/collections/${docRef.id}`);
     } catch (error) {
-      console.error("Error creating collection:", error);
     }
   };
 

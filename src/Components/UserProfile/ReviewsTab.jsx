@@ -41,12 +41,7 @@ export default function ReviewsTab({ userProfile, isOwnProfile }) {
         userId = userProfile?.id;
       }
 
-      console.log("Fetching reviews for userId:", userId);
-      console.log("isOwnProfile:", isOwnProfile);
-      console.log("userProfile:", userProfile);
-
       if (!userId) {
-        console.error("User ID is undefined");
         setIsLoading(false);
         return;
       }
@@ -56,17 +51,13 @@ export default function ReviewsTab({ userProfile, isOwnProfile }) {
           collection(db, "reviews"),
           where("userId", "==", userId)
         );
-        console.log("Query:", reviewsQuery);
         const reviewsSnapshot = await getDocs(reviewsQuery);
-        console.log("Query snapshot:", reviewsSnapshot);
         const reviewsData = reviewsSnapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-        console.log("Reviews data:", reviewsData);
         setReviews(reviewsData);
       } catch (error) {
-        console.error("Error fetching reviews:", error);
       } finally {
         setIsLoading(false);
       }
@@ -76,7 +67,7 @@ export default function ReviewsTab({ userProfile, isOwnProfile }) {
   }, [userProfile, isOwnProfile, user]);
 
   if (isLoading) {
-    return <div>Cargando reseñas...</div>;
+    return <div>Loading reviews...</div>;
   }
 
   const handleDelete = async (reviewId) => {
