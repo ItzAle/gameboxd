@@ -27,28 +27,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FaHeart,
   FaStar,
-  FaRegStar,
   FaCalendarAlt,
   FaDesktop,
-  FaTags,
   FaRegHeart,
   FaSteam,
   FaPlaystation,
   FaXbox,
   FaGamepad,
-  FaThumbsUp,
-  FaThumbsDown,
   FaPlayCircle,
   FaCheckCircle,
   FaListUl,
-  FaComment,
   FaTrash,
-  FaChevronDown,
-  FaChevronUp,
   FaLightbulb,
   FaTimes,
   FaTh,
   FaList,
+  FaEdit,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
@@ -70,7 +64,6 @@ import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 import "../../index.css";
 import YouTube from "react-youtube";
-import { BsGrid3X3GapFill, BsListUl } from "react-icons/bs";
 import "../../utils/customScrollbar.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -78,8 +71,6 @@ import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { SiNintendoswitch, SiEpicgames, SiGogdotcom } from "react-icons/si";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
-const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
-const MemoizedUpgradeBanner = React.memo(UpgradeBanner);
 const MemoizedAddReviewModal = React.memo(AddReviewModal);
 
 // Review Card (Hay que separla en un compente)
@@ -196,13 +187,13 @@ const ReviewCard = React.memo(
                           onClick={() => setEditingComment(comment.id)}
                           className="text-blue-400 mr-2"
                         >
-                          Editar
+                          <FaEdit className="h-5 w-5" />
                         </button>
                         <button
                           onClick={() => onDeleteComment(review.id, comment.id)}
                           className="text-red-400"
                         >
-                          Eliminar
+                          <FaTrash className="h-5 w-5" />
                         </button>
                       </div>
                     )}
@@ -492,7 +483,7 @@ const formatReleaseDate = (dateString) => {
     const date = parseISO(dateString);
     return format(date, "d MMM yyyy");
   } catch (error) {
-    return dateString; // Devuelve la fecha original si hay un error
+    return dateString; // Devolver la fecha original en caso de error
   }
 };
 
