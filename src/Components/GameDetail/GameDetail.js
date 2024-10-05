@@ -869,7 +869,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
         <p className="text-gray-300 mb-2">
           {showFullDescription ? description : shortDescription}
         </p>
-        {description.length > 150 && (
+        {description.length > 300 && (
           <button
             onClick={toggleDescription}
             className="text-blue-400 hover:underline select-none cursor-pointer"
@@ -1668,19 +1668,12 @@ export default function GameDetailsPage({ id, initialGameData }) {
                             <h3 className="text-xl font-semibold mb-2">
                               Description
                             </h3>
-                            <p className="text-gray-300">
-                              {game.description}
-                              {game.description.length > 150 && (
-                                <span
-                                  className="text-blue-400 cursor-pointer ml-2"
-                                  onClick={toggleDescription}
-                                >
-                                  {showFullDescription
-                                    ? "Read Less"
-                                    : "Read More"}
-                                </span>
-                              )}
-                            </p>
+                            <div className="text-sm">
+                              <h3 className={`font-semibold ${halloweenClass}`}>
+                                Description
+                              </h3>
+                              {renderDescription(game.description)}
+                            </div>
                           </div>
                           <div className="grid grid-cols-2 gap-6">
                             <div>
