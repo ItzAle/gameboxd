@@ -53,7 +53,6 @@ import GoogleAdSense from "../Ads/GoogleAdSense";
 import { Loader2 } from "lucide-react";
 import ProBadge from "../common/ProBadge";
 import StyledUsername from "../common/StyledUsername";
-import Image from "next/image";
 import AddReviewModal from "../AddReviewModal/AddReviewModal";
 import UpgradeBanner from "../UpgradeBaner/UpgradeBanner";
 import { useHalloween } from "../../context/HalloweenContext";
@@ -65,7 +64,6 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/autoplay";
-import ReactPlayer from "react-player/youtube";
 import { format, parseISO } from "date-fns";
 import { useRouter } from "next/navigation";
 import "../../index.css";
@@ -75,12 +73,14 @@ import "../../utils/customScrollbar.css";
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
+import { SiNintendoswitch, SiEpicgames, SiGogdotcom } from "react-icons/si";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedGoogleAdSense = React.memo(GoogleAdSense);
 const MemoizedUpgradeBanner = React.memo(UpgradeBanner);
 const MemoizedAddReviewModal = React.memo(AddReviewModal);
 
+// Review Card (Hay que separla en un compente)
 const ReviewCard = React.memo(
   ({
     review,
@@ -234,6 +234,12 @@ const ReviewCard = React.memo(
 );
 
 ReviewCard.displayName = "ReviewCard";
+
+// Fin review card
+
+// Función para obtener el ID del video de YouTube
+// No hace falta separar por componente
+//Compon
 
 const getYouTubeVideoId = (url) => {
   if (!url) return null;
@@ -536,6 +542,31 @@ export default function GameDetailsPage({ id, initialGameData }) {
     checkFavoriteStatus();
   }, [user, game]);
 
+  useEffect(() => {
+    const loadLibraryStatus = async () => {
+      if (user && game) {
+        try {
+          const userRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            const library = userData.library || [];
+            const gameInLibrary = library.find((g) => g.slug === game.slug);
+            if (gameInLibrary) {
+              setLibraryStatus(gameInLibrary.status);
+            } else {
+              setLibraryStatus(null);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading library status:", error);
+        }
+      }
+    };
+
+    loadLibraryStatus();
+  }, [user, game]);
+
   const toggleLayout = useCallback(() => {
     setIsCompactLayout((prevLayout) => {
       const newLayout = !prevLayout;
@@ -551,38 +582,6 @@ export default function GameDetailsPage({ id, initialGameData }) {
     setLightboxIndex(index);
     setIsLightboxOpen(true);
   }, []);
-
-  const detailsVariants = useMemo(
-    () => ({
-      hidden: {
-        opacity: 0,
-        height: 0,
-        transition: { duration: 0.3 },
-      },
-      visible: {
-        opacity: 1,
-        height: "auto",
-        transition: { duration: 0.3 },
-      },
-    }),
-    []
-  );
-
-  const mediaVariants = useMemo(
-    () => ({
-      hidden: {
-        opacity: 0,
-        height: 0,
-        transition: { duration: 0.3 },
-      },
-      visible: {
-        opacity: 1,
-        height: "auto",
-        transition: { duration: 0.3 },
-      },
-    }),
-    []
-  );
 
   const handleAddReviewClick = useCallback(() => {
     if (!user) {
@@ -873,7 +872,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
         {description.length > 150 && (
           <button
             onClick={toggleDescription}
-            className="text-blue-400 hover:underline"
+            className="text-blue-400 hover:underline select-none cursor-pointer"
           >
             {showFullDescription ? "Read Less" : "Read More"}
           </button>
@@ -890,7 +889,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
     <Link
       href={`/all?${type}=${encodeURIComponent(item)}`}
       key={item}
-      className="bg-gray-700 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-600 transition-colors duration-200"
+      className="bg-gray-700 px-2 py-1 rounded-full text-sm cursor-pointer hover:bg-gray-600 transition-colors duration-200 select-none"
     >
       {item}
     </Link>
@@ -949,8 +948,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
         })
       );
       setReviews(reviewsData);
-    } catch (error) {
-    }
+    } catch (error) {}
   }, [id]);
 
   useEffect(() => {
@@ -990,27 +988,8 @@ export default function GameDetailsPage({ id, initialGameData }) {
         }
       : {};
 
-  const containerClass = `min-h-screen  bg-gradient-to-b from-gray-900 to-black text-white relative ${
-    isHalloweenMode && isHorrorGame ? "halloween-mode" : ""
-  }`;
-
   const halloweenClass =
     isHalloweenMode && isHorrorGame ? "halloween-text" : "";
-  const halloweenClassLight =
-    isHalloweenMode && isHorrorGame ? "halloween-text-light" : "";
-
-  const handleSlideChange = (swiper) => {
-    const currentSlideIndex = swiper.activeIndex;
-    const isVideoSlide = currentSlideIndex >= game.images.length;
-
-    if (isVideoSlide) {
-      swiper.autoplay.stop();
-      setIsVideoPlaying(true);
-    } else {
-      swiper.autoplay.start();
-      setIsVideoPlaying(false);
-    }
-  };
 
   const LayoutToggleButton = ({ isCompactLayout, toggleLayout }) => {
     return (
@@ -1053,7 +1032,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
   const closeFullscreenVideo = useCallback(() => {
     setFullscreenVideo(null);
-    // Opcional: puedes decidir si quieres reanudar la reproducción del video pequeño o no
+    // Opcional: decir si quieres reanudar la reproduccion del video pequeño o no
     // setIsPlaying(true);
   }, []);
 
@@ -1232,17 +1211,21 @@ export default function GameDetailsPage({ id, initialGameData }) {
                                 Icon = FaPlaystation;
                                 storeName = "PlayStation";
                                 break;
+                              case "nintendoswitch":
+                                Icon = SiNintendoswitch;
+                                storeName = "Nintendo Switch";
+                                break;
                               case "xbox":
                                 Icon = FaXbox;
                                 storeName = "Xbox";
                                 break;
-                              case "nintendo":
-                                Icon = FaGamepad;
-                                storeName = "Nintendo";
-                                break;
                               case "epicgames":
-                                Icon = FaDesktop;
+                                Icon = SiEpicgames;
                                 storeName = "Epic Games";
+                                break;
+                              case "gog":
+                                Icon = SiGogdotcom;
+                                storeName = "GOG";
                                 break;
                               default:
                                 Icon = FaGamepad;
@@ -1524,13 +1507,17 @@ export default function GameDetailsPage({ id, initialGameData }) {
                                   Icon = FaXbox;
                                   storeName = "Xbox";
                                   break;
-                                case "nintendo":
-                                  Icon = FaGamepad;
-                                  storeName = "Nintendo";
+                                case "nintendoswitch":
+                                  Icon = SiNintendoswitch;
+                                  storeName = "Nintendo Switch";
                                   break;
                                 case "epicgames":
                                   Icon = FaDesktop;
                                   storeName = "Epic Games";
+                                  break;
+                                case "gog":
+                                  Icon = SiGogdotcom;
+                                  storeName = "GOG";
                                   break;
                                 default:
                                   Icon = FaGamepad;
@@ -1700,16 +1687,11 @@ export default function GameDetailsPage({ id, initialGameData }) {
                               <h4 className="text-lg font-semibold mb-2">
                                 Platforms
                               </h4>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1">
                                 {game.platforms &&
-                                  game.platforms.map((platform) => (
-                                    <span
-                                      key={platform}
-                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                    >
-                                      {platform}
-                                    </span>
-                                  ))}
+                                  game.platforms.map((platform) =>
+                                    renderFilterableItem(platform, "platform")
+                                  )}
                               </div>
                             </div>
                             <div>
@@ -1718,14 +1700,9 @@ export default function GameDetailsPage({ id, initialGameData }) {
                               </h4>
                               <div className="flex flex-wrap gap-2">
                                 {game.genres &&
-                                  game.genres.map((genre) => (
-                                    <span
-                                      key={genre}
-                                      className="bg-gray-700 px-2 py-1 rounded-full text-sm"
-                                    >
-                                      {genre}
-                                    </span>
-                                  ))}
+                                  game.genres.map((genre) =>
+                                    renderFilterableItem(genre, "genre")
+                                  )}
                               </div>
                             </div>
                           </div>
@@ -1734,17 +1711,23 @@ export default function GameDetailsPage({ id, initialGameData }) {
                               <h4 className="text-lg font-semibold mb-2">
                                 Developer
                               </h4>
-                              <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">
-                                {game.developer}
+                              <span>
+                                {renderFilterableItem(
+                                  game.developer,
+                                  "developer"
+                                )}
                               </span>
                             </div>
                             <div>
                               <h4 className="text-lg font-semibold mb-2">
                                 Publisher
                               </h4>
-                              <span className="bg-gray-700 px-2 py-1 rounded-full text-sm">
-                                {game.publisher}
-                              </span>
+                              <p>
+                                {renderFilterableItem(
+                                  game.publisher,
+                                  "publisher"
+                                )}
+                              </p>
                             </div>
                           </div>
                         </div>
