@@ -1,6 +1,7 @@
 export async function sendEmail({ to, gameName, releaseDate, coverImageUrl, gamePageUrl }) {
   try {
-    const response = await fetch('/api/sendEmail', {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const response = await fetch(`${baseUrl}/api/sendEmail`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

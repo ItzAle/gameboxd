@@ -33,7 +33,7 @@ export async function GET() {
         userId: notification.userId,
         type: "game_release",
         gameId: notification.gameId,
-        gameName: notification.gameName,
+        gameName: notification.gameName, // Asegúrate de que esto esté presente
         message: `${notification.gameName} has been released!`,
         createdAt: new Date(),
         read: false,

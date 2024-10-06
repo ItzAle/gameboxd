@@ -577,6 +577,11 @@ export default function GameDetailsPage({ id, initialGameData }) {
       return;
     }
 
+    if (isGameReleased(game.releaseDate)) {
+      toast.error("This game has already been released.");
+      return;
+    }
+
     try {
       const notificationsRef = collection(db, "notifications");
       const q = query(
@@ -586,21 +591,14 @@ export default function GameDetailsPage({ id, initialGameData }) {
       );
       const querySnapshot = await getDocs(q);
 
-      const isReleased = new Date(game.releaseDate) <= new Date();
-      const notificationMessage = isReleased
-        ? `${game.name} has been released!`
-        : `${game.name} will be released on ${formatReleaseDate(
-            game.releaseDate
-          )}`;
-
       if (querySnapshot.empty) {
-        // No hay notificación, así que la creamos
+        // Crear una notificación programada
         const notificationData = {
           userId: user.uid,
           gameId: game.id,
           gameName: game.name,
           type: "game_release",
-          releaseDate: game.releaseDate.split("T")[0],
+          releaseDate: game.releaseDate,
           coverImageUrl: game.coverImageUrl,
           createdAt: new Date(),
           sent: false,
@@ -608,21 +606,8 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
         await addDoc(notificationsRef, notificationData);
 
-        // Crear una notificación en el centro de notificaciones
-        await addDoc(collection(db, "userNotifications"), {
-          userId: user.uid,
-          type: "game_release",
-          message: notificationMessage,
-          createdAt: new Date(),
-          read: false,
-        });
-
         setIsNotifying(true);
-        if (isReleased) {
-          toast.success("You've been notified about this released game.");
-        } else {
-          toast.success("You will be notified when the game is released.");
-        }
+        toast.success("You will be notified when the game is released.");
       } else {
         // Ya existe una notificación, así que la eliminamos
         const notificationDoc = querySnapshot.docs[0];
@@ -652,6 +637,13 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
     checkNotificationStatus();
   }, [user, game, db]);
+
+  const isGameReleased = (releaseDate) => {
+    if (!releaseDate) return false;
+    const today = new Date();
+    const gameReleaseDate = new Date(releaseDate);
+    return gameReleaseDate <= today;
+  };
 
   const toggleLayout = useCallback(() => {
     setIsCompactLayout((prevLayout) => {
@@ -1231,27 +1223,19 @@ export default function GameDetailsPage({ id, initialGameData }) {
                     >
                       Add a review
                     </motion.button>
-                    {game && game.releaseDate && (
-                      <motion.button
+                    {!isGameReleased(game.releaseDate) && (
+                      <button
                         onClick={handleNotifyRelease}
-                        className={`flex items-center justify-center px-4 py-2 rounded mt-2 w-full ${
+                        className={`mt-2 px-4 py-2 rounded transition duration-300 w-full ${
                           isNotifying
-                            ? "bg-red-500 hover:bg-red-600"
-                            : "bg-blue-500 hover:bg-blue-600"
-                        } transition duration-300`}
-                        variants={itemVariants}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                            ? "bg-red-500 hover:bg-red-600 text-white"
+                            : "bg-blue-500 hover:bg-blue-600 text-white"
+                        }`}
                       >
-                        <FaBell className="mr-2" />
-                        {new Date(game.releaseDate) <= new Date()
-                          ? isNotifying
-                            ? "Remove release notification"
-                            : "Notify me about this release"
-                          : isNotifying
-                          ? "Cancel release notification"
+                        {isNotifying
+                          ? "Cancel Notification"
                           : "Notify me on release"}
-                      </motion.button>
+                      </button>
                     )}
                     <motion.div
                       className="grid grid-cols-3 gap-2 mt-2"

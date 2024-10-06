@@ -76,7 +76,7 @@ const NotificationsList = () => {
                   <span className="font-semibold hover:underline cursor-pointer">
                     {notification.gameName}
                   </span>
-                </Link>
+                </Link>{" "}
                 has been released!
               </p>
             </div>
