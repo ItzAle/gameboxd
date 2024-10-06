@@ -165,52 +165,97 @@ export default function TransparentNavbar() {
         <div className="hidden md:flex items-center space-x-4">
           {userProfile?.isPro && <ProBadge />}
           {user ? (
-            <div
-              className="relative flex items-center"
-              ref={userMenuRef}
-            >
-              <button 
-                className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
-                onMouseEnter={() => setIsUserMenuHovered(true)}
-                onClick={() => setIsUserMenuHovered(!isUserMenuHovered)}
+            <>
+              <div
+                className="relative flex items-center"
+                ref={userMenuRef}
               >
-                <Image
-                  src={userProfile?.photoURL || defaultAvatar}
-                  alt={userProfile?.displayName || "User"}
-                  width={32}
-                  height={32}
-                  className="rounded-full"
-                />
-                <span>{userProfile?.displayName || "User"}</span>
-                <FaChevronDown
-                  className={`transition-transform ${
-                    isUserMenuHovered ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-              {isUserMenuHovered && (
-                <div 
-                  className="absolute right-0 top-full mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-700"
-                  onMouseLeave={() => setIsUserMenuHovered(false)}
+                <button 
+                  className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
+                  onMouseEnter={() => setIsUserMenuHovered(true)}
+                  onClick={() => setIsUserMenuHovered(!isUserMenuHovered)}
                 >
-                  {navItems.map((item, index) => (
-                    <Link
-                      key={index}
-                      href={item.href}
-                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
-                    >
-                      {item.text}
-                    </Link>
-                  ))}
-                  <button
-                    onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                  <Image
+                    src={userProfile?.photoURL || defaultAvatar}
+                    alt={userProfile?.displayName || "User"}
+                    width={32}
+                    height={32}
+                    className="rounded-full"
+                  />
+                  <span>{userProfile?.displayName || "User"}</span>
+                  <FaChevronDown
+                    className={`transition-transform ${
+                      isUserMenuHovered ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {isUserMenuHovered && (
+                  <div 
+                    className="absolute right-0 top-full mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-700"
+                    onMouseLeave={() => setIsUserMenuHovered(false)}
                   >
-                    Sign Out
-                  </button>
-                </div>
-              )}
-            </div>
+                    {navItems.map((item, index) => (
+                      <Link
+                        key={index}
+                        href={item.href}
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                      >
+                        {item.text}
+                      </Link>
+                    ))}
+                    <button
+                      onClick={handleSignOut}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+              <Tooltip title="Activity" arrow>
+                <Link
+                  href="/activity"
+                  className="ml-4 text-white hover:text-blue-400 transition"
+                >
+                  <FiActivity size={20} />
+                </Link>
+              </Tooltip>
+              <Tooltip title="Release Calendar" arrow>
+                <Link
+                  href="/release-calendar"
+                  className="ml-4 text-white hover:text-blue-400 transition"
+                >
+                  <FiCalendar size={20} />
+                </Link>
+              </Tooltip>
+              <AnimatePresence>
+                {isSearchOpen && (
+                  <motion.form
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: "300px", opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    onSubmit={handleSearch}
+                    className="relative"
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search games, users or collections..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none"
+                    />
+                  </motion.form>
+                )}
+              </AnimatePresence>
+              <button
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="text-white hover:text-blue-400 transition"
+                aria-label="Toggle search"
+              >
+                <FaSearch />
+              </button>
+            </>
           ) : (
             <Link
               href="/signin"
@@ -219,49 +264,6 @@ export default function TransparentNavbar() {
               Sign In
             </Link>
           )}
-          <Tooltip title="Activity" arrow>
-            <Link
-              href="/activity"
-              className="ml-4 text-white hover:text-blue-400 transition"
-            >
-              <FiActivity size={20} />
-            </Link>
-          </Tooltip>
-          <Tooltip title="Release Calendar" arrow>
-            <Link
-              href="/release-calendar"
-              className="ml-4 text-white hover:text-blue-400 transition"
-            >
-              <FiCalendar size={20} />
-            </Link>
-          </Tooltip>
-          <AnimatePresence>
-            {isSearchOpen && (
-              <motion.form
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "300px", opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                onSubmit={handleSearch}
-                className="relative"
-              >
-                <input
-                  type="text"
-                  placeholder="Search games, users or collections..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none"
-                />
-              </motion.form>
-            )}
-          </AnimatePresence>
-          <button
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            className="text-white hover:text-blue-400 transition"
-            aria-label="Toggle search"
-          >
-            <FaSearch />
-          </button>
         </div>
 
         {/* Mobile menu button */}
@@ -285,43 +287,51 @@ export default function TransparentNavbar() {
             className="md:hidden bg-black/90 backdrop-blur-md"
           >
             <div className="container mx-auto py-4 px-4">
-              {user && (
-                <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-gray-700">
-                  <Image
-                    src={userProfile?.photoURL || defaultAvatar}
-                    alt={userProfile?.displayName || "User"}
-                    width={40}
-                    height={40}
-                    className="rounded-full"
-                  />
-                  <div>
-                    <p className="text-white font-semibold">
-                      {userProfile?.displayName || "User"}
-                    </p>
-                    {userProfile?.isPro && <ProBadge />}
-                  </div>
-                </div>
-              )}
-              {user &&
-                navItems.map((item, index) => (
-                  <Link
-                    key={index}
-                    href={item.href}
-                    className="flex items-center space-x-4 py-3 text-white hover:text-blue-400 transition"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <span className="text-xl">{item.icon}</span>
-                    <span>{item.text}</span>
-                  </Link>
-                ))}
               {user ? (
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center space-x-4 py-3 text-white hover:text-blue-400 transition w-full"
-                >
-                  <FaSignOutAlt className="text-xl" />
-                  <span>Sign Out</span>
-                </button>
+                <>
+                  <div className="flex items-center space-x-4 mb-4 pb-4 border-b border-gray-700">
+                    <Image
+                      src={userProfile?.photoURL || defaultAvatar}
+                      alt={userProfile?.displayName || "User"}
+                      width={40}
+                      height={40}
+                      className="rounded-full"
+                    />
+                    <div>
+                      <p className="text-white font-semibold">
+                        {userProfile?.displayName || "User"}
+                      </p>
+                      {userProfile?.isPro && <ProBadge />}
+                    </div>
+                  </div>
+                  {navItems.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="flex items-center space-x-4 py-3 text-white hover:text-blue-400 transition"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <span className="text-xl">{item.icon}</span>
+                      <span>{item.text}</span>
+                    </Link>
+                  ))}
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center space-x-4 py-3 text-white hover:text-blue-400 transition w-full"
+                  >
+                    <FaSignOutAlt className="text-xl" />
+                    <span>Sign Out</span>
+                  </button>
+                  <form onSubmit={handleSearch} className="mt-4">
+                    <input
+                      type="text"
+                      placeholder="Search games, users or collections..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none"
+                    />
+                  </form>
+                </>
               ) : (
                 <Link
                   href="/signin"
@@ -332,15 +342,6 @@ export default function TransparentNavbar() {
                   <span>Sign In</span>
                 </Link>
               )}
-              <form onSubmit={handleSearch} className="mb-4">
-                <input
-                  type="text"
-                  placeholder="Search games, users or collections..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 rounded-full bg-gray-800 text-white focus:outline-none"
-                />
-              </form>
             </div>
           </motion.div>
         )}
