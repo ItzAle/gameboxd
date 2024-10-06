@@ -168,10 +168,12 @@ export default function TransparentNavbar() {
             <div
               className="relative flex items-center"
               ref={userMenuRef}
-              onMouseEnter={() => setIsUserMenuHovered(true)}
-              onMouseLeave={() => setIsUserMenuHovered(false)}
             >
-              <button className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none">
+              <button 
+                className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
+                onMouseEnter={() => setIsUserMenuHovered(true)}
+                onClick={() => setIsUserMenuHovered(!isUserMenuHovered)}
+              >
                 <Image
                   src={userProfile?.photoURL || defaultAvatar}
                   alt={userProfile?.displayName || "User"}
@@ -187,47 +189,27 @@ export default function TransparentNavbar() {
                 />
               </button>
               {isUserMenuHovered && (
-                <>
-                  {/* Área invisible para aumentar la "hitbox" */}
-                  <div
-                    className="absolute top-full left-0 right-0 h-4"
-                    onMouseEnter={() => setIsUserMenuHovered(true)}
-                  ></div>
-                  <div className="absolute right-0 top-full mt-4 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-700">
-                    {navItems.map((item, index) => (
-                      <Link
-                        key={index}
-                        href={item.href}
-                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
-                      >
-                        {item.text}
-                      </Link>
-                    ))}
-                    <button
-                      onClick={handleSignOut}
-                      className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                <div 
+                  className="absolute right-0 top-full mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-700"
+                  onMouseLeave={() => setIsUserMenuHovered(false)}
+                >
+                  {navItems.map((item, index) => (
+                    <Link
+                      key={index}
+                      href={item.href}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
                     >
-                      Sign Out
-                    </button>
-                  </div>
-                </>
+                      {item.text}
+                    </Link>
+                  ))}
+                  <button
+                    onClick={handleSignOut}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition-colors duration-150"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               )}
-              <Tooltip title="Activity" arrow>
-                <Link
-                  href="/activity"
-                  className="ml-4 text-white hover:text-blue-400 transition"
-                >
-                  <FiActivity size={20} />
-                </Link>
-              </Tooltip>
-              <Tooltip title="Release Calendar" arrow>
-                <Link
-                  href="/release-calendar"
-                  className="ml-4 text-white hover:text-blue-400 transition"
-                >
-                  <FiCalendar size={20} />
-                </Link>
-              </Tooltip>
             </div>
           ) : (
             <Link
@@ -237,6 +219,22 @@ export default function TransparentNavbar() {
               Sign In
             </Link>
           )}
+          <Tooltip title="Activity" arrow>
+            <Link
+              href="/activity"
+              className="ml-4 text-white hover:text-blue-400 transition"
+            >
+              <FiActivity size={20} />
+            </Link>
+          </Tooltip>
+          <Tooltip title="Release Calendar" arrow>
+            <Link
+              href="/release-calendar"
+              className="ml-4 text-white hover:text-blue-400 transition"
+            >
+              <FiCalendar size={20} />
+            </Link>
+          </Tooltip>
           <AnimatePresence>
             {isSearchOpen && (
               <motion.form
