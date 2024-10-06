@@ -24,7 +24,7 @@ import { auth, db } from "../../../lib/firebase";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import ProBadge from "../common/ProBadge";
-import { FiActivity, FiCalendar } from "react-icons/fi";
+import { FiActivity, FiCalendar, FiBell } from "react-icons/fi";
 import defaultAvatar from "../../utils/default-image.png";
 import { useHalloween } from "../../context/HalloweenContext";
 import Tooltip from "@mui/material/Tooltip";
@@ -122,6 +122,12 @@ export default function TransparentNavbar() {
       showOnDesktop: false,
     },
     {
+      href: "/notifications",
+      text: "Notifications",
+      icon: <FiBell />,
+      showOnDesktop: false,
+    },
+    {
       href: "/activity",
       text: "Activity",
       icon: <FiActivity />,
@@ -166,11 +172,8 @@ export default function TransparentNavbar() {
           {userProfile?.isPro && <ProBadge />}
           {user ? (
             <>
-              <div
-                className="relative flex items-center"
-                ref={userMenuRef}
-              >
-                <button 
+              <div className="relative flex items-center" ref={userMenuRef}>
+                <button
                   className="flex items-center space-x-2 text-white hover:text-blue-400 transition focus:outline-none"
                   onMouseEnter={() => setIsUserMenuHovered(true)}
                   onClick={() => setIsUserMenuHovered(!isUserMenuHovered)}
@@ -190,7 +193,7 @@ export default function TransparentNavbar() {
                   />
                 </button>
                 {isUserMenuHovered && (
-                  <div 
+                  <div
                     className="absolute right-0 top-full mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-10 border border-gray-700"
                     onMouseLeave={() => setIsUserMenuHovered(false)}
                   >
@@ -226,6 +229,14 @@ export default function TransparentNavbar() {
                   className="ml-4 text-white hover:text-blue-400 transition"
                 >
                   <FiCalendar size={20} />
+                </Link>
+              </Tooltip>
+              <Tooltip title="Notifications" arrow>
+                <Link
+                  href="/notifications"
+                  className="ml-4 text-white hover:text-blue-400 transition"
+                >
+                  <FiBell size={20} />
                 </Link>
               </Tooltip>
               <AnimatePresence>
