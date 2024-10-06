@@ -15,12 +15,13 @@ import "../../utils/customScrollbar.css";
 const ReleaseCalendar = () => {
   const [allGames, setAllGames] = useState([]);
   const [availableYears, setAvailableYears] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear()); // Cambiado para usar el año actual
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // Cambiado para usar el mes actual
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [isLoading, setIsLoading] = useState(true);
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
   const [error, setError] = useState(null);
   const dropdownRef = useRef(null);
+  const [selectedView, setSelectedView] = useState("calendar"); // New state for view selection
 
   const months = [
     "January",
@@ -69,7 +70,6 @@ const ReleaseCalendar = () => {
         const sortedYears = years.sort((a, b) => b - a);
         setAvailableYears(sortedYears);
 
-        // Establecer el año actual si está disponible, de lo contrario, el último año disponible
         const currentYear = new Date().getFullYear();
         setSelectedYear(
           sortedYears.includes(currentYear) ? currentYear : sortedYears[0]
@@ -109,6 +109,56 @@ const ReleaseCalendar = () => {
       .sort((a, b) => new Date(a.releaseDate) - new Date(b.releaseDate));
   }, [allGames, selectedYear, selectedMonth]);
 
+  const thisWeekGames = useMemo(() => {
+    const today = new Date();
+    const endOfWeek = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 7
+    );
+    return allGames
+      .filter((game) => {
+        const releaseDate = new Date(game.releaseDate);
+        return releaseDate >= today && releaseDate < endOfWeek;
+      })
+      .sort((a, b) => new Date(a.releaseDate) - new Date(b.releaseDate));
+  }, [allGames]);
+
+  const nextWeekGames = useMemo(() => {
+    const today = new Date();
+    const startOfNextWeek = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 7
+    );
+    const endOfNextWeek = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 14
+    );
+    return allGames
+      .filter((game) => {
+        const releaseDate = new Date(game.releaseDate);
+        return releaseDate >= startOfNextWeek && releaseDate < endOfNextWeek;
+      })
+      .sort((a, b) => new Date(a.releaseDate) - new Date(b.releaseDate));
+  }, [allGames]);
+
+  const last30DaysGames = useMemo(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() - 30
+    );
+    return allGames
+      .filter((game) => {
+        const releaseDate = new Date(game.releaseDate);
+        return releaseDate >= thirtyDaysAgo && releaseDate <= today;
+      })
+      .sort((a, b) => new Date(b.releaseDate) - new Date(a.releaseDate));
+  }, [allGames]);
+
   const GameCard = ({ game }) => (
     <Link href={`/games/${game.slug}`}>
       <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer">
@@ -131,35 +181,13 @@ const ReleaseCalendar = () => {
     </Link>
   );
 
-  const monthAbbreviations = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+  const renderGames = (games) => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {games.map((game) => (
+        <GameCard key={game.id} game={game} />
+      ))}
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -189,87 +217,175 @@ const ReleaseCalendar = () => {
           <div>
             <h1 className="text-3xl font-bold">Release Calendar</h1>
             <p className="text-xl text-gray-400 mt-2">
-              {monthNames[selectedMonth]} {selectedYear}
+              {selectedView === "calendar"
+                ? `${months[selectedMonth]} ${selectedYear}`
+                : ""}
             </p>
           </div>
 
           {/* Year selector dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
-              className="px-4 py-2 text-lg font-medium text-white bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
-            >
-              {selectedYear} <FaChevronDown className="inline-block ml-2" />
-            </button>
-            <AnimatePresence>
-              {isYearDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute z-10 right-0 mt-2 bg-gray-800 rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
-                >
-                  {availableYears.map((year) => (
-                    <button
-                      key={year}
-                      className="block w-full px-4 py-2 text-lg text-gray-300 hover:bg-gray-700 hover:text-white"
-                      onClick={() => {
-                        setSelectedYear(year);
-                        setSelectedMonth(0); // Reset to January when changing year
-                        setIsYearDropdownOpen(false);
-                      }}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {selectedView === "calendar" && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsYearDropdownOpen(!isYearDropdownOpen)}
+                className="px-4 py-2 text-lg font-medium text-white bg-gray-800 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white"
+              >
+                {selectedYear} <FaChevronDown className="inline-block ml-2" />
+              </button>
+              <AnimatePresence>
+                {isYearDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute z-10 right-0 mt-2 bg-gray-800 rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
+                  >
+                    {availableYears.map((year) => (
+                      <button
+                        key={year}
+                        className="block w-full px-4 py-2 text-lg text-gray-300 hover:bg-gray-700 hover:text-white"
+                        onClick={() => {
+                          setSelectedYear(year);
+                          setSelectedMonth(0);
+                          setIsYearDropdownOpen(false);
+                        }}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
-        {/* Month selector */}
+        {/* View selector */}
         <div className="flex justify-center mb-8 overflow-x-auto">
-          {monthAbbreviations.map((month, index) => (
-            <button
-              key={month}
-              onClick={() => setSelectedMonth(index)}
-              className={`px-4 py-2 mx-1 text-sm font-medium relative ${
-                selectedMonth === index
-                  ? "text-white"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
-            >
-              {month}
-              {selectedMonth === index && (
-                <motion.div
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-                  layoutId="monthUnderline"
-                />
-              )}
-            </button>
-          ))}
+          <button
+            onClick={() => setSelectedView("calendar")}
+            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+              selectedView === "calendar"
+                ? "text-white"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            Calendar
+            {selectedView === "calendar" && (
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                layoutId="viewUnderline"
+              />
+            )}
+          </button>
+          <button
+            onClick={() => setSelectedView("thisWeek")}
+            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+              selectedView === "thisWeek"
+                ? "text-white"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            This Week
+            {selectedView === "thisWeek" && (
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                layoutId="viewUnderline"
+              />
+            )}
+          </button>
+          <button
+            onClick={() => setSelectedView("nextWeek")}
+            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+              selectedView === "nextWeek"
+                ? "text-white"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            Next Week
+            {selectedView === "nextWeek" && (
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                layoutId="viewUnderline"
+              />
+            )}
+          </button>
+          <button
+            onClick={() => setSelectedView("last30Days")}
+            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+              selectedView === "last30Days"
+                ? "text-white"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            Last 30 Days
+            {selectedView === "last30Days" && (
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                layoutId="viewUnderline"
+              />
+            )}
+          </button>
         </div>
+
+        {/* Month selector (only for calendar view) */}
+        {selectedView === "calendar" && (
+          <div className="flex justify-center mb-8 overflow-x-auto">
+            {months.map((month, index) => (
+              <button
+                key={month}
+                onClick={() => setSelectedMonth(index)}
+                className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+                  selectedMonth === index
+                    ? "text-white"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                {month}
+                {selectedMonth === index && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                    layoutId="monthUnderline"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Games grid */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${selectedYear}-${selectedMonth}`}
+            key={`${selectedView}-${selectedYear}-${selectedMonth}`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredGames.map((game) => (
-                <GameCard key={game.id} game={game} />
-              ))}
-            </div>
+            {selectedView === "calendar" && renderGames(filteredGames)}
+            {selectedView === "thisWeek" && renderGames(thisWeekGames)}
+            {selectedView === "nextWeek" && renderGames(nextWeekGames)}
+            {selectedView === "last30Days" && renderGames(last30DaysGames)}
 
-            {filteredGames.length === 0 && (
+            {selectedView === "calendar" && filteredGames.length === 0 && (
               <p className="text-center text-gray-500 mt-8">
                 No games released this month.
+              </p>
+            )}
+            {selectedView === "thisWeek" && thisWeekGames.length === 0 && (
+              <p className="text-center text-gray-500 mt-8">
+                No games releasing this week.
+              </p>
+            )}
+            {selectedView === "nextWeek" && nextWeekGames.length === 0 && (
+              <p className="text-center text-gray-500 mt-8">
+                No games releasing next week.
+              </p>
+            )}
+            {selectedView === "last30Days" && last30DaysGames.length === 0 && (
+              <p className="text-center text-gray-500 mt-8">
+                No games released in the last 30 days.
               </p>
             )}
           </motion.div>
