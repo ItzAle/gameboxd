@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/sendEmail?checkScheduled=true",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/checkGameReleases",
+      "schedule": "0 1 * * *"
+    }
+  ]
+}

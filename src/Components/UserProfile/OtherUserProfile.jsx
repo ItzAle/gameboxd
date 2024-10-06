@@ -19,6 +19,7 @@ import {
   updateDoc,
   arrayRemove,
   arrayUnion,
+  addDoc,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import ProfilePicture from "./ProfilePicture";
@@ -139,13 +140,29 @@ export default function OtherUserProfile({ userId }) {
           followers: arrayUnion(user.uid),
         });
         setFollowersCount((prev) => prev + 1);
+
+        // Obtener el nombre de usuario actual
+        const currentUserDoc = await getDoc(currentUserRef);
+        const currentUserData = currentUserDoc.data();
+        const followerUsername = currentUserData.username || "Usuario desconocido";
+
+        // Crear una notificación para el usuario que está siendo seguido
+        await addDoc(collection(db, "userNotifications"), {
+          userId: userId, // ID del usuario que está siendo seguido
+          type: "new_follower",
+          followerName: followerUsername, // Nombre de usuario del usuario que está siguiendo
+          followerId: user.uid, // ID del usuario que está siguiendo
+          createdAt: new Date(),
+          read: false,
+        });
       }
       setIsFollowing(!isFollowing);
       toast.success(
         isFollowing ? "Usuario dejado de seguir" : "Usuario seguido"
       );
     } catch (error) {
-      toast.error("An error occurred while updating the follow status");
+      console.error("Error updating follow status:", error);
+      toast.error("Ocurrió un error al actualizar el estado de seguimiento");
     }
   };
 

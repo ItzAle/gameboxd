@@ -18,6 +18,9 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  setDoc,
+  deleteDoc,
+  addDoc,
 } from "firebase/firestore";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -43,6 +46,7 @@ import {
   FaTh,
   FaList,
   FaEdit,
+  FaBell,
 } from "react-icons/fa";
 import TransparentNavbar from "@/Components/Navbar/TransparentNavbar";
 import GoogleAdSense from "../Ads/GoogleAdSense";
@@ -69,6 +73,7 @@ import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
 import "yet-another-react-lightbox/plugins/thumbnails.css";
 import { SiNintendoswitch, SiEpicgames, SiGogdotcom } from "react-icons/si";
+import { sendEmail } from "../../utils/sendEmail";
 
 const MemoizedTransparentNavbar = React.memo(TransparentNavbar);
 const MemoizedAddReviewModal = React.memo(AddReviewModal);
@@ -517,6 +522,7 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [isNotifying, setIsNotifying] = useState(false);
 
   useEffect(() => {
     const checkFavoriteStatus = async () => {
@@ -559,6 +565,93 @@ export default function GameDetailsPage({ id, initialGameData }) {
 
     loadLibraryStatus();
   }, [user, game]);
+
+  const handleNotifyRelease = useCallback(async () => {
+    if (!user) {
+      toast.error("You need to be logged in to receive notifications.");
+      return;
+    }
+
+    if (!game) {
+      toast.error("Game information is not available.");
+      return;
+    }
+
+    try {
+      const notificationsRef = collection(db, "notifications");
+      const q = query(
+        notificationsRef,
+        where("userId", "==", user.uid),
+        where("gameId", "==", game.id)
+      );
+      const querySnapshot = await getDocs(q);
+
+      const isReleased = new Date(game.releaseDate) <= new Date();
+      const notificationMessage = isReleased
+        ? `${game.name} has been released!`
+        : `${game.name} will be released on ${formatReleaseDate(
+            game.releaseDate
+          )}`;
+
+      if (querySnapshot.empty) {
+        // No hay notificación, así que la creamos
+        const notificationData = {
+          userId: user.uid,
+          gameId: game.id,
+          gameName: game.name,
+          type: "game_release",
+          releaseDate: game.releaseDate.split("T")[0],
+          coverImageUrl: game.coverImageUrl,
+          createdAt: new Date(),
+          sent: false,
+        };
+
+        await addDoc(notificationsRef, notificationData);
+
+        // Crear una notificación en el centro de notificaciones
+        await addDoc(collection(db, "userNotifications"), {
+          userId: user.uid,
+          type: "game_release",
+          message: notificationMessage,
+          createdAt: new Date(),
+          read: false,
+        });
+
+        setIsNotifying(true);
+        if (isReleased) {
+          toast.success("You've been notified about this released game.");
+        } else {
+          toast.success("You will be notified when the game is released.");
+        }
+      } else {
+        // Ya existe una notificación, así que la eliminamos
+        const notificationDoc = querySnapshot.docs[0];
+        await deleteDoc(doc(db, "notifications", notificationDoc.id));
+        setIsNotifying(false);
+        toast.success("Notification cancelled.");
+      }
+    } catch (error) {
+      console.error("Error handling notification:", error);
+      toast.error("An error occurred. Please try again.");
+    }
+  }, [user, game, db]);
+
+  useEffect(() => {
+    const checkNotificationStatus = async () => {
+      if (user && game && game.id) {
+        const notificationsRef = collection(db, "notifications");
+        const q = query(
+          notificationsRef,
+          where("userId", "==", user.uid),
+          where("gameId", "==", game.id)
+        );
+        const querySnapshot = await getDocs(q);
+        setIsNotifying(!querySnapshot.empty);
+      }
+    };
+
+    checkNotificationStatus();
+  }, [user, game, db]);
 
   const toggleLayout = useCallback(() => {
     setIsCompactLayout((prevLayout) => {
@@ -1138,6 +1231,28 @@ export default function GameDetailsPage({ id, initialGameData }) {
                     >
                       Add a review
                     </motion.button>
+                    {game && game.releaseDate && (
+                      <motion.button
+                        onClick={handleNotifyRelease}
+                        className={`flex items-center justify-center px-4 py-2 rounded mt-2 w-full ${
+                          isNotifying
+                            ? "bg-red-500 hover:bg-red-600"
+                            : "bg-blue-500 hover:bg-blue-600"
+                        } transition duration-300`}
+                        variants={itemVariants}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <FaBell className="mr-2" />
+                        {new Date(game.releaseDate) <= new Date()
+                          ? isNotifying
+                            ? "Remove release notification"
+                            : "Notify me about this release"
+                          : isNotifying
+                          ? "Cancel release notification"
+                          : "Notify me on release"}
+                      </motion.button>
+                    )}
                     <motion.div
                       className="grid grid-cols-3 gap-2 mt-2"
                       variants={containerVariants}
