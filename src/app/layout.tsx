@@ -25,7 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang="en">
-      <body className="flex flex-col min-h-screen bg-gray-900 text-white">
+      <body className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
         <AuthProvider>
           <SessionProvider>
             <ReviewsProvider>
