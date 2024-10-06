@@ -17,13 +17,14 @@ import {
   FaSignInAlt,
   FaUser,
   FaSearch,
+  FaCalendar,
 } from "react-icons/fa";
 import { signOut } from "firebase/auth";
 import { auth, db } from "../../../lib/firebase";
 import Image from "next/image";
 import { doc, getDoc } from "firebase/firestore";
 import ProBadge from "../common/ProBadge";
-import { FiActivity } from "react-icons/fi";
+import { FiActivity, FiCalendar } from "react-icons/fi";
 import defaultAvatar from "../../utils/default-image.png";
 import { useHalloween } from "../../context/HalloweenContext";
 import Tooltip from "@mui/material/Tooltip";
@@ -90,8 +91,7 @@ export default function TransparentNavbar() {
           photoURL: user.photoURL,
         });
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const handleSignOut = async () => {
@@ -100,8 +100,7 @@ export default function TransparentNavbar() {
       router.push("/");
       setIsMobileMenuOpen(false);
       setIsUserMenuHovered(false);
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const handleSearch = (e) => {
@@ -126,6 +125,12 @@ export default function TransparentNavbar() {
       href: "/activity",
       text: "Activity",
       icon: <FiActivity />,
+      showOnDesktop: true,
+    },
+    {
+      href: "/release-calendar",
+      text: "Release Calendar",
+      icon: <FaCalendar />,
       showOnDesktop: true,
     },
     {
@@ -213,6 +218,14 @@ export default function TransparentNavbar() {
                   className="ml-4 text-white hover:text-blue-400 transition"
                 >
                   <FiActivity size={20} />
+                </Link>
+              </Tooltip>
+              <Tooltip title="Release Calendar" arrow>
+                <Link
+                  href="/release-calendar"
+                  className="ml-4 text-white hover:text-blue-400 transition"
+                >
+                  <FiCalendar size={20} />
                 </Link>
               </Tooltip>
             </div>
