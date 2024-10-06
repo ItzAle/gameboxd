@@ -189,6 +189,9 @@ const ReleaseCalendar = () => {
     </div>
   );
 
+  const currentYear = new Date().getFullYear();
+  const isCurrentYear = selectedYear === currentYear;
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen bg-gradient-to-b from-gray-900 to-black">
@@ -279,54 +282,58 @@ const ReleaseCalendar = () => {
               />
             )}
           </button>
-          <button
-            onClick={() => setSelectedView("thisWeek")}
-            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
-              selectedView === "thisWeek"
-                ? "text-white"
-                : "text-gray-400 hover:text-gray-200"
-            }`}
-          >
-            This Week
-            {selectedView === "thisWeek" && (
-              <motion.div
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-                layoutId="viewUnderline"
-              />
-            )}
-          </button>
-          <button
-            onClick={() => setSelectedView("nextWeek")}
-            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
-              selectedView === "nextWeek"
-                ? "text-white"
-                : "text-gray-400 hover:text-gray-200"
-            }`}
-          >
-            Next Week
-            {selectedView === "nextWeek" && (
-              <motion.div
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-                layoutId="viewUnderline"
-              />
-            )}
-          </button>
-          <button
-            onClick={() => setSelectedView("last30Days")}
-            className={`px-4 py-2 mx-1 text-sm font-medium relative ${
-              selectedView === "last30Days"
-                ? "text-white"
-                : "text-gray-400 hover:text-gray-200"
-            }`}
-          >
-            Last 30 Days
-            {selectedView === "last30Days" && (
-              <motion.div
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
-                layoutId="viewUnderline"
-              />
-            )}
-          </button>
+          {isCurrentYear && (
+            <>
+              <button
+                onClick={() => setSelectedView("last30Days")}
+                className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+                  selectedView === "last30Days"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Last 30 Days
+                {selectedView === "last30Days" && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                    layoutId="viewUnderline"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setSelectedView("thisWeek")}
+                className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+                  selectedView === "thisWeek"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                This Week
+                {selectedView === "thisWeek" && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                    layoutId="viewUnderline"
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => setSelectedView("nextWeek")}
+                className={`px-4 py-2 mx-1 text-sm font-medium relative ${
+                  selectedView === "nextWeek"
+                    ? "text-white"
+                    : "text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                Next Week
+                {selectedView === "nextWeek" && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-white"
+                    layoutId="viewUnderline"
+                  />
+                )}
+              </button>
+            </>
+          )}
         </div>
 
         {/* Month selector (only for calendar view) */}
@@ -364,30 +371,42 @@ const ReleaseCalendar = () => {
             transition={{ duration: 0.3 }}
           >
             {selectedView === "calendar" && renderGames(filteredGames)}
-            {selectedView === "thisWeek" && renderGames(thisWeekGames)}
-            {selectedView === "nextWeek" && renderGames(nextWeekGames)}
-            {selectedView === "last30Days" && renderGames(last30DaysGames)}
+            {isCurrentYear &&
+              selectedView === "last30Days" &&
+              renderGames(last30DaysGames)}
+            {isCurrentYear &&
+              selectedView === "thisWeek" &&
+              renderGames(thisWeekGames)}
+            {isCurrentYear &&
+              selectedView === "nextWeek" &&
+              renderGames(nextWeekGames)}
 
             {selectedView === "calendar" && filteredGames.length === 0 && (
               <p className="text-center text-gray-500 mt-8">
                 No games released this month.
               </p>
             )}
-            {selectedView === "thisWeek" && thisWeekGames.length === 0 && (
-              <p className="text-center text-gray-500 mt-8">
-                No games releasing this week.
-              </p>
-            )}
-            {selectedView === "nextWeek" && nextWeekGames.length === 0 && (
-              <p className="text-center text-gray-500 mt-8">
-                No games releasing next week.
-              </p>
-            )}
-            {selectedView === "last30Days" && last30DaysGames.length === 0 && (
-              <p className="text-center text-gray-500 mt-8">
-                No games released in the last 30 days.
-              </p>
-            )}
+            {isCurrentYear &&
+              selectedView === "thisWeek" &&
+              thisWeekGames.length === 0 && (
+                <p className="text-center text-gray-500 mt-8">
+                  No games releasing this week.
+                </p>
+              )}
+            {isCurrentYear &&
+              selectedView === "nextWeek" &&
+              nextWeekGames.length === 0 && (
+                <p className="text-center text-gray-500 mt-8">
+                  No games releasing next week.
+                </p>
+              )}
+            {isCurrentYear &&
+              selectedView === "last30Days" &&
+              last30DaysGames.length === 0 && (
+                <p className="text-center text-gray-500 mt-8">
+                  No games released in the last 30 days.
+                </p>
+              )}
           </motion.div>
         </AnimatePresence>
       </div>
