@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import LandingPage from "../Components/LandingPage/LandingPage";
+import AdComponent from "../Components/AdComponent/AdComponent";
 
 export const metadata: Metadata = {
   title: "Gameboxd - Track, Rate, and Discover Video Games",
@@ -40,6 +41,7 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="relative">
+      <AdComponent />
       <main>
         <LandingPage />
       </main>
