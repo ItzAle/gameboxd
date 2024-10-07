@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server'
+import { NextResponse } from "next/server";
 
 export async function GET() {
-  const baseUrl = 'https://gameboxd-pi.vercel.app'
+  const baseUrl = "https://gameboxd.me";
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -16,6 +16,12 @@ export async function GET() {
         <lastmod>${new Date().toISOString()}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
+      </url>
+      <url>
+        <loc>${baseUrl}/release-calendar</loc>
+        <lastmod>${new Date().toISOString()}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
       </url>
       <url>
         <loc>${baseUrl}/profile</loc>
@@ -35,11 +41,11 @@ export async function GET() {
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
       </url>
-    </urlset>`
+    </urlset>`;
 
   return new NextResponse(sitemap, {
     headers: {
-      'Content-Type': 'text/xml',
+      "Content-Type": "text/xml",
     },
-  })
+  });
 }
