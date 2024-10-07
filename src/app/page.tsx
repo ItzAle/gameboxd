@@ -41,7 +41,6 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <div className="relative">
-      <AdComponent />
       <main>
         <LandingPage />
       </main>

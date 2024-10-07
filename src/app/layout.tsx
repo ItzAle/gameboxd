@@ -14,7 +14,6 @@ import { usePathname } from "next/navigation";
 import "swiper/css";
 import "swiper/css/pagination";
 import Script from "next/script";
-import AdComponent from "../Components/AdComponent/AdComponent";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -42,7 +41,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <ChristmasProvider>
                 <HalloweenProvider>
                   <div className="flex-grow">{children}</div>
-                  <AdComponent />
                   {!isHomePage &&
                     !isSignInPage &&
                     !isSignUpPage &&
