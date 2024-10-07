@@ -1544,6 +1544,20 @@ export default function GameDetailsPage({ id, initialGameData }) {
                       >
                         Add a review
                       </button>
+                      {!isGameReleased(game.releaseDate) && (
+                        <button
+                          onClick={handleNotifyRelease}
+                          className={`mt-2 px-4 py-2 rounded transition duration-300 w-full ${
+                            isNotifying
+                              ? "bg-red-500 hover:bg-red-600 text-white"
+                              : "bg-blue-500 hover:bg-blue-600 text-white"
+                          }`}
+                        >
+                          {isNotifying
+                            ? "Cancel Notification"
+                            : "Notify me on release"}
+                        </button>
+                      )}
                       <div className="grid grid-cols-3 gap-2 mt-2">
                         <button
                           onClick={() => handleAddToLibrary("playing")}
