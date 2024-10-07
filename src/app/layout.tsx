@@ -27,7 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
-        <meta name="monetag" content="32873ca5de19e872c956483b3b0cc0a6" />
+        <meta name="google-adsense-account" content="ca-pub-5646939424987434" />
       </head>
       <body className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
         <AuthProvider>
