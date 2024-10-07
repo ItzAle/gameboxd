@@ -13,7 +13,6 @@ import Footer from "../Components/Navbar/Footer";
 import { usePathname } from "next/navigation";
 import "swiper/css";
 import "swiper/css/pagination";
-import Head from "next/head";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -26,9 +25,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   return (
     <html lang="en">
-      <Head>
+      <head>
         <meta name="monetag" content="32873ca5de19e872c956483b3b0cc0a6" />
-      </Head>
+      </head>
       <body className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
         <AuthProvider>
           <SessionProvider>
