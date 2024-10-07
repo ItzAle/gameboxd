@@ -43,6 +43,23 @@ export async function POST(req) {
   }
 }
 
+export async function GET(req) {
+  const { searchParams } = new URL(req.url);
+  const checkScheduled = searchParams.get('checkScheduled');
+
+  if (checkScheduled === 'true') {
+    return await handleScheduledEmails();
+  } else {
+    return new Response(
+      JSON.stringify({ message: "Use POST to send a test email or add 'checkScheduled=true' for scheduled emails" }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
+}
+
 async function sendSingleEmail({
   to,
   gameName,
