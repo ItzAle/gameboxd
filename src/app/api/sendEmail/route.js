@@ -21,37 +21,28 @@ const transporter = nodemailer.createTransport({
 });
 
 export async function POST(req) {
-  const {
-    to,
-    gameName,
-    releaseDate,
-    coverImageUrl,
-    gamePageUrl,
-    checkScheduled,
-  } = await req.json();
-
-  if (checkScheduled) {
-    return await handleScheduledEmails();
-  } else {
-    return await sendSingleEmail({
-      to,
-      gameName,
-      releaseDate,
-      coverImageUrl,
-      gamePageUrl,
-    });
-  }
+  const { to, gameName, releaseDate, coverImageUrl, gamePageUrl } = await req.json();
+  return await sendSingleEmail({ to, gameName, releaseDate, coverImageUrl, gamePageUrl });
 }
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const checkScheduled = searchParams.get('checkScheduled');
+  const testEmail = searchParams.get('testEmail');
 
   if (checkScheduled === 'true') {
     return await handleScheduledEmails();
+  } else if (testEmail) {
+    return await sendSingleEmail({
+      to: testEmail,
+      gameName: "Test Game",
+      releaseDate: new Date().toISOString(),
+      coverImageUrl: "https://example.com/test-cover.jpg",
+      gamePageUrl: "https://gameboxd.me/games/test-game",
+    });
   } else {
     return new Response(
-      JSON.stringify({ message: "Use POST to send a test email or add 'checkScheduled=true' for scheduled emails" }),
+      JSON.stringify({ message: "Use POST to send a test email, add 'checkScheduled=true' for scheduled emails, or add 'testEmail=your@email.com' to test email sending" }),
       {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -150,6 +141,8 @@ async function handleScheduledEmails() {
       ...doc.data(),
     }));
 
+    let emailsSent = 0;
+
     for (const notification of notifications) {
       const userDoc = await getDoc(doc(db, "users", notification.userId));
       const userData = userDoc.data();
@@ -166,6 +159,8 @@ async function handleScheduledEmails() {
           coverImageUrl: notification.coverImageUrl,
           gamePageUrl: gamePageUrl,
         });
+
+        emailsSent++;
       }
 
       await updateDoc(doc(db, "notifications", notification.id), {
@@ -176,7 +171,7 @@ async function handleScheduledEmails() {
 
     return new Response(
       JSON.stringify({
-        message: `Processed ${notifications.length} notifications.`,
+        message: `Processed ${notifications.length} notifications. Sent ${emailsSent} emails.`,
       }),
       {
         status: 200,
@@ -186,7 +181,7 @@ async function handleScheduledEmails() {
   } catch (error) {
     console.error("Error processing notifications:", error);
     return new Response(
-      JSON.stringify({ error: "Error processing notifications" }),
+      JSON.stringify({ error: "Error processing notifications", details: error.message }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },
