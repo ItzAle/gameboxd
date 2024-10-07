@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/checkGameReleases",
-      "schedule": "0 1 * * *"
+      "schedule": "5 0 * * *"
     }
   ]
 }
