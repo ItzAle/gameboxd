@@ -13,6 +13,7 @@ import Footer from "../Components/Navbar/Footer";
 import { usePathname } from "next/navigation";
 import "swiper/css";
 import "swiper/css/pagination";
+import Script from "next/script";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -28,12 +29,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta name="monetag" content="32873ca5de19e872c956483b3b0cc0a6" />
       </head>
-      <script
+      <Script
         src="https://alwingulla.com/88/tag.min.js"
         data-zone="106453"
+        strategy="afterInteractive"
         async
         data-cfasync="false"
-      ></script>
+      />
       <body className="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
         <AuthProvider>
           <SessionProvider>
